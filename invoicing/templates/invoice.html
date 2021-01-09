@@ -1,32 +1,55 @@
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 
-<h1>
-    Hello word
-</h1>
+
 
 <form action="{% url 'create_invoice' %}" method="post">
     {% csrf_token %}
 
-    <input type="text" name="member_id">
-    <input type="submit" value="Vote">
+
+    <select name="member_id">
+        {% for member in choice_member %}
+    <option value="{{ member.pk }}">{{ member.name }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="submit" value="Valider">
 </form>
 
-<table>
-    <tr>
-        <th>Items</th>
-        <th>Quantité</th>
-        <th>Prix</th>
-    </tr>
+<h1>preview facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
+
+<div style="border-color: coral; display: grid; grid-template-columns: 70mm 50mm 99mm">
+
+    <div>
+        <h1>FabLab Sion</h1>
+        <p>Rte de la dixence 10<br>
+        1950 Sion</p>
+    </div>
+
+    <div style="grid-column: 3; grid-row: 2">
+        <p> {{ member_info.civility }}<br>
+            {{ member_info.name }} {{ member_info.surname }}<br>
+            {{ member_info.address }}<br>
+            {{ member_info.npa }} {{ member_info.locality }}</p>
+    </div>
+
+    <div style="grid-column-start: 1;grid-column-end: 3;grid-row: 3">
+        <h1>Facture n° xxxxxx</h1>
+        <table>
+            <tr>
+                <th>Items</th>
+                <th>Quantité</th>
+                <th>Prix</th>
+            </tr>
+            {% for usage in usages %}
+            <tr>
+                <td>{{ usage.resource }}</td>
+                <td>{{ usage.qty }}</td>
+                <td>{{ usage.total_price }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 
 
-{% for usage in usages %}
-
-<tr>
-    <td>{{ usage.resource }}</td>
-    <td>{{ usage.qty }}</td>
-    <td>{{ usage.total_price }}</td>
-</tr>
-
-{% endfor %}
-</table>
 </html>

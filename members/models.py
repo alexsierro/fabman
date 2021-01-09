@@ -10,10 +10,21 @@ class Member(models.Model):
         ('committee', 'committee'),
 
     ]
+    CIVILITY_MEMBER = [
+        ('M', 'Monsieur'),
+        ('Mme', 'Madame'),
+        ('Association', 'Association'),
+        ('Entreprise', 'Entreprise'),
+
+    ]
 
     user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    civility = models.CharField(max_length=20, choices=CIVILITY_MEMBER, default='no member')
     name = models.CharField(max_length=200)
     surname = models.CharField(max_length=200)
+    address = models.CharField(max_length=200, default=None, null=True, blank=True)
+    locality = models.CharField(max_length=200, default=None, null=True, blank=True)
+    npa = models.CharField(max_length=200, default=None, null=True, blank=True)
     rfid = models.CharField(max_length=200, default=None, null=True, blank=True)
     visa = models.CharField(max_length=3, default=None, null=True, blank=True)
     mail = models.CharField(max_length=200, default=None, null=True, blank=True)

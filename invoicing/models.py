@@ -15,7 +15,7 @@ class Invoice(models.Model):
         ('twint', 'twint'),
         ('bank', 'bank'),
     ]
-
+    invoice_number = models.DecimalField(max_digits=6, decimal_places=0)
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
     amount = models.DecimalField(max_digits=6, decimal_places=2)
     date_invoice = models.DateTimeField('Invoice date', default=datetime.datetime.now)

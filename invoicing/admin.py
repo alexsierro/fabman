@@ -4,7 +4,7 @@ from .models import Invoice, Usage, Resource, AccountEntry
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ['member', 'date_invoice', 'amount', 'status', 'comments']
+    list_display = ['invoice_number', 'member', 'date_invoice', 'amount', 'status', 'comments']
 
 
 admin.site.register(Invoice, InvoiceAdmin)

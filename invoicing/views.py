@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from invoicing.models import Invoice, Usage
+from django.db.models import Max
 
 # Create your views here.
 from members.models import Member
@@ -9,11 +10,15 @@ from members.models import Member
 def create_invoice(request):
 
     #try:
-        member_id = 1
-        invoices = Invoice.objects.all()
+        choice_member = Member.objects.all()
+        member_id = request.POST['member_id']
+        invoices_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))
+        #invoices_number = invoices_number_max + 1
+        #invoices = Invoice.objects.all()
         member = Member.objects.get(pk=member_id)
         usages = Usage.objects.filter(member=member)
-        total_amount= 15.80
+
+
         #Invoice.objects.create(amount=total_amount, member=member)
 
 
@@ -21,4 +26,4 @@ def create_invoice(request):
 
     #except:
 
-        return render(request, 'invoice.html', {'usages':usages })
+        return render(request, 'invoice.html', {'usages':usages, 'member_info':member,'choice_member':choice_member, 'invoices_number':invoices_number_max })
