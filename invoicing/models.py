@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 
 
@@ -15,16 +17,11 @@ class Invoice(models.Model):
     ]
 
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
-
     amount = models.DecimalField(max_digits=6, decimal_places=2)
-
-    date_invoice = models.DateTimeField('Invoice date')
-
-    status = models.CharField(max_length=10, choices=STATUS)
-
+    date_invoice = models.DateTimeField('Invoice date', default=datetime.datetime.now)
+    status = models.CharField(max_length=10, choices=STATUS, default="created")
     date_paid = models.DateTimeField('Paid date', default=None, null=True, blank=True)
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD, default=None, null=True, blank=True)
-
     comments = models.TextField(max_length=2000, default=None, null=True, blank=True)
 
 

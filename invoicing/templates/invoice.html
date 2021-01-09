@@ -1,0 +1,32 @@
+<html>
+
+<h1>
+    Hello word
+</h1>
+
+<form action="{% url 'create_invoice' %}" method="post">
+    {% csrf_token %}
+
+    <input type="text" name="member_id">
+    <input type="submit" value="Vote">
+</form>
+
+<table>
+    <tr>
+        <th>Items</th>
+        <th>Quantité</th>
+        <th>Prix</th>
+    </tr>
+
+
+{% for usage in usages %}
+
+<tr>
+    <td>{{ usage.resource }}</td>
+    <td>{{ usage.qty }}</td>
+    <td>{{ usage.total_price }}</td>
+</tr>
+
+{% endfor %}
+</table>
+</html>
