@@ -33,7 +33,7 @@
     </div>
 
     <div style="grid-column-start: 1;grid-column-end: 3;grid-row: 3">
-        <h1>Facture n° {{ invoice_number }}</h1>
+        <h1>Facture n° {{ invoice.invoice_number }}</h1>
         <table>
             <tr>
                 <th>Items</th>
@@ -48,6 +48,7 @@
             </tr>
             {% endfor %}
         </table>
+        <p>Total : {{ invoice.amount }}</p>
     </div>
 </div>
 
