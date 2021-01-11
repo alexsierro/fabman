@@ -25,9 +25,16 @@ class Invoice(models.Model):
     comments = models.TextField(max_length=2000, default=None, null=True, blank=True)
 
 
+class Unit(models.Model):
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f'{self.name}'
+
+
 class Resource(models.Model):
     name = models.CharField(max_length=200)
-    unit = models.CharField(max_length=200)
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, default=None, null=True, blank=True)
     price_member = models.DecimalField(max_digits=5, decimal_places=2)
     price_not_member = models.DecimalField(max_digits=5, decimal_places=2)
 
@@ -44,9 +51,10 @@ class Usage(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.PROTECT, default=None, null=True)
     qty = models.IntegerField(default=0)
     total_price = models.DecimalField(max_digits=6, decimal_places=2)
-    invoice_number = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
     valid = models.BooleanField(default=True)
-    edited_by = models.ForeignKey('members.Member', related_name='editor', on_delete=models.PROTECT, default=None, null=True, blank=True)
+    edited_by = models.ForeignKey('members.Member', related_name='editor', on_delete=models.PROTECT, default=None,
+                                  null=True, blank=True)
     comment = models.CharField(max_length=200, blank=True)
 
     def get_resource_unit(self):

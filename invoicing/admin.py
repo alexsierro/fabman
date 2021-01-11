@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Invoice, Usage, Resource, AccountEntry
+from .models import Invoice, Usage, Resource, AccountEntry, Unit
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -9,11 +9,12 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Resource)
+admin.site.register(Unit)
 
 
 class UsageAdmin(admin.ModelAdmin):
     list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'total_price', 'valid']
-    list_filter = ['valid', 'invoice_number']
+    list_filter = ['valid', 'invoice']
 
 admin.site.register(Usage, UsageAdmin)
 
