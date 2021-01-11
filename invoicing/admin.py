@@ -13,7 +13,7 @@ admin.site.register(Resource)
 
 class UsageAdmin(admin.ModelAdmin):
     list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'total_price', 'valid']
-
+    list_filter = ['valid', 'invoice_number']
 
 admin.site.register(Usage, UsageAdmin)
 

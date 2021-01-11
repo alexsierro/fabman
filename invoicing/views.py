@@ -8,22 +8,20 @@ from members.models import Member
 
 
 def create_invoice(request):
+    choice_member = Member.objects.all()
+    if not request.POST:
+        return render(request, 'invoice.html', {'choice_member': choice_member})
 
-    #try:
-        choice_member = Member.objects.all()
+    else:
         member_id = request.POST['member_id']
+
         invoices_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))
-        #invoices_number = invoices_number_max + 1
-        #invoices = Invoice.objects.all()
+        invoices_number = invoices_number_max
+        invoices = Invoice.objects.all()
         member = Member.objects.get(pk=member_id)
-        usages = Usage.objects.filter(member=member)
+        usages = Usage.objects.filter(member=member, valid=True, invoice=None)
 
 
         #Invoice.objects.create(amount=total_amount, member=member)
 
-
-
-
-    #except:
-
-        return render(request, 'invoice.html', {'usages':usages, 'member_info':member,'choice_member':choice_member, 'invoices_number':invoices_number_max })
+        return render(request, 'invoice.html', {'usages': usages, 'member_info': member, 'invoices_number': invoices_number_max, 'choice_member': choice_member})

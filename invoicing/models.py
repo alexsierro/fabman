@@ -15,7 +15,7 @@ class Invoice(models.Model):
         ('twint', 'twint'),
         ('bank', 'bank'),
     ]
-    invoice_number = models.DecimalField(max_digits=6, decimal_places=0)
+    invoice_number = models.IntegerField()
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
     amount = models.DecimalField(max_digits=6, decimal_places=2)
     date_invoice = models.DateTimeField('Invoice date', default=datetime.datetime.now)
@@ -44,7 +44,7 @@ class Usage(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.PROTECT, default=None, null=True)
     qty = models.IntegerField(default=0)
     total_price = models.DecimalField(max_digits=6, decimal_places=2)
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    invoice_number = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
     valid = models.BooleanField(default=True)
     edited_by = models.ForeignKey('members.Member', related_name='editor', on_delete=models.PROTECT, default=None, null=True, blank=True)
     comment = models.CharField(max_length=200, blank=True)
