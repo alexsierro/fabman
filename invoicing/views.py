@@ -6,6 +6,7 @@ from django.db.models import Max
 # Create your views here.
 from members.models import Member
 
+import logging
 
 def create_invoice(request):
     choice_member = Member.objects.all()
@@ -15,8 +16,10 @@ def create_invoice(request):
     else:
         member_id = request.POST['member_id']
 
-        invoices_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))
-        invoices_number = invoices_number_max
+        invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max']
+        invoice_number = invoice_number_max + 1
+
+
         invoices = Invoice.objects.all()
         member = Member.objects.get(pk=member_id)
         usages = Usage.objects.filter(member=member, valid=True, invoice=None)
@@ -24,4 +27,4 @@ def create_invoice(request):
 
         #Invoice.objects.create(amount=total_amount, member=member)
 
-        return render(request, 'invoice.html', {'usages': usages, 'member_info': member, 'invoices_number': invoices_number_max, 'choice_member': choice_member})
+        return render(request, 'invoice.html', {'usages': usages, 'member_info': member, 'invoice_number': invoice_number, 'choice_member': choice_member})
