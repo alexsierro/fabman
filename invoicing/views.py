@@ -25,7 +25,6 @@ def create_invoice(request):
 
         invoice = Invoice.objects.create(amount=total_amount, member=member, invoice_number=invoice_number)
 
-
         return render(request, 'invoice.html',
                       {'usages': usages, 'member_info': member,
                        'choice_member': choice_member, 'invoice': invoice})

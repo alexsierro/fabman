@@ -13,7 +13,7 @@ admin.site.register(Unit)
 
 
 class UsageAdmin(admin.ModelAdmin):
-    list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'total_price', 'valid']
+    list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'unit_price', 'total_price', 'valid']
     list_filter = ['valid', 'invoice']
 
 admin.site.register(Usage, UsageAdmin)
