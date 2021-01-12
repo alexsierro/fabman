@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import pre_save
 from django.utils import timezone
@@ -57,8 +58,8 @@ class Usage(models.Model):
     project = models.ForeignKey('members.Project', on_delete=models.PROTECT, default=None, null=True, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.PROTECT, default=None, null=True)
     qty = models.DecimalField(max_digits=6, decimal_places=2)
-    unit_price = models.DecimalField(max_digits=6, decimal_places=2)
-    total_price = models.DecimalField(max_digits=6, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
     valid = models.BooleanField(default=True)
     edited_by = models.ForeignKey('members.Member', related_name='editor', on_delete=models.PROTECT, default=None,
@@ -68,20 +69,23 @@ class Usage(models.Model):
     def get_resource_unit(self):
         return self.resource.unit
 
+    def clean(self):
+        if self.project and self.project.member != self.member:
+            raise ValidationError('Project not owned by this member')
+
     def __str__(self):
         return f'{self.member} / {self.qty} {self.resource.unit} {self.resource}'
 
 
 @receiver(pre_save, sender=Usage)
 def usage_pre_save(sender, instance, **kwargs):
+
     usage = instance
+
     if usage.id is None:
-        print("create")
-
         usage.unit_price = usage.resource.price_member
-        usage.total_price = Decimal(usage.unit_price) * Decimal(usage.qty)
 
-    print('ok')
+    usage.total_price = Decimal(usage.unit_price) * Decimal(usage.qty)
 
 
 class AccountEntry(models.Model):
