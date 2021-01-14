@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 
+from legacy.models import CheckKey
 from members.models import Member, Project
 from invoicing.models import Resource, Usage
 
@@ -38,4 +39,13 @@ def items(request):
 
 
 def check(request, api_key, name, surname):
+    print(api_key)
+    if CheckKey.objects.filter(key=api_key).first() is None:
+        return HttpResponse(status=403)
+
+    def clean(text):
+        #return unidecode(re.sub('\W+', '', text).lower())
+        pass
+
+
     return HttpResponse("ok")

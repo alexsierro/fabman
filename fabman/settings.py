@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'legacy.apps.LegacyConfig',
     'invoicing.apps.InvoicingConfig',
     'animation.apps.AnimationConfig',
     'members.apps.MembersConfig',

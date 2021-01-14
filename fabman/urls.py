@@ -29,5 +29,5 @@ urlpatterns = [
     path('usage/<resource>/<user>/<time>', legacy_views.usage),
     path('usage/<resource>/<user>/<time>/<project>', legacy_views.usage),
     path('items/', legacy_views.items),
-    path('check/<api_key>/<name>/<surname>', legacy_views.items),
+    path('check/<api_key>/<name>/<surname>', legacy_views.check),
 ]
