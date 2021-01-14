@@ -1,11 +1,13 @@
+import re
 from decimal import Decimal
 
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
+from unidecode import unidecode
 
+from invoicing.models import Resource, Usage
 from legacy.models import CheckKey
 from members.models import Member, Project
-from invoicing.models import Resource, Usage
 
 
 def user(request, uid):
@@ -20,7 +22,6 @@ def user2(request, uid):
 
 
 def usage(request, resource, user, time, project=None):
-
     resource = get_object_or_404(Resource, slug=resource)
     member = get_object_or_404(Member, visa=user)
 
@@ -39,13 +40,18 @@ def items(request):
 
 
 def check(request, api_key, name, surname):
-    print(api_key)
     if CheckKey.objects.filter(key=api_key).first() is None:
         return HttpResponse(status=403)
 
     def clean(text):
-        #return unidecode(re.sub('\W+', '', text).lower())
+        return unidecode(re.sub('\W+', '', text).lower())
         pass
 
+    response = 'not a member'
 
-    return HttpResponse("ok")
+    members = Member.objects.all()
+    for member in members:
+        if clean(name) == clean(member.name) and clean(surname) == clean(member.surname):
+            response = "ok"
+
+    return HttpResponse(response)
