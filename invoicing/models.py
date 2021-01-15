@@ -30,6 +30,9 @@ class Invoice(models.Model):
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD, default=None, null=True, blank=True)
     comments = models.TextField(max_length=2000, default=None, null=True, blank=True)
 
+    def __str__(self):
+        return str(self.invoice_number)
+
 
 class Unit(models.Model):
     name = models.CharField(max_length=200)
@@ -68,6 +71,10 @@ class Usage(models.Model):
 
     def get_resource_unit(self):
         return self.resource.unit
+
+    def invoiced(self):
+        return self.invoice is not None
+    invoiced.boolean = True
 
     def clean(self):
         if self.project and self.project.member != self.member:

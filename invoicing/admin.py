@@ -12,9 +12,31 @@ admin.site.register(Resource)
 admin.site.register(Unit)
 
 
+class IsInvoicedFilter(admin.SimpleListFilter):
+    title = 'invoiced'
+    parameter_name = 'is_invoiced'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('Yes', 'Yes'),
+            ('No', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == 'Yes':
+            return queryset.exclude(invoice=None)
+        elif value == 'No':
+            return queryset.filter(invoice=None)
+        return queryset
+
+
 class UsageAdmin(admin.ModelAdmin):
-    list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'unit_price', 'total_price', 'valid']
-    list_filter = ['valid', 'invoice']
+    list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'unit_price', 'total_price',
+                    'valid', 'invoice']
+    list_display_links = ['member', 'invoice']
+    list_filter = ['valid', IsInvoicedFilter]
+
 
 admin.site.register(Usage, UsageAdmin)
 

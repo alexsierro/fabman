@@ -2,7 +2,7 @@
 
 
 
-<form action="{% url 'create_invoice' %}" method="post">
+<form action="{% url 'preview_invoice' %}" method="post">
     {% csrf_token %}
 
 
@@ -12,7 +12,7 @@
         {% endfor %}
     </select>
 
-    <input type="submit" value="Valider">
+    <input type="submit" value="Preview">
 </form>
 
 <h1>preview facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
@@ -51,6 +51,14 @@
         <p>Total : {{ invoice.amount }}</p>
     </div>
 </div>
+
+<form action="{% url 'create_invoice' %}" method="post">
+    {% csrf_token %}
+
+
+    <input type="hidden" name="member_id" value="{{ invoice.member_id }}">
+    <input type="submit" value="Créer facture">
+</form>
 
 
 </html>
