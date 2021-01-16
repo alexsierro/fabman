@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from unidecode import unidecode
 
-from invoicing.models import Resource, Usage
+from invoicing.models import Resource, Usage, ResourceCategory
 from legacy.models import CheckKey
 from members.models import Member, Project
 
@@ -36,7 +36,35 @@ def usage(request, resource, user, time, project=None):
 
 
 def items(request):
-    return HttpResponse("not implemented")
+    categories = ResourceCategory.objects.all()
+
+    ret = []
+
+    for category in categories:
+
+        resources = Resource.objects.filter(category=category)
+
+        category_items = []
+
+        for resource in resources:
+            item = {
+                'slug': resource.slug,
+                'name': resource.name,
+                'type': resource.widget.name,
+                'unit': resource.unit.name,
+                'price_member': resource.price_member,
+                'price_non_member': resource.price_not_member,
+            }
+
+            if resource.on_submit:
+                item['on_submit'] = resource.on_submit
+
+            category_items.append(item)
+
+        entry = {'category': category.name, 'items': category_items}
+        ret.append(entry)
+
+    return JsonResponse(ret, safe=False)
 
 
 def check(request, api_key, name, surname):

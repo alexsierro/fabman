@@ -61,7 +61,9 @@ class Resource(models.Model):
     unit = models.ForeignKey(ResourceUnit, on_delete=models.PROTECT, default=None, null=True, blank=True)
     widget = models.ForeignKey(ResourceWidget, on_delete=models.PROTECT, default=None, null=True, blank=True)
     category = models.ForeignKey(ResourceCategory, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    on_submit = models.CharField(max_length=300, default=None, null=True, blank=True)
     logger_multiplier = models.DecimalField(max_digits=9, decimal_places=3, default=1)
+
     price_member = models.DecimalField(max_digits=9, decimal_places=2)
     price_not_member = models.DecimalField(max_digits=9, decimal_places=2)
 
