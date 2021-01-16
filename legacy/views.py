@@ -36,7 +36,7 @@ def usage(request, resource, user, time, project=None):
 
 
 def items(request):
-    return HttpResponse("ok")
+    return HttpResponse("not implemented")
 
 
 def check(request, api_key, name, surname):

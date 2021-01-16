@@ -34,7 +34,21 @@ class Invoice(models.Model):
         return str(self.invoice_number)
 
 
-class Unit(models.Model):
+class ResourceCategory(models.Model):
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f'{self.name}'
+
+
+class ResourceWidget(models.Model):
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f'{self.name}'
+
+
+class ResourceUnit(models.Model):
     name = models.CharField(max_length=200)
 
     def __str__(self):
@@ -44,10 +58,12 @@ class Unit(models.Model):
 class Resource(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200)
-    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, default=None, null=True, blank=True)
-    logger_multiplier = models.DecimalField(max_digits=5, decimal_places=2, default=1)
-    price_member = models.DecimalField(max_digits=5, decimal_places=2)
-    price_not_member = models.DecimalField(max_digits=5, decimal_places=2)
+    unit = models.ForeignKey(ResourceUnit, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    widget = models.ForeignKey(ResourceWidget, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    category = models.ForeignKey(ResourceCategory, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    logger_multiplier = models.DecimalField(max_digits=9, decimal_places=3, default=1)
+    price_member = models.DecimalField(max_digits=9, decimal_places=2)
+    price_not_member = models.DecimalField(max_digits=9, decimal_places=2)
 
     payable_by_animation_hours = models.BooleanField(default=False)
 
@@ -60,7 +76,7 @@ class Usage(models.Model):
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
     project = models.ForeignKey('members.Project', on_delete=models.PROTECT, default=None, null=True, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.PROTECT, default=None, null=True)
-    qty = models.DecimalField(max_digits=6, decimal_places=2)
+    qty = models.FloatField()
     unit_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
@@ -74,6 +90,7 @@ class Usage(models.Model):
 
     def invoiced(self):
         return self.invoice is not None
+
     invoiced.boolean = True
 
     def clean(self):
@@ -86,11 +103,13 @@ class Usage(models.Model):
 
 @receiver(pre_save, sender=Usage)
 def usage_pre_save(sender, instance, **kwargs):
-
     usage = instance
 
     if usage.id is None:
-        usage.unit_price = usage.resource.price_member
+        if usage.member.is_member:
+            usage.unit_price = usage.resource.price_member
+        else:
+            usage.unit_price = usage.resource.price_not_member
 
     usage.total_price = Decimal(usage.unit_price) * Decimal(usage.qty)
 

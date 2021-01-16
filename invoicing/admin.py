@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Invoice, Usage, Resource, AccountEntry, Unit
+from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -9,7 +9,11 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Resource)
-admin.site.register(Unit)
+admin.site.register(ResourceWidget)
+admin.site.register(ResourceUnit)
+admin.site.register(ResourceCategory)
+
+
 
 
 class IsInvoicedFilter(admin.SimpleListFilter):
