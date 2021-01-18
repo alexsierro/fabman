@@ -40,8 +40,11 @@
                 <th>Quantité</th>
                 <th>Prix</th>
             </tr>
+
+
             {% for usage in usages %}
             <tr>
+
                 <td>{{ usage.resource }}</td>
                 <td>{{ usage.qty }}</td>
                 <td>{{ usage.total_price }}</td>

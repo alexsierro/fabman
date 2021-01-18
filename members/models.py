@@ -31,6 +31,8 @@ class Member(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_MEMBER, default='no member')
     is_member = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
+    bank_name = models.CharField(max_length=200, default=None, null=True, blank=True)
+    iban = models.CharField(max_length=200, default=None, null=True, blank=True)
 
     def __str__(self):
         return f'{self.name} {self.surname}'
