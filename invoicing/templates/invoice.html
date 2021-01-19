@@ -39,6 +39,7 @@
                 <th>Items</th>
                 <th>Quantité</th>
                 <th>Prix</th>
+                <th>Total</th>
             </tr>
 
 
@@ -47,10 +48,32 @@
 
                 <td>{{ usage.resource }}</td>
                 <td>{{ usage.qty }}</td>
+                <td>{{ usage.unit_price }}</td>
                 <td>{{ usage.total_price }}</td>
             </tr>
             {% endfor %}
         </table>
+        <p>Groupé</p>
+        <table>
+        <tr>
+            <th>Items</th>
+            <th>Quantité</th>
+            <th>Prix</th>
+            <th>Total</th>
+        </tr>
+
+
+        {% for usage in usages_anotated %}
+        <tr>
+
+            <td>{{ usage.resource__name }}</td>
+            <td>{{ usage.qty }}</td>
+            <td>{{ usage.unit_price }}</td>
+            <td>{{ usage.total_price }}</td>
+        </tr>
+        {% endfor %}
+        </table>
+
         <p>Total : {{ invoice.amount }}</p>
     </div>
 </div>

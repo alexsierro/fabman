@@ -6,6 +6,7 @@ from django.db.models import Max, Sum
 # Create your views here.
 from members.models import Member
 
+
 def preview(request):
     choice_member = Member.objects.all()
     if not request.POST:
@@ -18,16 +19,19 @@ def preview(request):
         invoice_number = invoice_number_max + 1
 
         member = Member.objects.get(pk=member_id)
-        #usages = Usage.objects.raw('SELECT * FROM Usage wherer member = member')
+        # usages = Usage.objects.raw('SELECT * FROM Usage wherer member = member')
         usages = Usage.objects.filter(member=member, valid=True, invoice=None)
 
         total_amount = usages.aggregate(total=Sum('total_price'))['total']
 
         invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
 
+        usages_annotated = usages.values('resource__name', 'unit_price').annotate(qty=Sum('qty'), total_price=Sum('total_price'))
+
         return render(request, 'invoice.html',
-                      {'usages': usages, 'member_info': member,
+                      {'usages': usages, 'usages_anotated': usages_annotated, 'member_info': member,
                        'choice_member': choice_member, 'invoice': invoice})
+
 
 def create(request):
     choice_member = Member.objects.all()
@@ -46,6 +50,7 @@ def create(request):
         total_amount = usages.aggregate(total=Sum('total_price'))['total']
 
         invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
+
         invoice.save()
 
         usages.update(invoice=invoice)
