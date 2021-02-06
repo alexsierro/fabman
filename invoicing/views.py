@@ -26,15 +26,26 @@ def preview(request):
 
         invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
 
-        usages_annotated = usages.values('resource__name', 'unit_price', 'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')).order_by('project__name')
+        usages_annotated = usages.values('resource__name', 'resource__unit', 'unit_price', 'project__name').annotate(qty=Sum('qty'),
+                                                                                                   total_price=Sum(
+                                                                                                       'total_price')).order_by(
+            'project__name')
 
         # information about machine hours for animators
-        amount_machine_available = AccountEntry.objects.aggregate(total=Sum('amount_machine'))['total']
+        amount_machine_before = AccountEntry.objects.aggregate(total=Sum('amount_machine'))['total']
+        amount_machine_usages = \
+        usages.filter(resource__payable_by_animation_hours=True).aggregate(total=Sum('total_price'))['total']
+        deduction = min(amount_machine_before, amount_machine_usages)
+        amount_machine_after = amount_machine_before - deduction
 
+        grand_total = total_amount - deduction
+
+        print(total_amount)
+        print(grand_total)
 
         return render(request, 'invoice.html',
                       {'usages': usages, 'usages_anotated': usages_annotated, 'member_info': member,
-                       'choice_member': choice_member, 'invoice': invoice, 'amount_machine_available': amount_machine_available})
+                       'choice_member': choice_member, 'invoice': invoice, 'amount_machine_available': 0})
 
 
 def create(request):
