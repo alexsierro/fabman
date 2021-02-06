@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
-from invoicing.models import Invoice, Usage
+from invoicing.models import Invoice, Usage, AccountEntry
 from django.db.models import Max, Sum
 
 # Create your views here.
@@ -26,11 +26,15 @@ def preview(request):
 
         invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
 
-        usages_annotated = usages.values('resource__name', 'unit_price').annotate(qty=Sum('qty'), total_price=Sum('total_price'))
+        usages_annotated = usages.values('resource__name', 'unit_price', 'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')).order_by('project__name')
+
+        # information about machine hours for animators
+        amount_machine_available = AccountEntry.objects.aggregate(total=Sum('amount_machine'))['total']
+
 
         return render(request, 'invoice.html',
                       {'usages': usages, 'usages_anotated': usages_annotated, 'member_info': member,
-                       'choice_member': choice_member, 'invoice': invoice})
+                       'choice_member': choice_member, 'invoice': invoice, 'amount_machine_available': amount_machine_available})
 
 
 def create(request):
