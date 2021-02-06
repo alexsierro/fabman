@@ -24,6 +24,8 @@ class Invoice(models.Model):
     invoice_number = models.IntegerField()
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
     amount = models.DecimalField(max_digits=6, decimal_places=2)
+    amount_deduction = models.DecimalField(max_digits=6, decimal_places=2)
+    amount_due = models.DecimalField(max_digits=6, decimal_places=2)
     date_invoice = models.DateTimeField('Invoice date', default=datetime.datetime.now)
     status = models.CharField(max_length=10, choices=STATUS, default="created")
     date_paid = models.DateTimeField('Paid date', default=None, null=True, blank=True)
