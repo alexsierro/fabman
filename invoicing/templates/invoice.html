@@ -2,9 +2,26 @@
 
 <html xmlns="http://www.w3.org/1999/html">
 <style>
-    div{
-    border-style: solid;
+
+table
+{
+border-collapse: collapse;
+
+}
+
+    td, th{
+    text-align: left;
     }
+
+
+    .detail:nth-child(odd) {
+      background-color: #BDBFC1;
+    }
+
+    .detail:nth-child(even) {
+    background-color: #FFF;
+    padding: 5px;
+}
 </style>
 
 
@@ -24,7 +41,7 @@
 
 <h1>preview facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
 
-<div style="border-style: dotted; display: grid; grid-template-columns: 70mm 50mm 99mm">
+<div style="border-style: solide; display: grid; grid-template-columns: 70mm 50mm 99mm">
 
     <div>
         <h1>FabLab Sion</h1>
@@ -39,16 +56,16 @@
             {{ member_info.npa }} {{ member_info.locality }}</p>
     </div>
 
-    <div style="grid-column-start: 1;grid-column-end: 3;grid-row: 3">
+    <div  style="grid-column-start: 1;grid-column-end: 4;grid-row: 3">
         <h1>Facture n° {{ invoice.invoice_number }}</h1>
 
-        <table>
+        <table style="width:100%">
         <tr>
-            <th>Project</th>
-            <th>Items</th>
-            <th>Quantité</th>
-            <th>Prix</th>
-            <th>Total</th>
+
+            <th style="width:25%">Items</th>
+            <th style="width:25%">Quantité</th>
+            <th style="width:25%">Prix</th>
+            <th style="width:25%">Total</th>
         </tr>
 
         {% regroup usages_anotated by project__name as usages_list %}
@@ -56,26 +73,26 @@
         {% for project__name, project_usages in usages_list %}
 
             <tr>
-                <td colspan="5"> <h2>Project : {{ project__name|default_if_none:"Sans projet" }} </h2></td>
+                <td colspan="4"> <h2>Project : {{ project__name|default_if_none:"Sans projet" }} </h2></td>
             </tr>
 
             {% for usage in project_usages %}
-                <tr>
-                    <td>{{ usage.project__name }}</td>
+                <tr class="detail">
+
                     <td>{{ usage.resource__name }}</td>
-                    <td>{{ usage.qty }}</td>
-                    <td>{{ usage.unit_price }}</td>
-                    <td>{{ usage.total_price }}</td>
+                    <td>{{ usage.qty|floatformat:"-2" }} / {{ usage.resource__unit}}</td>
+                    <td>CHF{{ usage.unit_price|floatformat:"-2" }}.-</td>
+                    <td>CHF{{ usage.total_price|floatformat:"-2" }}.-</td>
                 </tr>
 
             {% endfor %}
-            <tr> <td>Sous total {{ project_usages|running_total }}</td> </tr>
+            <tr> <td>Sous total {{ project_usages|running_total|floatformat:"-2" }}</td> </tr>
         {% endfor %}
 
 
         </table>
 
-        <p>Total : {{ invoice.amount }}</p>
+        <p>Total : {{ invoice.amount|floatformat:"-2" }}</p>
     </div>
 </div>
 

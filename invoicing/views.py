@@ -19,7 +19,6 @@ def preview(request):
         invoice_number = invoice_number_max + 1
 
         member = Member.objects.get(pk=member_id)
-        # usages = Usage.objects.raw('SELECT * FROM Usage wherer member = member')
         usages = Usage.objects.filter(member=member, valid=True, invoice=None)
 
         total_amount = usages.aggregate(total=Sum('total_price'))['total']
