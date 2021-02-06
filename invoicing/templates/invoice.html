@@ -80,7 +80,7 @@ border-collapse: collapse;
                 <tr class="detail">
 
                     <td>{{ usage.resource__name }}</td>
-                    <td>{{ usage.qty|floatformat:"-2" }} / {{ usage.resource__unit}}</td>
+                    <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
                     <td>CHF{{ usage.unit_price|floatformat:"-2" }}.-</td>
                     <td>CHF{{ usage.total_price|floatformat:"-2" }}.-</td>
                 </tr>

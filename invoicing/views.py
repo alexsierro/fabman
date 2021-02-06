@@ -25,7 +25,7 @@ def preview(request):
 
         invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
 
-        usages_annotated = usages.values('resource__name', 'resource__unit', 'unit_price', 'project__name').annotate(qty=Sum('qty'),
+        usages_annotated = usages.values('resource__name', 'resource__unit__name', 'unit_price', 'project__name').annotate(qty=Sum('qty'),
                                                                                                    total_price=Sum(
                                                                                                        'total_price')).order_by(
             'project__name')
