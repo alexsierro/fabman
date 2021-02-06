@@ -52,8 +52,9 @@ border-collapse: collapse;
     <div style="grid-column: 3; grid-row: 2">
         <p> {{ member_info.civility }}<br>
             {{ member_info.name }} {{ member_info.surname }}<br>
-            {{ member_info.address }}<br>
-            {{ member_info.npa }} {{ member_info.locality }}</p>
+            {{ member_info.address|default_if_none:" " }}<br>
+            {{ member_info.npa|default_if_none:" " }}<br>
+           </p>
     </div>
 
     <div  style="grid-column-start: 1;grid-column-end: 4;grid-row: 3">
@@ -91,12 +92,46 @@ border-collapse: collapse;
 
 
         </table>
+        <table>
+            <tr>
+                <td>Total intérmediaier</td>
+                <td>{{ invoice.amount|floatformat:"-2" }}</td>
+            </tr>
 
-        <p>Total : {{ invoice.amount|floatformat:"-2" }}</p>
+            <tr>
+                <td colspan="2"> <h3>Déduction animateur</h3></td>
+            </tr>
+
+            <tr>
+                <td>Utilisation machine</td>
+                <td>{{ amount_machine_usages|floatformat:"-2" }}</td>
+            </tr>
+            <tr>
+                <td>Avoir disponible</td>
+                <td>{{amount_machine_before|floatformat:"-2" }}</td>
+            </tr>
+            <tr>
+                <td>Déduction</td>
+                <td>{{ invoice.amount_deduction|floatformat:"-2" }}</td>
+            </tr>
+            <tr>
+                <td>Avoir restant</td>
+                <td>{{ amount_machine_after|floatformat:"-2" }}</td>
+            </tr>
+            <th>
+            <td>Solde à payé</td>
+            <td>{{ invoice.amount_due|floatformat:"-2" }}</td>
+            </th>
+        </table>
+
+        <p>Total intermédaire : </p>
+        <p>dont déductible : </p>
+        <p>Déduction  : {{ invoice.amount_deduction|floatformat:"-2" }}</p>
+        <p>Solde à payer : {{ invoice.amount_due|floatformat:"-2" }}</p>
     </div>
 </div>
 
-Heures animateurs dispo {{ amount_machine_available }}
+( Crédit animateurs restant) {{ amount_machine_available }}
 
 <form action="{% url 'create_invoice' %}" method="post">
     {% csrf_token %}
