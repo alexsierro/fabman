@@ -18,6 +18,13 @@ class Member(models.Model):
 
     ]
 
+    INSCRIPTION_STATE = [
+        ('not member', 'not member'),
+        ('subscribed', 'subscribed'),
+        ('member', 'member'),
+
+    ]
+
     user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, null=True, blank=True)
     civility = models.CharField(max_length=20, choices=CIVILITY_MEMBER, default='no member')
     name = models.CharField(max_length=200)
@@ -33,6 +40,7 @@ class Member(models.Model):
     is_staff = models.BooleanField(default=False)
     bank_name = models.CharField(max_length=200, default=None, null=True, blank=True)
     iban = models.CharField(max_length=200, default=None, null=True, blank=True)
+    inscription_state = models.CharField(max_length=20, choices=INSCRIPTION_STATE, default='not member')
 
     def __str__(self):
         return f'{self.name} {self.surname}'
