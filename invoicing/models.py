@@ -24,6 +24,8 @@ class Invoice(models.Model):
     invoice_number = models.IntegerField()
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
     amount = models.DecimalField(max_digits=6, decimal_places=2)
+    amount_deduction = models.DecimalField(max_digits=6, decimal_places=2)
+    amount_due = models.DecimalField(max_digits=6, decimal_places=2)
     date_invoice = models.DateTimeField('Invoice date', default=datetime.datetime.now)
     status = models.CharField(max_length=10, choices=STATUS, default="created")
     date_paid = models.DateTimeField('Paid date', default=None, null=True, blank=True)
@@ -122,5 +124,22 @@ class AccountEntry(models.Model):
     amount_machine = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     amount_cash = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
-
     comment = models.CharField(max_length=200, blank=True)
+
+class ExpenseType(models.Model):
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f'{self.name}'
+
+class Expense(models.Model):
+    member = models.ForeignKey('members.Member', on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    date = models.DateTimeField()
+    expense_type = models.ForeignKey(ExpenseType, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    comment = models.CharField(max_length=200, blank=True)
+    topaye = models.BooleanField(default=None)
+    processed = models.BooleanField(default=None)
+
+
+

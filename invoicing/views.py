@@ -1,10 +1,11 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
-from invoicing.models import Invoice, Usage
+from invoicing.models import Invoice, Usage, AccountEntry
 from django.db.models import Max, Sum
 
 # Create your views here.
 from members.models import Member
+
 
 def preview(request):
     choice_member = Member.objects.all()
@@ -22,11 +23,32 @@ def preview(request):
 
         total_amount = usages.aggregate(total=Sum('total_price'))['total']
 
-        invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
+
+
+        usages_annotated = usages.values('resource__name', 'resource__unit__name', 'unit_price', 'project__name').annotate(qty=Sum('qty'),
+                                                                                                   total_price=Sum(
+                                                                                                       'total_price')).order_by(
+            'project__name')
+
+        # information about machine hours for animators
+        amount_machine_before = AccountEntry.objects.aggregate(total=Sum('amount_machine'))['total']
+        amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(total=Sum('total_price'))['total']
+        deduction = min(amount_machine_before, amount_machine_usages)
+        amount_machine_after = amount_machine_before - deduction
+
+        amount_due = total_amount - deduction
+
+        invoice = Invoice(amount=total_amount, amount_deduction=deduction, amount_due=amount_due, member=member, invoice_number=invoice_number)
+
+        print(total_amount)
 
         return render(request, 'invoice.html',
-                      {'usages': usages, 'member_info': member,
-                       'choice_member': choice_member, 'invoice': invoice})
+                      {'usages': usages, 'usages_anotated': usages_annotated, 'member_info': member,
+                       'choice_member': choice_member, 'invoice': invoice, 'amount_machine_before': amount_machine_before,
+                       'amount_machine_after': amount_machine_after, 'amount_machine_usages': amount_machine_usages,
+
+                       })
+
 
 def create(request):
     choice_member = Member.objects.all()
@@ -45,6 +67,7 @@ def create(request):
         total_amount = usages.aggregate(total=Sum('total_price'))['total']
 
         invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
+
         invoice.save()
 
         usages.update(invoice=invoice)

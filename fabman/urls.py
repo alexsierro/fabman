@@ -23,11 +23,9 @@ urlpatterns = [
     path('invoicing/', include('invoicing.urls')),
     path('admin/', admin.site.urls),
 
-    # legacy fablog api
-    path('user/<uid>', legacy_views.user),
-    path('user2/<uid>', legacy_views.user2),
-    path('usage/<resource>/<user>/<time>', legacy_views.usage),
-    path('usage/<resource>/<user>/<time>/<project>', legacy_views.usage),
-    path('items/', legacy_views.items),
-    path('check/<api_key>/<name>/<surname>', legacy_views.check),
+    path('', include('legacy.urls'))
+
+
+
+
 ]

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit
+from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, Expense
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -12,6 +12,8 @@ admin.site.register(Resource)
 admin.site.register(ResourceWidget)
 admin.site.register(ResourceUnit)
 admin.site.register(ResourceCategory)
+admin.site.register(ExpenseType)
+
 
 
 
@@ -48,5 +50,11 @@ admin.site.register(Usage, UsageAdmin)
 class AccountEntryAdmin(admin.ModelAdmin):
     list_display = ['date', 'member', 'amount_machine', 'amount_cash', 'comment', 'invoice']
 
+class ExpenseAdmin(admin.ModelAdmin):
+     list_display = ['member', 'date','amount','topaye','processed']
+     list_filter = ['processed']
+
+
 
 admin.site.register(AccountEntry, AccountEntryAdmin)
+admin.site.register(Expense, ExpenseAdmin)
