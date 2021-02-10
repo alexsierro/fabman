@@ -35,6 +35,7 @@ class Member(models.Model):
     rfid = models.CharField(max_length=200, default=None, null=True, blank=True)
     visa = models.CharField(max_length=3, default=None, null=True, blank=True)
     mail = models.CharField(max_length=200, default=None, null=True, blank=True)
+    phone_number = models.CharField(max_length=20, default=None, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_MEMBER, default='no member')
     is_member = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
