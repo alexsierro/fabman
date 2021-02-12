@@ -1,0 +1,16 @@
+{% load static %}
+<html>
+    <body>
+        <div class="content container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h2>Adhérer</h2>
+                    <form method="POST" class="new-inscription">{% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="save btn btn-default">S'inscrire</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

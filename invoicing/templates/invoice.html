@@ -1,145 +1,127 @@
 {% load app_filters %}
 
 <html xmlns="http://www.w3.org/1999/html">
-<style>
+    <style>
+    table
+    {
+    border-collapse: collapse;
 
-table
-{
-border-collapse: collapse;
-
-}
-
-    td, th{
-    text-align: left;
     }
 
+        td, th{
+        text-align: left;
+        }
 
-    .detail:nth-child(odd) {
-      background-color: #BDBFC1;
+
+        .detail:nth-child(odd) {
+          background-color: #BDBFC1;
+        }
+
+        .detail:nth-child(even) {
+        background-color: #FFF;
+        padding: 5px;
     }
+    </style>
 
-    .detail:nth-child(even) {
-    background-color: #FFF;
-    padding: 5px;
-}
-</style>
+    <form action="{% url 'preview_invoice' %}" method="post">
+        {% csrf_token %}
+        <select name="member_id">
+            {% for member in choice_member %}
+        <option value="{{ member.pk }}">{{ member.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Preview">
+    </form>
 
+    <h1>preview facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
 
+    <div style="border-style: solide; display: grid; grid-template-columns: 70mm 50mm 99mm">
+        <div>
+            <h1>FabLab Sion</h1>
+            <p>Rte de la dixence 10<br>
+            1950 Sion</p>
+        </div>
 
-<form action="{% url 'preview_invoice' %}" method="post">
-    {% csrf_token %}
+        <div style="grid-column: 3; grid-row: 2">
+            <p> {{ member_info.civility }}<br>
+                {{ member_info.name }} {{ member_info.surname }}<br>
+                {{ member_info.address|default_if_none:" " }}<br>
+                {{ member_info.npa|default_if_none:" " }}<br>
+            </p>
+        </div>
 
+        <div  style="grid-column-start: 1;grid-column-end: 4;grid-row: 3">
 
-    <select name="member_id">
-        {% for member in choice_member %}
-    <option value="{{ member.pk }}">{{ member.name }}</option>
-        {% endfor %}
-    </select>
+            <h1>Facture n° {{ invoice.invoice_number }}</h1>
 
-    <input type="submit" value="Preview">
-</form>
-
-<h1>preview facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
-
-<div style="border-style: solide; display: grid; grid-template-columns: 70mm 50mm 99mm">
-
-    <div>
-        <h1>FabLab Sion</h1>
-        <p>Rte de la dixence 10<br>
-        1950 Sion</p>
-    </div>
-
-    <div style="grid-column: 3; grid-row: 2">
-        <p> {{ member_info.civility }}<br>
-            {{ member_info.name }} {{ member_info.surname }}<br>
-            {{ member_info.address|default_if_none:" " }}<br>
-            {{ member_info.npa|default_if_none:" " }}<br>
-           </p>
-    </div>
-
-    <div  style="grid-column-start: 1;grid-column-end: 4;grid-row: 3">
-        <h1>Facture n° {{ invoice.invoice_number }}</h1>
-
-        <table style="width:100%">
-        <tr>
-
-            <th style="width:25%">Items</th>
-            <th style="width:25%">Quantité</th>
-            <th style="width:25%">Prix</th>
-            <th style="width:25%">Total</th>
-        </tr>
-
-        {% regroup usages_anotated by project__name as usages_list %}
-
-        {% for project__name, project_usages in usages_list %}
-
-            <tr>
-                <td colspan="4"> <h2>Project : {{ project__name|default_if_none:"Sans projet" }} </h2></td>
-            </tr>
-
-            {% for usage in project_usages %}
-                <tr class="detail">
-
-                    <td>{{ usage.resource__name }}</td>
-                    <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
-                    <td>CHF{{ usage.unit_price|floatformat:"-2" }}.-</td>
-                    <td>CHF{{ usage.total_price|floatformat:"-2" }}.-</td>
+            <table style="width:100%">
+                <tr>
+                    <th style="width:25%">Items</th>
+                    <th style="width:25%">Quantité</th>
+                    <th style="width:25%">Prix</th>
+                    <th style="width:25%">Total</th>
                 </tr>
 
-            {% endfor %}
-            <tr> <td>Sous total {{ project_usages|running_total|floatformat:"-2" }}</td> </tr>
-        {% endfor %}
+                {% regroup usages_anotated by project__name as usages_list %}
 
+                {% for project__name, project_usages in usages_list %}
+                    <tr>
+                        <td colspan="4"> <h2>Project : {{ project__name|default_if_none:"Sans projet" }} </h2></td>
+                    </tr>
+                    {% for usage in project_usages %}
+                        <tr class="detail">
+                            <td>{{ usage.resource__name }}</td>
+                            <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
+                            <td>CHF{{ usage.unit_price|floatformat:"-2" }}.-</td>
+                            <td>CHF{{ usage.total_price|floatformat:"-2" }}.-</td>
+                        </tr>
+                    {% endfor %}
+                    <tr> <td>Sous total {{ project_usages|running_total|floatformat:"-2" }}</td> </tr>
+                {% endfor %}
+            </table>
 
-        </table>
-        <table>
-            <tr>
-                <td>Total intérmediaier</td>
-                <td>{{ invoice.amount|floatformat:"-2" }}</td>
-            </tr>
+            <table>
+                <tr>
+                    <td>Total intermédiaire</td>
+                    <td>{{ invoice.amount|floatformat:"-2" }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"> <h3>Déduction heures d'animation</h3></td>
+                </tr>
+                <tr>
+                    <td>Utilisation des machines</td>
+                    <td>{{ amount_machine_usages|floatformat:"-2" }}</td>
+                </tr>
+                <tr>
+                    <td>Avoir disponible</td>
+                    <td>{{amount_machine_before|floatformat:"-2" }}</td>
+                </tr>
+                <tr>
+                    <td>Déduction</td>
+                    <td>{{ invoice.amount_deduction|floatformat:"-2" }}</td>
+                </tr>
+                <tr>
+                    <td>Avoir restant</td>
+                    <td>{{ amount_machine_after|floatformat:"-2" }}</td>
+                </tr>
+                <th>
+                    <td>Solde à payer</td>
+                    <td>{{ invoice.amount_due|floatformat:"-2" }}</td>
+                </th>
+            </table>
 
-            <tr>
-                <td colspan="2"> <h3>Déduction animateur</h3></td>
-            </tr>
-
-            <tr>
-                <td>Utilisation machine</td>
-                <td>{{ amount_machine_usages|floatformat:"-2" }}</td>
-            </tr>
-            <tr>
-                <td>Avoir disponible</td>
-                <td>{{amount_machine_before|floatformat:"-2" }}</td>
-            </tr>
-            <tr>
-                <td>Déduction</td>
-                <td>{{ invoice.amount_deduction|floatformat:"-2" }}</td>
-            </tr>
-            <tr>
-                <td>Avoir restant</td>
-                <td>{{ amount_machine_after|floatformat:"-2" }}</td>
-            </tr>
-            <th>
-            <td>Solde à payé</td>
-            <td>{{ invoice.amount_due|floatformat:"-2" }}</td>
-            </th>
-        </table>
-
-        <p>Total intermédaire : </p>
-        <p>dont déductible : </p>
-        <p>Déduction  : {{ invoice.amount_deduction|floatformat:"-2" }}</p>
-        <p>Solde à payer : {{ invoice.amount_due|floatformat:"-2" }}</p>
+            <p>Total intermédiaire : </p>
+            <p>dont déductible : </p>
+            <p>Déduction  : {{ invoice.amount_deduction|floatformat:"-2" }}</p>
+            <p>Solde à payer : {{ invoice.amount_due|floatformat:"-2" }}</p>
+        </div>
     </div>
-</div>
 
-( Crédit animateurs restant) {{ amount_machine_available }}
+    ( Crédit animateurs restant) {{ amount_machine_available }}
 
-<form action="{% url 'create_invoice' %}" method="post">
-    {% csrf_token %}
-
-
-    <input type="hidden" name="member_id" value="{{ invoice.member_id }}">
-    <input type="submit" value="Créer facture">
-</form>
-
-
+    <form action="{% url 'create_invoice' %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="member_id" value="{{ invoice.member_id }}">
+        <input type="submit" value="Créer facture">
+    </form>
 </html>

@@ -21,6 +21,7 @@ class Invoice(models.Model):
         ('twint', 'twint'),
         ('bank', 'bank'),
     ]
+
     invoice_number = models.IntegerField()
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
     amount = models.DecimalField(max_digits=6, decimal_places=2)
@@ -126,11 +127,13 @@ class AccountEntry(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
     comment = models.CharField(max_length=200, blank=True)
 
+
 class ExpenseType(models.Model):
     name = models.CharField(max_length=200)
 
     def __str__(self):
         return f'{self.name}'
+
 
 class Expense(models.Model):
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT)
@@ -140,6 +143,3 @@ class Expense(models.Model):
     comment = models.CharField(max_length=200, blank=True)
     topaye = models.BooleanField(default=None)
     processed = models.BooleanField(default=None)
-
-
-
