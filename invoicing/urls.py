@@ -1,8 +1,8 @@
 from django.urls import path
 
-from invoicing.views import preview, create
+from . import views
 
 urlpatterns = [
-    path('preview', preview, name='preview_invoice'),
-    path('create', create, name='create_invoice'),
+    path('preview', views.preview, name='preview_invoice'),
+    path('create', views.create, name='create_invoice'),
 ]
