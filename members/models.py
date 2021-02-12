@@ -5,24 +5,23 @@ from django.contrib.auth.models import User
 class Member(models.Model):
     STATUS_MEMBER = [
         ('no member', 'no member'),
-        ('member', 'memeber'),
+        ('member', 'member'),
         ('staff', 'staff'),
-        ('committee', 'committee'),
-
+        ('committee', 'committee')
     ]
-    CIVILITY_MEMBER = [
-        ('M', 'Monsieur'),
-        ('Mme', 'Madame'),
-        ('Association', 'Association'),
-        ('Entreprise', 'Entreprise'),
 
+    CIVILITY_MEMBER = [
+        ('Mme', 'Madame'),
+        ('M', 'Monsieur'),
+        ('Non souhaitée', 'Non souhaitée'),
+        ('Association', 'Association'),
+        ('Entreprise', 'Entreprise')
     ]
 
     INSCRIPTION_STATE = [
         ('not member', 'not member'),
         ('subscribed', 'subscribed'),
-        ('member', 'member'),
-
+        ('member', 'member')
     ]
 
     user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, null=True, blank=True)
@@ -31,11 +30,11 @@ class Member(models.Model):
     surname = models.CharField(max_length=200)
     address = models.CharField(max_length=200, default=None, null=True, blank=True)
     locality = models.CharField(max_length=200, default=None, null=True, blank=True)
-    npa = models.CharField(max_length=200, default=None, null=True, blank=True)
+    npa = models.IntegerField(default=None, null=True, blank=True)
     rfid = models.CharField(max_length=200, default=None, null=True, blank=True)
     visa = models.CharField(max_length=3, default=None, null=True, blank=True)
-    mail = models.CharField(max_length=200, default=None, null=True, blank=True)
-    phone_number = models.CharField(max_length=20, default=None, null=True, blank=True)
+    mail = models.EmailField(max_length=200, default=None, null=True, blank=True)
+    phone_number = models.IntegerField(default=None, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_MEMBER, default='no member')
     is_member = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)

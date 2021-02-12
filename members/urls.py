@@ -1,7 +1,9 @@
 from django.urls import path
 
-from . import views
+from members.views import index, new_inscription, new_inscription_infos
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', index, name='index'),
+    path('inscriptions/new/', new_inscription, name='new'),
+    path('inscriptions/new/infos/', new_inscription_infos, name='infos'),
 ]

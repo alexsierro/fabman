@@ -54,7 +54,6 @@ def create(request):
     choice_member = Member.objects.all()
     if not request.POST:
         return render(request, 'invoice.html', {'choice_member': choice_member})
-
     else:
         member_id = request.POST['member_id']
 
