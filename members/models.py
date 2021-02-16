@@ -32,7 +32,7 @@ class Member(models.Model):
     locality = models.CharField('Localité', max_length=200, default=None, null=True, blank=True)
     npa = models.IntegerField('NPA', default=None, null=True, blank=True)
     rfid = models.CharField(max_length=200, default=None, null=True, blank=True)
-    visa = models.CharField(max_length=3, default=None, null=True, blank=True)
+    visa = models.CharField(max_length=3, default=None, null=True, blank=True, unique=True)
     mail = models.EmailField('Email', max_length=200, default=None, null=True, blank=True)
     phone_number = models.CharField('Téléphone', max_length=25, default=None, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_MEMBER, default='no member')
