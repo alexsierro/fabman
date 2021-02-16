@@ -3,3 +3,4 @@ db.sqlite3
 venv/
 venv37/
 .idea
+members/membres.csv
