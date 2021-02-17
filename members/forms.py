@@ -14,6 +14,6 @@ class InscriptionForm(forms.ModelForm):
 
     class Meta:
         model = Member
-        fields = ('civility', 'name', 'surname', 'address', 'locality', 'npa', 'mail', 'phone_number')
+        fields = ('name', 'surname', 'address', 'locality', 'npa', 'mail', 'phone_number')
 
     Choix_tarif = forms.ChoiceField(choices=choice_inscription)

@@ -43,8 +43,7 @@
         </div>
 
         <div style="grid-column: 3; grid-row: 2">
-            <p> {{ member_info.civility }}<br>
-                {{ member_info.name }} {{ member_info.surname }}<br>
+            <p> {{ member_info.name }} {{ member_info.surname }}<br>
                 {{ member_info.address|default_if_none:" " }}<br>
                 {{ member_info.npa|default_if_none:" " }}<br>
             </p>

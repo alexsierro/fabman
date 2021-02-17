@@ -10,14 +10,6 @@ class Member(models.Model):
         ('committee', 'committee')
     ]
 
-    CIVILITY_MEMBER = [
-        ('Mme', 'Madame'),
-        ('M', 'Monsieur'),
-        ('Non souhaitée', 'Non souhaitée'),
-        ('Association', 'Association'),
-        ('Entreprise', 'Entreprise')
-    ]
-
     INSCRIPTION_STATE = [
         ('not member', 'not member'),
         ('subscribed', 'subscribed'),
@@ -25,7 +17,6 @@ class Member(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, null=True, blank=True)
-    civility = models.CharField('Civilité', max_length=20, choices=CIVILITY_MEMBER, default='no member')
     name = models.CharField('Nom', max_length=200)
     surname = models.CharField('Prénom', max_length=200)
     address = models.CharField('Adresse', max_length=200, default=None, null=True, blank=True)
