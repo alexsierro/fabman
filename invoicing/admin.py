@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, Expense
+from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
+    Expense
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -8,14 +9,22 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Invoice, InvoiceAdmin)
-admin.site.register(Resource)
+admin.site.register(ResourceCategory)
 admin.site.register(ResourceWidget)
 admin.site.register(ResourceUnit)
-admin.site.register(ResourceCategory)
 admin.site.register(ExpenseType)
 
 
+class ResourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug', 'widget', 'category', 'unit', 'logger_multiplier', 'price_member',
+                    'price_not_member', 'payable_by_animation_hours']
+    list_display_links = ['name']
+    list_filter = ['category', 'payable_by_animation_hours']
 
+    ordering = ['category', 'name']
+
+
+admin.site.register(Resource, ResourceAdmin)
 
 
 class IsInvoicedFilter(admin.SimpleListFilter):
@@ -50,10 +59,10 @@ admin.site.register(Usage, UsageAdmin)
 class AccountEntryAdmin(admin.ModelAdmin):
     list_display = ['date', 'member', 'amount_machine', 'amount_cash', 'comment', 'invoice']
 
-class ExpenseAdmin(admin.ModelAdmin):
-     list_display = ['member', 'date','amount','topaye','processed']
-     list_filter = ['processed']
 
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ['member', 'date', 'amount', 'topaye', 'processed']
+    list_filter = ['processed']
 
 
 admin.site.register(AccountEntry, AccountEntryAdmin)
