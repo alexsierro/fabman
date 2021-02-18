@@ -11,7 +11,7 @@ admin.site.register(Project, ProjectAdmin)
 
 
 class MemberAdmin(admin.ModelAdmin):
-    list_display = ['name', 'surname', 'rfid', 'status', 'is_member', 'is_staff']
+    list_display = ['name', 'surname', 'rfid', 'is_member', 'is_staff']
 
 
 admin.site.register(Member, MemberAdmin)
