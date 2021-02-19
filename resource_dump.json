@@ -1,5 +1,82 @@
 [
   {
+    "model": "invoicing.resourceunit",
+    "pk": 1,
+    "fields": {
+      "name": "minute"
+    }
+  },
+  {
+    "model": "invoicing.resourceunit",
+    "pk": 2,
+    "fields": {
+      "name": "pce"
+    }
+  },
+  {
+    "model": "invoicing.resourceunit",
+    "pk": 3,
+    "fields": {
+      "name": "seconde"
+    }
+  },
+  {
+    "model": "invoicing.resourceunit",
+    "pk": 4,
+    "fields": {
+      "name": "heure"
+    }
+  },
+  {
+    "model": "invoicing.resourceunit",
+    "pk": 5,
+    "fields": {
+      "name": "duration"
+    }
+  },
+  {
+    "model": "invoicing.resourceunit",
+    "pk": 6,
+    "fields": {
+      "name": "ml"
+    }
+  },
+  {
+    "model": "invoicing.resourceunit",
+    "pk": 7,
+    "fields": {
+      "name": "cm"
+    }
+  },
+  {
+    "model": "invoicing.resourceunit",
+    "pk": 8,
+    "fields": {
+      "name": "CHF"
+    }
+  },
+  {
+    "model": "invoicing.resourcewidget",
+    "pk": 1,
+    "fields": {
+      "name": "Increment"
+    }
+  },
+  {
+    "model": "invoicing.resourcewidget",
+    "pk": 2,
+    "fields": {
+      "name": "Duration"
+    }
+  },
+  {
+    "model": "invoicing.resourcewidget",
+    "pk": 3,
+    "fields": {
+      "name": "Keypad"
+    }
+  },
+  {
     "model": "invoicing.resourcecategory",
     "pk": 1,
     "fields": {
@@ -28,27 +105,6 @@
     }
   },
   {
-    "model": "invoicing.resourcewidget",
-    "pk": 1,
-    "fields": {
-      "name": "Increment"
-    }
-  },
-  {
-    "model": "invoicing.resourcewidget",
-    "pk": 2,
-    "fields": {
-      "name": "Duration"
-    }
-  },
-  {
-    "model": "invoicing.resourcewidget",
-    "pk": 3,
-    "fields": {
-      "name": "Keypad"
-    }
-  },
-  {
     "model": "invoicing.resource",
     "pk": 1,
     "fields": {
@@ -68,7 +124,7 @@
     "model": "invoicing.resource",
     "pk": 2,
     "fields": {
-      "name": "Bière",
+      "name": "Bi�re",
       "slug": "cantine+Biere",
       "unit": 2,
       "widget": 1,
@@ -84,7 +140,7 @@
     "model": "invoicing.resource",
     "pk": 3,
     "fields": {
-      "name": "Bière spéciale",
+      "name": "Bi�re sp�ciale",
       "slug": "cantine+BiereSpeciale",
       "unit": 2,
       "widget": 1,
@@ -100,7 +156,7 @@
     "model": "invoicing.resource",
     "pk": 4,
     "fields": {
-      "name": "Minérale",
+      "name": "Min�rale",
       "slug": "cantine+Minerale",
       "unit": 2,
       "widget": 1,
@@ -180,7 +236,7 @@
     "model": "invoicing.resource",
     "pk": 9,
     "fields": {
-      "name": "3D Résine",
+      "name": "3D R�sine",
       "slug": "3dresine",
       "unit": 6,
       "widget": 3,
@@ -196,7 +252,7 @@
     "model": "invoicing.resource",
     "pk": 10,
     "fields": {
-      "name": "Découpe Vynil",
+      "name": "D�coupe Vynil",
       "slug": "plotterDecoupe+vynil",
       "unit": 7,
       "widget": 3,
@@ -212,7 +268,7 @@
     "model": "invoicing.resource",
     "pk": 11,
     "fields": {
-      "name": "Découpe Floc",
+      "name": "D�coupe Floc",
       "slug": "plotterDecoupe+floc",
       "unit": 7,
       "widget": 3,
@@ -292,7 +348,7 @@
     "model": "invoicing.resource",
     "pk": 16,
     "fields": {
-      "name": "Contreplaqué 4mm",
+      "name": "Contreplaqu� 4mm",
       "slug": "ctpl4",
       "unit": 2,
       "widget": 1,
@@ -308,7 +364,7 @@
     "model": "invoicing.resource",
     "pk": 17,
     "fields": {
-      "name": "Contreplaqué 6mm",
+      "name": "Contreplaqu� 6mm",
       "slug": "ctpl6",
       "unit": 2,
       "widget": 1,
@@ -324,7 +380,7 @@
     "model": "invoicing.resource",
     "pk": 18,
     "fields": {
-      "name": "Contreplaqué 12mm",
+      "name": "Contreplaqu� 12mm",
       "slug": "ctpl12",
       "unit": 2,
       "widget": 1,
