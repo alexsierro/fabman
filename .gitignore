@@ -4,3 +4,4 @@ venv/
 venv37/
 .idea
 members/membres.csv
+invoicing/usage.csv
