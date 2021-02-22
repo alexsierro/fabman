@@ -5,32 +5,43 @@ import os
 import sys
 
 import django
+from decimal import Decimal
 
 sys.path.append('..')
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fabman.settings")
 django.setup()
 
-from invoicing.models import Usage
+from invoicing.models import Usage, Resource
+from members.models import Member
 
 if __name__ == '__main__':
 
     with open('usage.csv', encoding='utf-8') as f:
         reader = csv.reader(f)
+
         for row in reader:
-            print(row)
 
             date,visa,ressource,quantity,project,fac, *_ = row
 
+            if ressource == 'boisson':
+                ressource = 'cantine+Minerale'
+
+
             if date != 'date':
-                usage, created = Usage.objects.get_or_create(
-                    date=date
-                )
+                try:
+                    member = Member.objects.get(visa=visa)
+                    resource = Resource.objects.get(slug=ressource)
 
-                usage.member = visa
-                usage.resource = ressource
-                usage.qty = quantity
-                usage.project = project
-                usage.comment = fac
-
-                usage.save()
+                    usage, created = Usage.objects.get_or_create(
+                        date=date,
+                        member=member,
+                        resource=resource,
+                        qty = Decimal(quantity) / resource.logger_multiplier,
+                        comment= fac
+                    )
+                    
+                except Exception as e: 
+                    print(row)
+                    print('Not imported')
+                    print(e)
