@@ -7,7 +7,11 @@ from members.models import Member
 
 
 def preview(request):
-    choice_member = Member.objects.all()
+
+    #Todo SELECT DISTINCT member from Usage where factNumber is null
+    choice_member = Member.objects.exclude(usage=None)
+
+
     if not request.POST:
         return render(request, 'invoice.html', {'choice_member': choice_member})
 
