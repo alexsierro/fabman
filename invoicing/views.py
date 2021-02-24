@@ -7,7 +7,11 @@ from members.models import Member
 
 
 def preview(request):
-    choice_member = Member.objects.all()
+
+    #Todo SELECT DISTINCT member from Usage where factNumber is null
+    choice_member = Member.objects.exclude(usage=None)
+
+
     if not request.POST:
         return render(request, 'invoice.html', {'choice_member': choice_member})
 
@@ -20,7 +24,7 @@ def preview(request):
         member = Member.objects.get(pk=member_id)
         usages = Usage.objects.filter(member=member, valid=True, invoice=None)
 
-        total_amount = usages.aggregate(total=Sum('total_price'))['total']
+        total_amount = usages.aggregate(total=Sum('total_price'))['total'] or 0
 
         usages_annotated = usages.values('resource__name',
                                          'resource__unit__name',
@@ -29,10 +33,14 @@ def preview(request):
                                                                    ).order_by('project__name')
 
         # information about machine hours for animators
-        amount_machine_before = AccountEntry.objects.aggregate(total=Sum('amount_machine'))['total']
+        amount_machine_before = AccountEntry.objects.filter(member=member).aggregate(total=Sum('amount_machine'))['total'] or 0
         amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(
-            total=Sum('total_price'))['total']
+            total=Sum('total_price'))['total'] or 0
+
+
+
         deduction = min(amount_machine_before, amount_machine_usages)
+
         amount_machine_after = amount_machine_before - deduction
 
         amount_due = total_amount - deduction

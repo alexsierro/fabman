@@ -27,7 +27,7 @@
         {% csrf_token %}
         <select name="member_id">
             {% for member in choice_member %}
-        <option value="{{ member.pk }}">{{ member.name }}</option>
+        <option value="{{ member.pk }}">{{ member.name}} {{ member.surname }}</option>
             {% endfor %}
         </select>
         <input type="submit" value="Preview">
