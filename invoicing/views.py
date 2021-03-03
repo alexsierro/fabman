@@ -2,6 +2,9 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from invoicing.models import Invoice, Usage, AccountEntry
 from django.db.models import Max, Sum
+from qrbill.bill import QRBill
+from stdnum.ch import esr
+
 
 from members.models import Member
 
@@ -80,8 +83,9 @@ def create(request):
         usages = Usage.objects.filter(member=member, valid=True, invoice=None)
 
         total_amount = usages.aggregate(total=Sum('total_price'))['total']
+        total_deduction = 0
 
-        invoice = Invoice(amount=total_amount, member=member, invoice_number=invoice_number)
+        invoice = Invoice(amount=total_amount,amount_deduction = total_deduction , member=member, invoice_number=invoice_number)
         invoice.save()
 
         usages.update(invoice=invoice)
@@ -93,3 +97,26 @@ def create(request):
                        'choice_member': choice_member,
                        'invoice': invoice}
                       )
+ #redirection sur views/Number
+
+def show(request, invoice_number):
+
+    invoce = Invoice.objects.get(invoice_number = invoice_number)
+    number = invoice_number
+    number_ref = number + esr.calc_check_digit(number)
+
+    my_bill = QRBill(
+         ref_number= number_ref,
+         account='CH5530808007723788063',
+         creditor={
+             'name': 'FabLab Sion' , 'pcode': '1950', 'city': 'Sion',
+         },
+         debtor={
+            'name': invoce.member.name , 'pcode': '1950', 'city': invoce.member.locality, 'street': invoce.member.address,
+         },
+         amount= invoce.amount_due,
+    )
+    my_bill.as_svg('my_bill.svg')
+    my_bill.
+
+    return HttpResponse(invoce.member.address)
