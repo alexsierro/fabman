@@ -5,7 +5,8 @@ from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, Re
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ['invoice_number', 'member', 'date_invoice', 'amount', 'status', 'comments']
+    list_display = ['invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
+    readonly_fields = ['amount_due']
 
 
 admin.site.register(Invoice, InvoiceAdmin)
