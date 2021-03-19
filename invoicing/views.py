@@ -11,11 +11,8 @@ from members.models import Member
 
 def preview(request):
 
-    #Todo SELECT DISTINCT member from Usage where factNumber is null
-    choice_member = Member.objects.exclude(usage=None)
-
-
-
+    # Select all members with usages assigned to an invoice
+    choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct()
 
     if not request.POST:
         return render(request, 'invoice.html', {'choice_member': choice_member})
