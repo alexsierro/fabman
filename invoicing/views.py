@@ -117,6 +117,5 @@ def show(request, invoice_number):
          amount= invoce.amount_due,
     )
     my_bill.as_svg('my_bill.svg')
-    my_bill.
 
     return HttpResponse(invoce.member.address)
