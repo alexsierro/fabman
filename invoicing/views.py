@@ -15,6 +15,8 @@ def preview(request):
     choice_member = Member.objects.exclude(usage=None)
 
 
+
+
     if not request.POST:
         return render(request, 'invoice.html', {'choice_member': choice_member})
 
@@ -50,7 +52,6 @@ def preview(request):
 
         invoice = Invoice(amount=total_amount,
                           amount_deduction=deduction,
-                          amount_due=amount_due,
                           member=member,
                           invoice_number=invoice_number)
 
