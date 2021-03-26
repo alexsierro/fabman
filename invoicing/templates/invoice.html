@@ -88,36 +88,31 @@
                     <td colspan="2"> <h3>Déduction heures d'animation</h3></td>
                 </tr>
                 <tr>
-                    <td>Utilisation des machines</td>
-                    <td>{{ amount_machine_usages|floatformat:"-2" }}</td>
+                    <td>Déduction</td>
+                    <td>{{ deduction_machine|floatformat:"-2" }}</td>
                 </tr>
                 <tr>
-                    <td>Avoir disponible</td>
-                    <td>{{amount_machine_before|floatformat:"-2" }}</td>
+                    <td>Avoir machine restant</td>
+                    <td>{{ amount_machine_after|floatformat:"-2" }}</td>
+                </tr>
+
+                <tr>
+                    <td colspan="2"> <h3>Déduction avoir cash</h3></td>
                 </tr>
                 <tr>
                     <td>Déduction</td>
-                    <td>{{ invoice.amount_deduction|floatformat:"-2" }}</td>
+                    <td>{{ deduction_cash|floatformat:"-2" }}</td>
                 </tr>
                 <tr>
-                    <td>Avoir restant</td>
-                    <td>{{ amount_machine_after|floatformat:"-2" }}</td>
+                    <td>Avoir cash restant</td>
+                    <td>{{ cash_after|floatformat:"-2" }}</td>
                 </tr>
-                <th>
-                    <td>Solde à payer</td>
-                    <td>{{ invoice.amount_due|floatformat:"-2" }}</td>
-                </th>
+
             </table>
 
-            <p>Total intermédiaire : </p>
-            <p>dont déductible : </p>
-            <p>Déduction  : {{ invoice.amount_deduction|floatformat:"-2" }}</p>
             <p>Solde à payer : {{ invoice.amount_due|floatformat:"-2" }}</p>
         </div>
     </div>
-
-    ( Crédit animateurs restant) {{ amount_machine_available }}
-
     <form action="{% url 'create_invoice' %}" method="post">
         {% csrf_token %}
         <input type="hidden" name="member_id" value="{{ invoice.member_id }}">
