@@ -1,0 +1,186 @@
+{% load static %}
+{% load app_filters %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture N°</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+</head>
+<style>
+
+    div{
+        border-width:1px;
+        border-style:dotted;
+        border-color:black;
+    }
+    table
+    {
+    border-collapse: collapse;
+
+    }
+
+        td, th{
+        text-align: left;
+        }
+
+
+        .detail:nth-child(odd) {
+          background-color: #BDBFC1;
+        }
+
+        .detail:nth-child(even) {
+        background-color: #FFF;
+        padding: 5px;
+    }
+    #page{
+        display: grid;
+        grid-template-columns: (50mm,100mm);
+        grid-template-row: (40mm,50mm,47mm;50mm,100mm);
+        width: 210mm;
+        height: 297mm;
+    }
+    .logo{
+        grid-row: 1;
+        grid-column: 1;
+        }
+
+    .logo img{
+    height:50mm;
+    }
+    .adresse{
+        grid-row: 1;
+        grid-column: 2;
+         }
+    .facture{
+        grid-row: 3/5;
+        grid-column: 1/3;
+         }
+    .qrCode{
+        grid-row: 5;
+        grid-column: 1/3;
+        }
+     .tot_projet
+         {
+         border-top: 3px solid black;
+         border-bottom: 3px solid black;
+
+
+          }
+     h4{
+
+     font-weight: bold;
+     }
+     .espacement
+     {
+     height : 20mm;
+     }
+
+
+</style>
+
+<body>
+<div id="page">
+    <div class="logo">
+        <img src="{% static 'img/logo.png' %}" alt="My image">
+    </div>
+    <div class="adresse">
+        <div style="margin-top:30mm"><p> {{ member_info.name }} {{ member_info.surname }}<br>
+            {{ member_info.address|default_if_none:" " }}<br>
+            {{ member_info.npa|default_if_none:" " }}<br>
+        </p></div>
+
+    </div>
+    <div class="facture">
+        <h2>Facture N° {{ invoice.invoice_number }}</h2>
+        <table style="width:100%">
+            <tr>
+                <th style="width:25%">Items</th>
+                <th style="width:25%">Quantité</th>
+                <th style="width:25%">Prix</th>
+                <th style="width:25%">Total</th>
+            </tr>
+
+            {% regroup usages_anotated by project__name as usages_list %}
+
+            {% for project__name, project_usages in usages_list %}
+            <tr>
+                <td colspan="4"> <h4>Project : {{ project__name|default_if_none:"Sans projet" }} </h4></td>
+            </tr>
+            {% for usage in project_usages %}
+            <tr class="detail">
+                <td>{{ usage.resource__name }}</td>
+                <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
+                <td>CHF{{ usage.unit_price|floatformat:"-2" }}.-</td>
+                <td>CHF{{ usage.total_price|floatformat:"-2" }}.-</td>
+            </tr>
+            {% endfor %}
+            <tr class="tot_projet">
+                <td colspan="3">Total pour le projet {{ project__name|default_if_none:"Sans projet" }} :  </td>
+                <td>CHF {{ project_usages|running_total|floatformat:"-2" }}.-</td>
+            </tr>
+            {% endfor %}
+
+            <tr class="espacement">
+                <td colspan="4"></td>
+            </tr>
+            <tr>
+                <td colspan="3">Total intermédiaire</td>
+                <td>CHF {{ invoice.amount|floatformat:"-2" }}.-</td>
+            </tr>
+            <tr>
+                <td colspan="4"><h4>Déduction</h4></td>
+            </tr>
+            <tr>
+                <td colspan="3">Heure animateur disponible:</td>
+                <td colspan="1">Déduction</td>
+            </tr>
+
+        </table>
+        <table>
+
+            <tr>
+                <td colspan="2"> <h3>Déduction heures d'animation</h3></td>
+            </tr>
+            <tr>
+                <td>Utilisation des machines</td>
+                <td>{{ amount_machine_usages|floatformat:"-2" }}</td>
+            </tr>
+            <tr>
+                <td>Avoir disponible</td>
+                <td>{{amount_machine_before|floatformat:"-2" }}</td>
+            </tr>
+            <tr>
+                <td>Déduction</td>
+                <td>{{ invoice.amount_deduction|floatformat:"-2" }}</td>
+            </tr>
+            <tr>
+                <td>Avoir restant</td>
+                <td>{{ amount_machine_after|floatformat:"-2" }}</td>
+            </tr>
+            <th>
+            <td>Solde à payer</td>
+            <td>{{ invoice.amount_due|floatformat:"-2" }}</td>
+            </th>
+        </table>
+
+        <p>Total intermédiaire : </p>
+        <p>dont déductible : </p>
+        <p>Déduction  : {{ invoice.amount_deduction|floatformat:"-2" }}</p>
+        <p>Solde à payer : {{ invoice.amount_due|floatformat:"-2" }}</p>
+    </div>
+</div>
+
+( Crédit animateurs restant) {{ amount_machine_available }}
+
+    </div>
+    <div class="qrCode">
+        <img src="{% static 'img/invoicing.svg' %}" alt="My image">
+    </div>
+
+
+
+</div>
+
+</body>
+</html>

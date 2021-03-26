@@ -48,7 +48,7 @@ def prepare(request, create = False):
             invoice.save()
             if deduction > 0:
                 AccountEntry.objects.create(member=member, amount_machine=-deduction, invoice=invoice)
-                
+
             usages.update(invoice=invoice)
             usages = Usage.objects.filter(invoice=invoice)
 
@@ -90,11 +90,21 @@ def create(request):
         result['choice_member'] = choice_member
         return render(request, 'invoice.html', result)
 
+
 def show(request, invoice_number):
 
-    invoce = Invoice.objects.get(invoice_number = invoice_number)
+    invoice = Invoice.objects.get(invoice_number = invoice_number)
     number = invoice_number
     number_ref = number + esr.calc_check_digit(number)
+
+    usages = Usage.objects.filter(invoice=invoice)
+    usages_annotated = usages.values('resource__name',
+                                     'resource__unit__name',
+                                     'unit_price',
+                                     'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')
+                                                               ).order_by('project__name')
+
+    print(usages)
 
     my_bill = QRBill(
          ref_number= number_ref,
@@ -103,10 +113,12 @@ def show(request, invoice_number):
              'name': 'FabLab Sion' , 'pcode': '1950', 'city': 'Sion',
          },
          debtor={
-            'name': invoce.member.name , 'pcode': '1950', 'city': invoce.member.locality, 'street': invoce.member.address,
+            'name': invoice.member.name , 'pcode': '1950', 'city': invoice.member.locality, 'street': invoice.member.address,
          },
-         amount= invoce.amount_due,
+         amount= invoice.amount_due,
     )
-    my_bill.as_svg('my_bill.svg')
+    my_bill.as_svg('src/img/invoicing.svg')
 
-    return HttpResponse(invoce.member.address)
+    return render(request, 'show_invoice.html', {'invoice': invoice,
+                                                 'member_info': invoice.member,
+                                                 'usages_anotated': usages_annotated})
