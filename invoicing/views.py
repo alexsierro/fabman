@@ -8,16 +8,8 @@ from stdnum.ch import esr
 
 from members.models import Member
 
+def prepare(request, create = False):
 
-def preview(request):
-
-    # Select all members with usages assigned to an invoice
-    choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct()
-
-    if not request.POST:
-        return render(request, 'invoice.html', {'choice_member': choice_member})
-
-    else:
         member_id = request.POST['member_id']
 
         invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max']
@@ -45,7 +37,6 @@ def preview(request):
 
         amount_machine_after = amount_machine_before - deduction
 
-        amount_due = total_amount - deduction
 
         invoice = Invoice(amount=total_amount,
                           amount_deduction=deduction,
@@ -53,49 +44,51 @@ def preview(request):
                           invoice_number=invoice_number)
 
         print(total_amount)
+        if create:
+            invoice.save()
+            if deduction > 0:
+                AccountEntry.objects.create(member=member, amount_machine=-deduction, invoice=invoice)
+                
+            usages.update(invoice=invoice)
+            usages = Usage.objects.filter(invoice=invoice)
 
-        return render(request, 'invoice.html',
-                      {'usages': usages,
-                       'usages_anotated': usages_annotated,
-                       'member_info': member,
-                       'choice_member': choice_member,
-                       'invoice': invoice,
-                       'amount_machine_before': amount_machine_before,
-                       'amount_machine_after': amount_machine_after,
-                       'amount_machine_usages': amount_machine_usages
-                       }
-                      )
+
+        return {'usages': usages,
+                'usages_anotated': usages_annotated,
+                'member_info': member,
+                'invoice': invoice,
+                'amount_machine_before': amount_machine_before,
+                'amount_machine_after': amount_machine_after,
+                'amount_machine_usages': amount_machine_usages
+                }
+
+
+def preview(request):
+    # Select all members with usages not assigned to an invoice
+    choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
+        .order_by('name', 'surname')
+
+    if not request.POST:
+        return render(request, 'invoice.html', {'choice_member': choice_member})
+
+    else:
+        result = prepare(request)
+        result['choice_member'] = choice_member
+        return render(request, 'invoice.html', result)
 
 
 def create(request):
-    choice_member = Member.objects.all()
+    # Select all members with usages not assigned to an invoice
+    choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
+        .order_by('name', 'surname')
+
     if not request.POST:
         return render(request, 'invoice.html', {'choice_member': choice_member})
+
     else:
-        member_id = request.POST['member_id']
-
-        invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max']
-        invoice_number = invoice_number_max + 1
-
-        member = Member.objects.get(pk=member_id)
-        usages = Usage.objects.filter(member=member, valid=True, invoice=None)
-
-        total_amount = usages.aggregate(total=Sum('total_price'))['total']
-        total_deduction = 0
-
-        invoice = Invoice(amount=total_amount,amount_deduction = total_deduction , member=member, invoice_number=invoice_number)
-        invoice.save()
-
-        usages.update(invoice=invoice)
-        usages = Usage.objects.filter(invoice=invoice)
-
-        return render(request, 'invoice.html',
-                      {'usages': usages,
-                       'member_info': member,
-                       'choice_member': choice_member,
-                       'invoice': invoice}
-                      )
- #redirection sur views/Number
+        result = prepare(request, True)
+        result['choice_member'] = choice_member
+        return render(request, 'invoice.html', result)
 
 def show(request, invoice_number):
 

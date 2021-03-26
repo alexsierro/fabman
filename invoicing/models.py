@@ -124,7 +124,7 @@ def usage_pre_save(sender, instance, **kwargs):
 
 
 class AccountEntry(models.Model):
-    date = models.DateTimeField()
+    date = models.DateTimeField(default=timezone.now)
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT)
     amount_machine = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     amount_cash = models.DecimalField(max_digits=6, decimal_places=2, default=0)
