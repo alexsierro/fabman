@@ -11,7 +11,7 @@ from members.models import Member
 def prepare(request, create=False):
     member_id = request.POST['member_id']
 
-    invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max']
+    invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max'] or 0
     invoice_number = invoice_number_max + 1
 
     member = Member.objects.get(pk=member_id)
