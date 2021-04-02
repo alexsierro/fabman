@@ -10,7 +10,6 @@ class InvoiceAdmin(admin.ModelAdmin):
     search_fields = ['member__name', 'member__surname']
 
     def get_search_results(self, request, queryset, search_term):
-        print('coucou')
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
         try:
             search_term_as_int = int(search_term)
@@ -64,6 +63,7 @@ class UsageAdmin(admin.ModelAdmin):
                     'valid', 'invoice']
     list_display_links = ['member', 'invoice']
     list_filter = ['valid', IsInvoicedFilter]
+    search_fields = ['member__name', 'member__surname']
 
 
 admin.site.register(Usage, UsageAdmin)

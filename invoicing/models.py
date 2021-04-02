@@ -13,6 +13,8 @@ class Invoice(models.Model):
     STATUS = [
         ('created', 'created'),
         ('paid', 'paid'),
+        ('rappel1', '1er rappel'),
+        ('rapell2', ' 2ème rappel'),
         ('cancelled', 'cancelled'),
     ]
 
@@ -21,6 +23,8 @@ class Invoice(models.Model):
         ('twint', 'twint'),
         ('bank', 'bank'),
     ]
+
+
 
     invoice_number = models.IntegerField()
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
