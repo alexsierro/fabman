@@ -119,7 +119,7 @@ def show(request, invoice_number):
     amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(
         total=Sum('total_price'))['total'] or 0
 
-    amount_other_usages = invoice.total - amount_machine_usages
+    amount_other_usages = invoice.amount - amount_machine_usages
 
 
 
