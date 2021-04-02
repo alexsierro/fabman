@@ -50,11 +50,11 @@ h2{
 }
 .commentaire{
     grid-column: 1/4;
-    grid-row: 4;
+    grid-row: 5;
 }
 .info_staff{
 grid-column: 1/4;
-    grid-row: 5;
+    grid-row: 4;
 }
 .qrCode{
     grid-column: 1/4;
@@ -89,7 +89,7 @@ grid-column: 1/4;
             {{ member_info.address|default_if_none:" " }}<br>
             {{ member_info.npa|default_if_none:" " }} {{ member_info.locality|default_if_none:" " }}<br>
         </p></div>
-        <p>Sion, le {% now "jS F Y" %}</p>
+        <p style="padding-top:15mm">Sion, le {{ invoice.date_invoice|date:"d.m.Y"}}</p>
     </div>
     <div class="facture">
         <h2>Facture N° {{ invoice.invoice_number }}</h2>
@@ -120,36 +120,67 @@ grid-column: 1/4;
                 <td>CHF {{ project_usages|running_total|floatformat:"-2" }}.-</td>
             </tr>
             {% endfor %}
-            <tr class="total">
-                <td colspan="3" style="text-align: right; padding-right : 5mm; font-weight: bold">Total</td>
+            {% if amount_machine_usages > 0 %}
+            <tr>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Machines</td>
+                <td style="font-weight: bold;">CHF {{ amount_machine_usages|floatformat:"-2" }}.-</td>
+            </tr>
+            {% endif %}
+            {% if amount_other_usages > 0 %}
+            <tr>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Autres</td>
+                <td style="font-weight: bold;">CHF {{ amount_other_usages|floatformat:"-2" }}.-</td>
+            </tr>
+            {% endif %}
+            {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
+            <tr>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Sous-total</td>
                 <td style="font-weight: bold;">CHF {{ invoice.amount|floatformat:"-2" }}.-</td>
             </tr>
+            {% endif %}
+
+            {% if invoice.amount_deduction_machine > 0 %}
+            <tr>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction Machine</td>
+                <td style="font-weight: bold;">CHF {{ invoice.amount_deduction_machine|floatformat:"-2" }}.-</td>
+            </tr>
+            {% endif %}
+            {% if invoice.amount_deduction_cash > 0 %}
+            <tr>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction Autres</td>
+                <td style="font-weight: bold;">CHF {{ invoice.amount_deduction_cash|floatformat:"-2" }}.-</td>
+            </tr>
+            {% endif %}
+
+            <tr>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Total à payer</td>
+                <td style="font-weight: bold;">CHF {{ invoice.amount_due|floatformat:"-2" }}.-</td>
+            </tr>
+
         </table>
 
 
     </div>
-    {% if member_info.is_staff %}
+    {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0%}
     <div class="info_staff">
-        <h2>Réduction animateur</h2>
+        <h2>Avoir réstant</h2>
         <table>
             <tr>
-                <td>Notes de frais diponible</td>
-                <td></td>
+                <td>Heure d'animation restante</td>
+                <td>{{ amount_machine_after|floatformat:"-2" }}.-</td>
             </tr>
             <tr>
-                <td>Heures animateur disponible</td>
-                <td></td>
+                <td>Note de frais restante</td>
+                <td>{{ amount_cash_after|floatformat:"-2" }}.-</td>
             </tr>
         </table>
-        <p>Total intermédiaire : </p>
-        <p>dont déductible : </p>
-        <p>Déduction : {{ invoice.amount_deduction|floatformat:"-2" }}</p>
-        <p>Solde à payer : {{ invoice.amount_due|floatformat:"-2" }}</p>
-        ( Crédit animateurs restant) {{ amount_machine_available }}
     </div>
     {% endif %}
     <div class="commentaire">
-        <p>{{ invoice.comments|default_if_none:" "|linebreaks}}</p>
+        <p>Voici la facture pour ton utilisations du FabLab Sion.</br>
+            Nous t'invitons à la régler dans un délai de 30 jours.<br>
+            Pour toutes demande merci de contacter le caissier par e-mail caisse@fablab-sion.ch <br>
+            Meilleures salutations.</p>
     </div>
     <div class="qrCode">
         <img src="{% static 'img/invoicing.svg' %}" alt="My image">
