@@ -7,6 +7,18 @@ from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, Re
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
     readonly_fields = ['amount_due']
+    search_fields = ['member__name', 'member__surname']
+
+    def get_search_results(self, request, queryset, search_term):
+        print('coucou')
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        try:
+            search_term_as_int = int(search_term)
+        except ValueError:
+            pass
+        else:
+            queryset |= self.model.objects.filter(invoice_number=search_term_as_int)
+        return queryset, use_distinct
 
 
 admin.site.register(Invoice, InvoiceAdmin)
