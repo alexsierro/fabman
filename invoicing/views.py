@@ -1,10 +1,10 @@
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+from django.utils import timezone
+
 from invoicing.models import Invoice, Usage, AccountEntry
 from django.db.models import Max, Sum
 from qrbill.bill import QRBill
 from stdnum.ch import esr
-
 from members.models import Member
 
 
@@ -55,9 +55,12 @@ def prepare(request, create=False):
     print(total_amount)
     if create:
         invoice.save()
+
         if deduction > 0:
             AccountEntry.objects.create(member=member, amount_machine=-deduction_machine, amount_cash=-deduction_cash, invoice=invoice)
 
+        invoice.date_invoice=timezone.now()
+        invoice.save()
         usages.update(invoice=invoice)
         usages = Usage.objects.filter(invoice=invoice)
 
@@ -96,12 +99,11 @@ def create(request):
         .order_by('name', 'surname')
 
     if not request.POST:
-        return render(request, 'invoice.html', {'choice_member': choice_member})
+        return redirect('preview_invoice')
 
     else:
         result = prepare(request, True)
-        result['choice_member'] = choice_member
-        return render(request, 'invoice.html', result)
+        return redirect('show_invoice', invoice_number=result['invoice'].invoice_number)
 
 
 def show(request, invoice_number):
@@ -151,5 +153,7 @@ def show(request, invoice_number):
                                                  'member_info': invoice.member,
                                                  'usages_anotated': usages_annotated,
                                                  'amount_other_usages': amount_other_usages,
-                                                 'amount_machine_usages': amount_machine_usages
+                                                 'amount_machine_usages': amount_machine_usages,
+                                                 'amount_cash_after': amount_cash_after,
+                                                 'amount_machine_after': amount_machine_after
                                                  })
