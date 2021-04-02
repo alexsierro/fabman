@@ -116,6 +116,14 @@ def show(request, invoice_number):
                                      'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')
                                                                ).order_by('project__name')
 
+    amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(
+        total=Sum('total_price'))['total'] or 0
+
+    amount_other_usages = invoice.total - amount_machine_usages
+
+
+
+
     print(usages)
 
     my_bill = QRBill(
@@ -133,4 +141,7 @@ def show(request, invoice_number):
 
     return render(request, 'show_invoice.html', {'invoice': invoice,
                                                  'member_info': invoice.member,
-                                                 'usages_anotated': usages_annotated})
+                                                 'usages_anotated': usages_annotated,
+                                                 'amount_other_usages': amount_machine_usages,
+                                                 'amount_machine_usages': amount_other_usages
+                                                 })
