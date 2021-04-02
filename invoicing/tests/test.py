@@ -34,7 +34,7 @@ class InvoicePreviewTests(TestCase):
         member1 = Member.objects.create(name='Name1', surname='Surname')
         member2 = Member.objects.create(name='Name2', surname='Surname')
         resource = Resource.objects.create(name='Resource', price_member=10, price_not_member=20, slug='res')
-        invoice = Invoice.objects.create(member=member1, amount=50, amount_deduction=0, invoice_number='20210001')
+        invoice = Invoice.objects.create(member=member1, amount=50, invoice_number='20210001')
         usage = Usage.objects.create(member=member1, resource=resource, qty=5, invoice=invoice)
 
         response = self.client.get(reverse('preview_invoice'))

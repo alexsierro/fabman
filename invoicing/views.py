@@ -47,7 +47,8 @@ def prepare(request, create=False):
     deduction = deduction_machine + deduction_cash
 
     invoice = Invoice(amount=total_amount,
-                      amount_deduction=deduction,
+                      amount_deduction_machine=deduction_machine,
+                      amount_deduction_cash=deduction_cash,
                       member=member,
                       invoice_number=invoice_number)
 
