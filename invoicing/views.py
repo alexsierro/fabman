@@ -140,6 +140,13 @@ def show(request, invoice_number):
     )
     my_bill.as_svg('src/img/invoicing.svg')
 
+    balance = AccountEntry.objects.\
+        filter(member=invoice.member, date__lte=invoice.date_invoice).\
+        aggregate(machine=Sum('amount_machine'), cash=Sum('amount_cash'))
+
+    amount_cash_after = balance['machine'] or 0
+    amount_machine_after = balance['cash'] or 0
+
     return render(request, 'show_invoice.html', {'invoice': invoice,
                                                  'member_info': invoice.member,
                                                  'usages_anotated': usages_annotated,
