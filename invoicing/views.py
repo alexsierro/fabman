@@ -33,6 +33,7 @@ def prepare(request, create=False):
     amount_machine_before = balance['machine'] or 0
     amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(
         total=Sum('total_price'))['total'] or 0
+    amount_other_usages = total_amount - amount_machine_usages
 
     deduction_machine = min(amount_machine_before, amount_machine_usages)
     amount_machine_after = amount_machine_before - deduction_machine
@@ -66,6 +67,7 @@ def prepare(request, create=False):
             'amount_machine_before': amount_machine_before,
             'amount_machine_after': amount_machine_after,
             'amount_machine_usages': amount_machine_usages,
+            'amount_other_usages': amount_other_usages,
             'deduction_machine': deduction_machine,
             'cash_before': cash_before,
             'cash_after': cash_after,
