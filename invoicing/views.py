@@ -142,6 +142,6 @@ def show(request, invoice_number):
     return render(request, 'show_invoice.html', {'invoice': invoice,
                                                  'member_info': invoice.member,
                                                  'usages_anotated': usages_annotated,
-                                                 'amount_other_usages': amount_machine_usages,
-                                                 'amount_machine_usages': amount_other_usages
+                                                 'amount_other_usages': amount_other_usages,
+                                                 'amount_machine_usages': amount_machine_usages
                                                  })
