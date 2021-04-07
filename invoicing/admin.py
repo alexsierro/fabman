@@ -1,11 +1,17 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
     Expense
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ['invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
+
+    def invoice_actions(self, obj):
+        return format_html('<a class="button" href="{}" target="_blank">Show</a>', reverse('show_invoice', args=[obj.invoice_number]))
+
+    list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
     readonly_fields = ['amount_due']
     search_fields = ['member__name', 'member__surname']
 
