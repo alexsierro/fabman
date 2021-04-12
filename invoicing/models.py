@@ -12,7 +12,7 @@ from django.dispatch import receiver
 class Invoice(models.Model):
     STATUS = [
         ('created', 'created'),
-        ('paid', 'paid'),
+        ('paid', 'Payé'),
         ('rappel1', '1er rappel'),
         ('rapell2', ' 2ème rappel'),
         ('cancelled', 'cancelled'),

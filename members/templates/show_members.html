@@ -4,15 +4,34 @@
 
 
 
-
 <body>
 <div id="page">
-    <div id="navbar"></div>
-    <div id="members">
+    <div id="navbar2"></div>
+    <div id="infoUser"></div>
+    <div id="invoces">
 
-        {{ invoice.member|default_if_none:" " }}<br>
+        <h1> Listes des factures ouvertes</h1>
+        <table class="detail">
+
+        <tr>
+            <td>Numéro</td>
+            <td>Date</td>
+            <td>Somme</td>
+            <td>Statu</td>
+            <td></td>
+        </tr>
+        {% for invoice in invoice %}
+        <tr class="detail">
+            <td>{{ invoice.invoice_number }}</td>
+            <td>{{ invoice.date_invoice }}</td>
+            <td>{{ invoice.amount }}</td>
+            <td>{{ invoice.status }}</td>
+            <td><a href="../../invoicing/show/2020035">Show</a></td>
+        </tr>
+        {% endfor %}
+        </table>
     </div>
-    <div id="">
+    <div id="statistique">
 
     </div>
 </div>

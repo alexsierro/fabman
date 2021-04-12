@@ -1,4 +1,4 @@
-from django.contrib import admin 
+from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -31,6 +31,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ['amount_due']
     search_fields = ['member__name', 'member__surname']
     actions = [paide, rappel1, rapell2, cancelled]
+    list_filter = ['status']
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
