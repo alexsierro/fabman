@@ -1,9 +1,25 @@
-from django.contrib import admin
+from django.contrib import admin 
 from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
     Expense
+
+
+def paide(modeladmin, request, queryset):
+    queryset.update(status='paid')
+
+
+def rappel1(modeladmin, request, queryset):
+    queryset.update(status='rappel1')
+
+
+def rapell2(modeladmin, request, queryset):
+        queryset.update(status='rapell2')
+
+
+def cancelled(modeladmin, request, queryset):
+    queryset.update(status='cancelled')
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -14,6 +30,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
     readonly_fields = ['amount_due']
     search_fields = ['member__name', 'member__surname']
+    actions = [paide, rappel1, rapell2, cancelled]
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
