@@ -1,0 +1,42 @@
+{% load static %}
+
+<html xmlns="http://www.w3.org/1999/html">
+
+
+
+<body>
+<div id="page">
+    <div id="navbar2"></div>
+    <div id="infoUser"></div>
+    <div id="invoces">
+
+        <h1> Listes des factures ouvertes</h1>
+        <table class="detail">
+
+        <tr>
+            <td>Numéro</td>
+            <td>Date</td>
+            <td>Somme</td>
+            <td>Statu</td>
+            <td></td>
+        </tr>
+        {% for invoice in invoice %}
+        <tr class="detail">
+            <td>{{ invoice.invoice_number }}</td>
+            <td>{{ invoice.date_invoice }}</td>
+            <td>{{ invoice.amount }}</td>
+            <td>{{ invoice.status }}</td>
+            <td><a href="../../invoicing/show/{{ invoice.invoice_number }}">Show</a></td>
+        </tr>
+        {% endfor %}
+        </table>
+    </div>
+    <div id="statistique">
+
+    </div>
+</div>
+
+
+</body>
+
+</html>
