@@ -5,19 +5,19 @@ from django.utils.html import format_html
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
     Expense
 
-
+@admin.action(description="Payé")
 def paide(modeladmin, request, queryset):
     queryset.update(status='paid')
 
-
+@admin.action(description="1er rappel")
 def rappel1(modeladmin, request, queryset):
     queryset.update(status='rappel1')
 
-
-def rapell2(modeladmin, request, queryset):
+@admin.action(description="2ème rappel")
+def rappel2(modeladmin, request, queryset):
         queryset.update(status='rapell2')
 
-
+@admin.action(description="Annuler la facture")
 def cancelled(modeladmin, request, queryset):
     queryset.update(status='cancelled')
 
@@ -30,7 +30,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
     readonly_fields = ['amount_due']
     search_fields = ['member__name', 'member__surname']
-    actions = [paide, rappel1, rapell2, cancelled]
+    actions = [paide, rappel1, rappel2, cancelled]
     list_filter = ['status']
 
     def get_search_results(self, request, queryset, search_term):
