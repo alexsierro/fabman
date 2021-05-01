@@ -25,10 +25,14 @@ def cancelled(modeladmin, request, queryset):
 class InvoiceAdmin(admin.ModelAdmin):
 
     def invoice_actions(self, obj):
-        return format_html('<a class="button" href="{}" target="_blank">Show</a>', reverse('show_invoice', args=[obj.invoice_number]))
+        if obj.member is not None :
+            return format_html('<a class="button" href="{}" target="_blank">Show</a>', reverse('show_invoice', args=[obj.invoice_number]))
+        else:
+            return ''
 
     list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
-    readonly_fields = ['amount_due']
+    list_display_links = ['invoice_number',]
+    readonly_fields = ['amount_due',]
     search_fields = ['member__name', 'member__surname']
     actions = [paide, rappel1, rappel2, cancelled]
     list_filter = ['status']
