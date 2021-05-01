@@ -30,4 +30,7 @@ urlpatterns = [
   + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+from django.contrib import admin
+admin.site.site_header = "Fablab Sion - FabMan"
+admin.site.site_title = "FabMan"
+admin.site.index_title = ''
