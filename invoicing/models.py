@@ -46,6 +46,9 @@ class Invoice(models.Model):
 class ResourceCategory(models.Model):
     name = models.CharField(max_length=200)
 
+    class Meta:
+        verbose_name_plural = "Resource categories"
+
     def __str__(self):
         return f'{self.name}'
 
@@ -126,6 +129,10 @@ def usage_pre_save(sender, instance, **kwargs):
 
 
 class AccountEntry(models.Model):
+
+    class Meta:
+        verbose_name_plural = "Account entries"
+
     date = models.DateTimeField(default=timezone.now)
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT)
     amount_machine = models.DecimalField(max_digits=6, decimal_places=2, default=0)
