@@ -28,7 +28,6 @@ def prepare(request, create=False):
     balance = AccountEntry.objects.filter(member=member).aggregate(machine=Sum('amount_machine'),
                                                                    cash=Sum('amount_cash'))
 
-    print(balance)
     # information about machine hours balance
     amount_machine_before = balance['machine'] or 0
     amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(
@@ -119,26 +118,30 @@ def show(request, invoice_number):
                                      'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')
                                                                ).order_by('project__name')
 
+
+    # use_project is true if at last one project is used
+    projects = usages.values('project').distinct()
+    if projects.count() == 1 and projects.first()['project'] is None:
+        use_projects = False
+    else:
+        use_projects = True
+
     amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(
         total=Sum('total_price'))['total'] or 0
 
     amount_other_usages = invoice.amount - amount_machine_usages
 
-
-
-
-    print(usages)
-
     my_bill = QRBill(
-         ref_number= number_ref,
-         account='CH5530808007723788063',
-         creditor={
-             'name': 'FabLab Sion' , 'pcode': '1950', 'city': 'Sion',
-         },
-         debtor={
-            'name': invoice.member.name , 'pcode': '1950', 'city': invoice.member.locality, 'street': invoice.member.address,
-         },
-         amount= invoice.amount_due,
+        language='fr',
+        ref_number= number_ref,
+        account='CH5530808007723788063',
+        creditor={
+         'name': 'FabLab Sion' , 'pcode': '1950', 'city': 'Sion',
+        },
+        debtor={
+            'name': f'{invoice.member.name} {invoice.member.surname}' , 'pcode': '1950', 'city': invoice.member.locality, 'street': invoice.member.address,
+        },
+        amount= invoice.amount_due,
     )
     my_bill.as_svg('media/invoicing.svg')
 
@@ -155,5 +158,6 @@ def show(request, invoice_number):
                                                  'amount_other_usages': amount_other_usages,
                                                  'amount_machine_usages': amount_machine_usages,
                                                  'amount_cash_after': amount_cash_after,
-                                                 'amount_machine_after': amount_machine_after
+                                                 'amount_machine_after': amount_machine_after,
+                                                 'use_projects': use_projects
                                                  })

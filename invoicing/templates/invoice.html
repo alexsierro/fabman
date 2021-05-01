@@ -33,14 +33,9 @@
         <input type="submit" value="Preview">
     </form>
 
-    <h1>preview facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
+    <h1>Apercu : Facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
 
     <div style="border-style: solide; display: grid; grid-template-columns: 70mm 50mm 99mm">
-        <div>
-            <h1>FabLab Sion</h1>
-            <p>Rte de la dixence 10<br>
-            1950 Sion</p>
-        </div>
 
         <div style="grid-column: 3; grid-row: 2">
             <p> {{ member_info.name }} {{ member_info.surname }}<br>
@@ -71,8 +66,8 @@
                         <tr class="detail">
                             <td>{{ usage.resource__name }}</td>
                             <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
-                            <td>CHF{{ usage.unit_price|floatformat:"-2" }}.-</td>
-                            <td>CHF{{ usage.total_price|floatformat:"-2" }}.-</td>
+                            <td>{{ usage.unit_price|format_currency }}</td>
+                            <td>{{ usage.total_price|format_currency }}</td>
                         </tr>
                     {% endfor %}
                     <tr> <td>Sous total {{ project_usages|running_total|floatformat:"-2" }}</td> </tr>

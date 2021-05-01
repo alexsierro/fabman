@@ -85,7 +85,7 @@ grid-column: 1/4;
 <div id="page">
     <div class="logo">
         <img src="{% static 'img/logo.png' %}" alt="My image"><br>
-        FabLab Sion <br> Rue de la dixences 10 <br> 1950 Sion <br> <br> info@fablab-sion.ch
+        FabLab Sion <br> Rue de la Dixence 10 <br> 1950 Sion <br> <br> info@fablab-sion.ch
     </div>
     <div class="adresse">
         <div><p> {{ member_info.name }} {{ member_info.surname }}<br>
@@ -98,7 +98,7 @@ grid-column: 1/4;
         <h2>Facture N° {{ invoice.invoice_number }}</h2>
         <table style="width:100%" class="detail">
             <tr>
-                <th style="width:25%">Items</th>
+                <th style="width:25%">Désignation</th>
                 <th style="width:25%">Quantité</th>
                 <th style="width:25%">Prix</th>
                 <th style="width:25%">Total</th>
@@ -107,83 +107,92 @@ grid-column: 1/4;
             {% regroup usages_anotated by project__name as usages_list %}
 
             {% for project__name, project_usages in usages_list %}
+
+            {% if use_projects %}
             <tr>
-                <td colspan="4"><h4>Project : {{ project__name|default_if_none:"Sans projet" }} </h4></td>
+                <td colspan="4"><h4>Projet : {{ project__name|default_if_none:"Non spécifié" }} </h4></td>
             </tr>
+            {% endif %}
             {% for usage in project_usages %}
             <tr class="detail">
                 <td>{{ usage.resource__name }}</td>
                 <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
-                <td>CHF{{ usage.unit_price|floatformat:"-2" }}.-</td>
-                <td>CHF{{ usage.total_price|floatformat:"-2" }}.-</td>
+                <td>{{ usage.unit_price|format_currency}}</td>
+                <td>{{ usage.total_price|format_currency }}</td>
             </tr>
             {% endfor %}
+            {% if use_projects %}
             <tr class="tot_projet">
-                <td colspan="3">Total pour le projet {{ project__name|default_if_none:"Sans projet" }} :</td>
-                <td>CHF {{ project_usages|running_total|floatformat:"-2" }}.-</td>
+                <td colspan="3">Total pour le projet "{{ project__name|default_if_none:'non spécifié' }}" :</td>
+                <td>{{ project_usages|running_total|format_currency }}</td>
             </tr>
+            {% endif %}
             {% endfor %}
-            {% if amount_machine_usages > 0 %}
+
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Machines</td>
-                <td style="font-weight: bold;">CHF {{ amount_machine_usages|floatformat:"-2" }}.-</td>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Utilisation machine</td>
+                <td style="font-weight: bold;">{{ amount_machine_usages|format_currency }}</td>
             </tr>
-            {% endif %}
-            {% if amount_other_usages > 0 %}
+
+
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Autres</td>
-                <td style="font-weight: bold;">CHF {{ amount_other_usages|floatformat:"-2" }}.-</td>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Autre</td>
+                <td style="font-weight: bold;">{{ amount_other_usages|format_currency }}</td>
             </tr>
-            {% endif %}
+
             {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
             <tr>
                 <td colspan="3" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Sous-total</td>
-                <td style="font-weight: bold;">CHF {{ invoice.amount|floatformat:"-2" }}.-</td>
+                <td style="font-weight: bold;">{{ invoice.amount|format_currency }}</td>
             </tr>
             {% endif %}
 
             {% if invoice.amount_deduction_machine > 0 %}
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction Machine</td>
-                <td style="font-weight: bold;">CHF {{ invoice.amount_deduction_machine|floatformat:"-2" }}.-</td>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
+                <td style="font-weight: bold;">{{ invoice.amount_deduction_machine|format_currency }}</td>
             </tr>
             {% endif %}
             {% if invoice.amount_deduction_cash > 0 %}
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction Autres</td>
-                <td style="font-weight: bold;">CHF {{ invoice.amount_deduction_cash|floatformat:"-2" }}.-</td>
+                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
+                <td style="font-weight: bold;">{{ invoice.amount_deduction_cash|format_currency }}</td>
             </tr>
             {% endif %}
 
             <tr>
                 <td colspan="3" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Total à payer</td>
-                <td style="font-weight: bold;">CHF {{ invoice.amount_due|floatformat:"-2" }}.-</td>
+                <td style="font-weight: bold;">{{ invoice.amount_due|format_currency }}</td>
             </tr>
 
         </table>
-
-
     </div>
+
     {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0%}
     <div class="info_staff">
-        <h2>Avoir restant</h2>
+        <h3>Avoir restant</h3>
         <table>
             <tr>
-                <td>Heure d'animation restante</td>
+                <td>Credit machine</td>
                 <td>{{ amount_machine_after|floatformat:"-2" }}.-</td>
             </tr>
             <tr>
-                <td>Note de frais restante</td>
+                <td>Autre</td>
                 <td>{{ amount_cash_after|floatformat:"-2" }}.-</td>
             </tr>
         </table>
+    </br>
     </div>
     {% endif %}
+
     <div class="commentaire">
-        <p>Voici la facture pour ton utilisations du FabLab Sion.</br>
+        {% if invoice.comments %}
+        <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
+        {%  endif %}
+        <p>Voici la facture pour ton utilisation du FabLab Sion.</br>
             Nous t'invitons à la régler dans un délai de 30 jours.<br>
             Pour toutes demande merci de contacter le caissier par e-mail caisse@fablab-sion.ch <br>
-            Meilleures salutations.</p>
+        </p>
     </div>
     <div class="qrCode">
         <img src="{{ MEDIA_PREFIX }}invoicing.svg" alt="My image">
