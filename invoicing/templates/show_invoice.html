@@ -1,4 +1,5 @@
 {% load static %}
+{% get_media_prefix as MEDIA_PREFIX %}
 {% load app_filters %}
 <html lang="en">
 <head>
@@ -165,7 +166,7 @@ grid-column: 1/4;
     </div>
     {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0%}
     <div class="info_staff">
-        <h2>Avoir réstant</h2>
+        <h2>Avoir restant</h2>
         <table>
             <tr>
                 <td>Heure d'animation restante</td>
@@ -185,7 +186,7 @@ grid-column: 1/4;
             Meilleures salutations.</p>
     </div>
     <div class="qrCode">
-        <img src="{% static 'img/invoicing.svg' %}" alt="My image">
+        <img src="{{ MEDIA_PREFIX }}invoicing.svg" alt="My image">
     </div>
 </div>
 

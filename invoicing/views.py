@@ -140,7 +140,7 @@ def show(request, invoice_number):
          },
          amount= invoice.amount_due,
     )
-    my_bill.as_svg('src/img/invoicing.svg')
+    my_bill.as_svg('media/invoicing.svg')
 
     balance = AccountEntry.objects.\
         filter(member=invoice.member, date__lte=invoice.date_invoice).\
