@@ -13,19 +13,20 @@
 
 *{
     margin-bottom : 0;
+    margin-top : 0;
     padding-bottom : 0;
+    padding-top : 0;
+    font-family:monospace
 }
-div{
 
-}
 h2{
-    margin-bottom : 10mm;
+    margin-bottom : 5mm;
 }
 #page{
     display : grid;
     grid-gap: 0.2vw;
     grid-template-columns: 80mm 40mm 80mm;
-    grid-template-rows: 50mm 30mm;
+    grid-template-rows: 50mm 30mm 35mm;
     padding-left : 10mm;
 
 }
@@ -47,36 +48,46 @@ h2{
 }
 .facture{
     grid-column: 1/4;
-    grid-row: 3;
+    grid-row: 4;
     margin-right : 20mm;
+    margin-top : 10mm;
 
 }
 .commentaire{
     grid-column: 1/4;
-    grid-row: 5;
+    grid-row: 3;
 }
 .info_staff{
 grid-column: 1/4;
-    grid-row: 4;
+    grid-row: 5;
 }
 .qrCode{
     grid-column: 1/4;
     grid-row: 6;
 }
 .detail:nth-child(odd) {
-     background-color: #BDBFC1 !important;
+     background-color: #EEE !important;
 }
 .detail:nth-child(even) {
      background-color: #FFF !important;
      padding: 5px;
 }
+.titre_tableau th{
+    background-color: #CDCDCD;
+}
 .tot_projet td{
      border-top : solid 2px;
-     border-bottom : solid 2px;
+
 }
+
 .total td{
-    padding-top : 20mm
+    padding-top : 20mm;
 }
+.chiffre {
+    text-align: right !important;
+    padding-right: 3mm;
+}
+
 
 
 </style>
@@ -94,14 +105,26 @@ grid-column: 1/4;
         </p></div>
         <p style="padding-top:15mm">Sion, le {{ invoice.date_invoice|date:"d.m.Y"}}</p>
     </div>
-    <div class="facture">
+
+    <div class="commentaire">
         <h2>Facture N° {{ invoice.invoice_number }}</h2>
-        <table style="width:100%" class="detail">
-            <tr>
-                <th style="width:25%">Désignation</th>
+        {% if invoice.comments %}
+        <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
+        {%  endif %}
+        Voici la facture pour ton utilisation du FabLab Sion.</br>
+            Nous t'invitons à la régler dans un délai de 30 jours.<br>
+            Pour toutes demande merci de contacter le caissier par e-mail caisse@fablab-sion.ch
+
+    </div>
+
+    <div class="facture">
+
+        <table style="width:100%">
+            <tr class="titre_tableau">
+                <th style="width:47%">Désignation</th>
                 <th style="width:25%">Quantité</th>
-                <th style="width:25%">Prix</th>
-                <th style="width:25%">Total</th>
+                <th colspan="2" style="width:14%">Prix</th>
+                <th colspan="2" style="width:14%">Total</th>
             </tr>
 
             {% regroup usages_anotated by project__name as usages_list %}
@@ -117,52 +140,60 @@ grid-column: 1/4;
             <tr class="detail">
                 <td>{{ usage.resource__name }}</td>
                 <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
-                <td>{{ usage.unit_price|format_currency}}</td>
-                <td>{{ usage.total_price|format_currency }}</td>
+                <td>CHF</td>
+                <td class="chiffre">{{ usage.unit_price|format_currency}}</td>
+                <td>CHF</td>
+                <td class="chiffre">{{ usage.total_price|format_currency }}</td>
             </tr>
             {% endfor %}
             {% if use_projects %}
             <tr class="tot_projet">
-                <td colspan="3">Total pour le projet "{{ project__name|default_if_none:'non spécifié' }}" :</td>
+                <td colspan="5">Total pour le projet "{{ project__name|default_if_none:'non spécifié' }}" :</td>
                 <td>{{ project_usages|running_total|format_currency }}</td>
             </tr>
             {% endif %}
             {% endfor %}
 
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Utilisation machine</td>
-                <td style="font-weight: bold;">{{ amount_machine_usages|format_currency }}</td>
+                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Utilisation machine</td>
+                <td> CHF </td>
+                <td class="chiffre" style="font-weight: bold;">{{ amount_machine_usages|format_currency }}</td>
             </tr>
 
 
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Autre</td>
-                <td style="font-weight: bold;">{{ amount_other_usages|format_currency }}</td>
+                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Autre</td>
+                <td> CHF </td>
+                <td class="chiffre" style="font-weight: bold;">{{ amount_other_usages|format_currency }}</td>
             </tr>
 
             {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Sous-total</td>
-                <td style="font-weight: bold;">{{ invoice.amount|format_currency }}</td>
+                <td colspan="4" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Sous-total</td>
+                <td> CHF </td>
+                <td class="chiffre" style="font-weight: bold;">{{ invoice.amount|format_currency }}</td>
             </tr>
             {% endif %}
 
             {% if invoice.amount_deduction_machine > 0 %}
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
-                <td style="font-weight: bold;">{{ invoice.amount_deduction_machine|format_currency }}</td>
+                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
+                <td> CHF </td>
+                <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_deduction_machine|format_currency }}</td>
             </tr>
             {% endif %}
             {% if invoice.amount_deduction_cash > 0 %}
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
-                <td style="font-weight: bold;">{{ invoice.amount_deduction_cash|format_currency }}</td>
+                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
+                <td> CHF </td>
+                <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_deduction_cash|format_currency }}</td>
             </tr>
             {% endif %}
 
             <tr>
-                <td colspan="3" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Total à payer</td>
-                <td style="font-weight: bold;">{{ invoice.amount_due|format_currency }}</td>
+                <td colspan="4" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Total à payer</td>
+                <td> CHF </td>
+                <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_due|format_currency }}</td>
             </tr>
 
         </table>
@@ -185,15 +216,7 @@ grid-column: 1/4;
     </div>
     {% endif %}
 
-    <div class="commentaire">
-        {% if invoice.comments %}
-        <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
-        {%  endif %}
-        <p>Voici la facture pour ton utilisation du FabLab Sion.</br>
-            Nous t'invitons à la régler dans un délai de 30 jours.<br>
-            Pour toutes demande merci de contacter le caissier par e-mail caisse@fablab-sion.ch <br>
-        </p>
-    </div>
+
     <div class="qrCode">
         <img src="{{ MEDIA_PREFIX }}invoicing.svg" alt="My image">
     </div>
