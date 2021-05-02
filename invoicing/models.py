@@ -26,7 +26,7 @@ class Invoice(models.Model):
 
     invoice_number = models.IntegerField()
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
-    amount = models.DecimalField(max_digits=6, decimal_places=2)
+    amount = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     amount_deduction_machine = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     amount_deduction_cash = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     date_invoice = models.DateTimeField('Invoice date', default=datetime.datetime.now)
