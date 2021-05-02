@@ -11,6 +11,14 @@
 <style>
 
 
+@media print
+{
+    button
+    {
+        display: none !important;
+    }
+}
+
 *{
     margin-bottom : 0;
     margin-top : 0;
@@ -73,7 +81,7 @@ grid-column: 1/4;
      padding: 5px;
 }
 .titre_tableau th{
-    background-color: #CDCDCD;
+    background-color: #CDCDCD !important;
 }
 .tot_projet td{
      border-top : solid 2px;
@@ -93,6 +101,9 @@ grid-column: 1/4;
 </style>
 
 <body>
+<button>Imprimer</button>
+<button>Envoyer</button>
+
 <div id="page">
     <div class="logo">
         <img src="{% static 'img/logo.png' %}" alt="My image"><br>
@@ -122,7 +133,7 @@ grid-column: 1/4;
         <table style="width:100%">
             <tr class="titre_tableau">
                 <th style="width:47%">Désignation</th>
-                <th style="width:25%">Quantité</th>
+                <th colspan="2" style="width:25%">Quantité</th>
                 <th colspan="2" style="width:14%">Prix</th>
                 <th colspan="2" style="width:14%">Total</th>
             </tr>
@@ -139,7 +150,8 @@ grid-column: 1/4;
             {% for usage in project_usages %}
             <tr class="detail">
                 <td>{{ usage.resource__name }}</td>
-                <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
+                <td > {{ usage.resource__unit__name}}</td>
+                <td class="chiffre" style="padding-right:15mm">{{ usage.qty|floatformat:"-2" }}</td>
                 <td>CHF</td>
                 <td class="chiffre">{{ usage.unit_price|format_currency}}</td>
                 <td>CHF</td>
@@ -155,21 +167,21 @@ grid-column: 1/4;
             {% endfor %}
 
             <tr>
-                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Utilisation machine</td>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Utilisation machine</td>
                 <td> CHF </td>
                 <td class="chiffre" style="font-weight: bold;">{{ amount_machine_usages|format_currency }}</td>
             </tr>
 
 
             <tr>
-                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Autre</td>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Autre</td>
                 <td> CHF </td>
                 <td class="chiffre" style="font-weight: bold;">{{ amount_other_usages|format_currency }}</td>
             </tr>
 
             {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
             <tr>
-                <td colspan="4" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Sous-total</td>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Sous-total</td>
                 <td> CHF </td>
                 <td class="chiffre" style="font-weight: bold;">{{ invoice.amount|format_currency }}</td>
             </tr>
@@ -177,39 +189,45 @@ grid-column: 1/4;
 
             {% if invoice.amount_deduction_machine > 0 %}
             <tr>
-                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
                 <td> CHF </td>
                 <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_deduction_machine|format_currency }}</td>
             </tr>
             {% endif %}
             {% if invoice.amount_deduction_cash > 0 %}
             <tr>
-                <td colspan="4" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
                 <td> CHF </td>
                 <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_deduction_cash|format_currency }}</td>
             </tr>
             {% endif %}
 
             <tr>
-                <td colspan="4" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Total à payer</td>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Total à payer</td>
                 <td> CHF </td>
                 <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_due|format_currency }}</td>
             </tr>
 
         </table>
-    </div>
+
 
     {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0%}
-    <div class="info_staff">
+
         <h3>Avoir restant</h3>
-        <table>
-            <tr>
-                <td>Credit machine</td>
-                <td>{{ amount_machine_after|floatformat:"-2" }}.-</td>
+        <table width="100%">
+            <tr class="titre_tableau">
+                <th style="width:86%">Désignation</th>
+                <th colspan="2" style="width:14%">Total</th>
             </tr>
             <tr>
-                <td>Autre</td>
-                <td>{{ amount_cash_after|floatformat:"-2" }}.-</td>
+                <td>Crédit machine</td>
+                <td>CHF</td>
+                <td class="chiffre">{{ amount_machine_after|format_currency }}</td>
+            </tr>
+            <tr>
+                <td  style="background-color: #EEE !important";>Autre</td>
+                <td style="background-color: #EEE !important";>CHF</td>
+                <td  style=" background-color: #EEE !important"; class="chiffre">{{ amount_cash_after|format_currency }}</td>
             </tr>
         </table>
     </br>
