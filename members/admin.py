@@ -25,7 +25,7 @@ class MemberAdmin(admin.ModelAdmin):
         if open_invoices > 1:
             color = 'red'
         return format_html('<a class="button" href="{}" style="background-color:{}"target="_blank">Invoices ({})</a>', reverse('show_members', args=[obj.pk]), color, open_invoices)
-    list_display = ['members_actions', 'name', 'surname', 'rfid', 'is_member', 'is_staff']
+    list_display = ['members_actions', 'name', 'surname', 'rfid', 'is_member', 'is_staff', 'is_committee']
     list_display_links = ['name', 'surname']
     search_fields = ['name', 'surname', 'rfid']
     ordering = ['name', 'surname']
