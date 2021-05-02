@@ -42,7 +42,7 @@ def items(request):
 
     for category in categories:
 
-        resources = Resource.objects.filter(category=category)
+        resources = Resource.objects.filter(category=category).exclude(widget=None)
 
         category_items = []
 
