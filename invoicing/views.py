@@ -1,3 +1,5 @@
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
@@ -79,6 +81,9 @@ def prepare(request, create=False):
 
 
 def preview(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
     # Select all members with usages not assigned to an invoice
     choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
         .order_by('name', 'surname')
@@ -93,6 +98,8 @@ def preview(request):
 
 
 def create(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
     # Select all members with usages not assigned to an invoice
     choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
         .order_by('name', 'surname')
@@ -106,6 +113,8 @@ def create(request):
 
 
 def show(request, invoice_number):
+    if not request.user.is_staff:
+        raise PermissionDenied
 
     invoice = Invoice.objects.get(invoice_number = invoice_number)
     number = invoice_number

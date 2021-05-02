@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
@@ -31,6 +32,9 @@ def new_inscription_infos(request):
 
 
 def show(request, pk):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
     members = Member.objects.get(pk=pk)
     invoice = Invoice.objects.filter(member=pk).exclude(status='paid').exclude(status='cancelled')
     invoice_annotated = invoice.values('invoice_number',
