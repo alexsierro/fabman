@@ -21,7 +21,7 @@ if __name__ == '__main__':
             print(row)
 
             id, name, surname, email, member_type, phone_number, address, npa, locality, language, \
-            member_since, is_staff, visa, rfid, comitee, demission, *_ = row
+            member_since, is_staff, visa, rfid, statut, comitee, demission, *_ = row
 
             if name != 'Nom':
                 member, created = Member.objects.get_or_create(
@@ -49,5 +49,29 @@ if __name__ == '__main__':
 
                 if is_staff == 'oui':
                     member.is_staff = True
+
+                if demission:
+                    member.is_member = True
+                    member.is_resigned = True
+                else:
+                    member.is_member = True
+                    member.is_resigned = False
+
+                member.is_committee = comitee != ''
+
+                if member_type == 'Alias facturation':
+                    member.member_type = 'alias'
+                elif member_type == 'Etudiant':
+                    member.member_type = 'etudiant'
+                elif member_type == 'FabLab Angel':
+                    member.member_type = 'angel'
+                elif member_type == 'Fondateur':
+                    member.member_type = 'membre'
+                elif member_type == 'Membre':
+                    member.member_type = 'membre'
+                elif member_type == 'Passif':
+                    member.member_type = 'passif'
+                else:
+                    member.member_type = None
 
                 member.save()
