@@ -158,8 +158,8 @@ def show(request, invoice_number):
         filter(member=invoice.member, date__lte=invoice.date_invoice).\
         aggregate(machine=Sum('amount_machine'), cash=Sum('amount_cash'))
 
-    amount_cash_after = balance['machine'] or 0
-    amount_machine_after = balance['cash'] or 0
+    amount_cash_after = balance['cash'] or 0
+    amount_machine_after = balance['machine'] or 0
 
     return render(request, 'show_invoice.html', {'invoice': invoice,
                                                  'member_info': invoice.member,

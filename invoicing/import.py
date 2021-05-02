@@ -13,7 +13,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fabman.settings")
 django.setup()
 
 from invoicing.models import Usage, Resource
-from members.models import Member
+from members.models import Member, Project
 
 if __name__ == '__main__':
 
@@ -33,12 +33,15 @@ if __name__ == '__main__':
                     member = Member.objects.get(visa=visa)
                     resource = Resource.objects.get(slug=ressource)
 
+                    project = Project.objects.filter(member=member, name=project).first()
+
                     usage, created = Usage.objects.get_or_create(
                         date=date,
                         member=member,
                         resource=resource,
                         qty = Decimal(quantity) / resource.logger_multiplier,
-                        comment= fac
+                        comment= fac,
+                        project=project
                     )
                     
                 except Exception as e: 
