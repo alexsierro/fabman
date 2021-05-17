@@ -1,6 +1,7 @@
 import re
 from decimal import Decimal
 
+from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from unidecode import unidecode
@@ -21,9 +22,9 @@ def user2(request, uid):
     return JsonResponse(response)
 
 
-def usage(request, resource, user, time, project=None):
+def usage(request, resource, visa, time, project=None):
     resource = get_object_or_404(Resource, slug=resource)
-    member = get_object_or_404(Member, visa=user)
+    member = get_object_or_404(Member, visa=visa)
 
     if project:
         project = Project.objects.get(member=member, name=project)
@@ -83,3 +84,10 @@ def check(request, api_key, name, surname):
             response = "ok"
 
     return HttpResponse(response)
+
+
+def projects(request, visa):
+    user = Member.objects.get(visa=visa)
+    projects = [project.name for project in Project.objects.filter(member=user)]
+
+    return JsonResponse(projects, safe=None)
