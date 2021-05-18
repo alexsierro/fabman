@@ -37,7 +37,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
     list_display_links = ['invoice_number', ]
-    readonly_fields = ['amount_due', ]
+    readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash',]
     search_fields = ['member__name', 'member__surname']
     actions = [paide, rappel1, rappel2, cancelled]
     list_filter = ['status']
@@ -52,6 +52,13 @@ class InvoiceAdmin(admin.ModelAdmin):
             queryset |= self.model.objects.filter(invoice_number=search_term_as_int)
         return queryset, use_distinct
 
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.status not in ['created', 'cancelled']:
+            return False
+        return super().has_delete_permission(request, obj=obj)
+
+    def has_add_permission(self, request):
+        return False
 
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(ResourceCategory)
