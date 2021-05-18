@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, pre_delete
 from django.utils import timezone
 
 from django.dispatch import receiver
@@ -40,7 +40,7 @@ class Invoice(models.Model):
         return self.amount - self.amount_deduction_machine - self.amount_deduction_cash
 
     def __str__(self):
-        return str(self.invoice_number)
+        return f'#{self.invoice_number} : {self.member.name} {self.member.surname} (CHF {self.amount_due})'
 
 
 class ResourceCategory(models.Model):
@@ -93,7 +93,7 @@ class Usage(models.Model):
     qty = models.FloatField()
     unit_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, default=None, null=True, blank=True)
     valid = models.BooleanField(default=True)
     edited_by = models.ForeignKey('members.Member', related_name='editor', on_delete=models.PROTECT, default=None,
                                   null=True, blank=True)
@@ -129,7 +129,6 @@ def usage_pre_save(sender, instance, **kwargs):
 
 
 class AccountEntry(models.Model):
-
     class Meta:
         verbose_name_plural = "Account entries"
 
@@ -137,8 +136,11 @@ class AccountEntry(models.Model):
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT)
     amount_machine = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     amount_cash = models.DecimalField(max_digits=6, decimal_places=2, default=0)
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, default=None, null=True, blank=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, default=None, null=True, blank=True)
     comment = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return f'{self.member} : machine {self.amount_machine}, cash {self.amount_cash}'
 
 
 class ExpenseType(models.Model):
