@@ -40,6 +40,8 @@ class Invoice(models.Model):
         return self.amount - self.amount_deduction_machine - self.amount_deduction_cash
 
     def __str__(self):
+        if self.member is None:
+            return(f'{self.invoice_number}')
         return f'#{self.invoice_number} : {self.member.name} {self.member.surname} (CHF {self.amount_due})'
 
 
