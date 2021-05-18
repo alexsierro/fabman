@@ -5,17 +5,21 @@ from django.utils.html import format_html
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
     Expense
 
+
 @admin.action(description="Payé")
 def paide(modeladmin, request, queryset):
     queryset.update(status='paid')
+
 
 @admin.action(description="1er rappel")
 def rappel1(modeladmin, request, queryset):
     queryset.update(status='rappel1')
 
+
 @admin.action(description="2ème rappel")
 def rappel2(modeladmin, request, queryset):
-        queryset.update(status='rapell2')
+    queryset.update(status='rapell2')
+
 
 @admin.action(description="Annuler la facture")
 def cancelled(modeladmin, request, queryset):
@@ -25,14 +29,15 @@ def cancelled(modeladmin, request, queryset):
 class InvoiceAdmin(admin.ModelAdmin):
 
     def invoice_actions(self, obj):
-        if obj.member is not None :
-            return format_html('<a class="button" href="{}" target="_blank">Show</a>', reverse('show_invoice', args=[obj.invoice_number]))
+        if obj.member is not None:
+            return format_html('<a class="button" href="{}" target="_blank">Show</a>',
+                               reverse('show_invoice', args=[obj.invoice_number]))
         else:
             return ''
 
     list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
-    list_display_links = ['invoice_number',]
-    readonly_fields = ['amount_due',]
+    list_display_links = ['invoice_number', ]
+    readonly_fields = ['amount_due', ]
     search_fields = ['member__name', 'member__surname']
     actions = [paide, rappel1, rappel2, cancelled]
     list_filter = ['status']
@@ -92,6 +97,16 @@ class UsageAdmin(admin.ModelAdmin):
     list_display_links = ['member', 'invoice']
     list_filter = ['valid', IsInvoicedFilter]
     search_fields = ['member__name', 'member__surname']
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and obj.invoice is not None:
+            return False
+        return super().has_change_permission(request, obj=obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.invoice is not None:
+            return False
+        return super().has_delete_permission(request, obj=obj)
 
 
 admin.site.register(Usage, UsageAdmin)
