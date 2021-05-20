@@ -102,8 +102,9 @@ class UsageAdmin(admin.ModelAdmin):
     list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'unit_price', 'total_price',
                     'valid', 'invoice']
     list_display_links = ['member', 'invoice']
-    list_filter = ['valid', IsInvoicedFilter]
+    list_filter = ['valid', IsInvoicedFilter, 'resource']
     search_fields = ['member__name', 'member__surname']
+    readonly_fields = ['total_price']
 
     def has_change_permission(self, request, obj=None):
         if obj is not None and obj.invoice is not None:
