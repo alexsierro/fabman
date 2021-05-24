@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
-from invoicing.models import Invoice, Usage, AccountEntry
+from invoicing.models import Invoice, Usage, AccountEntry, Payment
 from django.db.models import Max, Sum
 from qrbill.bill import QRBill
 from stdnum.ch import esr
@@ -53,9 +53,13 @@ def prepare(request, create=False):
                       member=member,
                       invoice_number=invoice_number)
 
+    payment = Payment( invoice_number=invoice_number,
+                       invoice_amount = total_amount)
+
     print(total_amount)
     if create:
         invoice.save()
+        payment.save()
 
         if deduction > 0:
             AccountEntry.objects.create(member=member, amount_machine=-deduction_machine, amount_cash=-deduction_cash, invoice=invoice)

@@ -45,6 +45,26 @@ class Invoice(models.Model):
         return f'#{self.invoice_number} : {self.member.name} {self.member.surname} (CHF {self.amount_due})'
 
 
+class Payment(models.Model):
+
+    PAYMENT_METHOD = [
+        ('cash', 'cash'),
+        ('twint', 'twint'),
+        ('bank', 'bank'),
+    ]
+
+    invoice_number = models.IntegerField(unique=True)
+    invoice_amount = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    invoice_paid = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    date_paid = models.DateTimeField('Paid date', default=None, null=True, blank=True)
+    payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD, default=None, null=True, blank=True)
+    comments = models.TextField(max_length=2000, default=None, null=True, blank=True)
+
+    @property
+    def amount_due(self):
+        return self.invoice_amount - self.invoice_paid
+
+
 class ResourceCategory(models.Model):
     name = models.CharField(max_length=200)
 
