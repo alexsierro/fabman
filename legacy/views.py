@@ -87,7 +87,7 @@ def check(request, api_key, name, surname):
 
 
 def projects(request, visa):
-    user = Member.objects.get(visa=visa)
+    user = get_object_or_404(Member, visa=visa)
     projects = [project.name for project in Project.objects.filter(member=user)]
 
     return JsonResponse(projects, safe=None)
