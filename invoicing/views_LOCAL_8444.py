@@ -3,13 +3,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
-<<<<<<< HEAD
 from invoicing.models import Invoice, Usage, AccountEntry, Payment
 from django.db.models import Max, Sum
-=======
-from invoicing.models import Invoice, Usage, AccountEntry
-from django.db.models import Max, Sum, Q
->>>>>>> upstream/develop
 from qrbill.bill import QRBill
 from stdnum.ch import esr
 from members.models import Member
@@ -164,7 +159,7 @@ def show(request, invoice_number):
     my_bill.as_svg('media/invoicing.svg')
 
     balance = AccountEntry.objects.\
-        filter(Q(date__lte=invoice.date_invoice) | Q(invoice=invoice), member=invoice.member,).\
+        filter(member=invoice.member, date__lte=invoice.date_invoice).\
         aggregate(machine=Sum('amount_machine'), cash=Sum('amount_cash'))
 
     amount_cash_after = balance['cash'] or 0

@@ -30,8 +30,13 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def invoice_actions(self, obj):
         if obj.member is not None:
-            return format_html('<a class="button" href="{}" target="_blank">Show</a>',
-                               reverse('show_invoice', args=[obj.invoice_number]))
+            color = 'orange'
+
+            if obj.status == 'paid':
+                color = 'green'
+
+            return format_html('<a class="button" style="background-color:{}" href="{}" target="_blank">Show</a>',
+                               color, reverse('show_invoice', args=[obj.invoice_number]))
         else:
             return ''
 
