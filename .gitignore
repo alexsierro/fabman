@@ -5,3 +5,5 @@ venv37/
 .idea
 members/membres.csv
 invoicing/usage.csv
+/.env.prod.db
+/.env.prod

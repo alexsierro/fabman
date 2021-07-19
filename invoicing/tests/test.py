@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from invoicing.models import Usage, Resource, Invoice
+from invoicing.models import Usage, Resource, Invoice, AccountEntry
 from members.models import Member
 
 
@@ -71,6 +71,40 @@ class InvoicePreviewTests(TestCase):
         response = self.client.post(reverse('preview_invoice'), {'member_id': member1.id})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['invoice'].amount, 50)
+
+    def test_deduction_machine(self):
+        """
+        Must use machine balance and compute right available balance after invoice
+        Must use deduction only for resources that allow it
+        """
+
+        self.client.force_login(self.staff_user)
+
+        member1 = Member.objects.create(name='Name1', surname='Surname', is_member=True, locality='City')
+
+        AccountEntry.objects.create(member=member1, amount_machine=75)
+        AccountEntry.objects.create(member=member1, amount_cash=4)
+
+        resource1 = Resource.objects.create(name='Resource1', price_member=10, price_not_member=1, slug='res1', payable_by_animation_hours=True)
+        resource2 = Resource.objects.create(name='Resource2', price_member=10, price_not_member=1, slug='res2')
+
+        usage1 = Usage.objects.create(member=member1, resource=resource1, qty=5)
+        usage2 = Usage.objects.create(member=member1, resource=resource2, qty=10)
+
+        response = self.client.post(reverse('create_invoice'), {'member_id': member1.id})
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.get(reverse('show_invoice', args=[1]))
+        self.assertEqual(response.status_code, 200)
+
+        invoice = response.context['invoice']
+
+        self.assertEqual(invoice.amount, 150)
+        self.assertEqual(invoice.amount_deduction_machine, 50)
+        self.assertEqual(invoice.amount_deduction_cash, 4)
+        self.assertEqual(response.context['amount_machine_after'], 25)
+        self.assertEqual(response.context['amount_cash_after'], 0)
+        self.assertEqual(invoice.amount_due, 96)
 
     def test_no_staff(self):
         """
