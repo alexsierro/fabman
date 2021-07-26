@@ -7,3 +7,5 @@ members/membres.csv
 invoicing/usage.csv
 /.env.prod.db
 /.env.prod
+static/
+backup/
