@@ -11,17 +11,29 @@ from legacy.models import CheckKey
 from members.models import Member, Project
 
 
+def allow_all_origins(func):
+    def inner(*args, **kwargs):
+        response = func(*args, **kwargs)
+        response['access-control-allow-origin'] = '*'
+        return response
+
+    return inner
+
+
+@allow_all_origins
 def user(request, uid):
     member = get_object_or_404(Member, rfid=uid)
     return HttpResponse(member.visa)
 
 
+@allow_all_origins
 def user2(request, uid):
     member = get_object_or_404(Member, rfid=uid)
     response = {'visa': member.visa, 'animateur': member.is_staff}
     return JsonResponse(response)
 
 
+@allow_all_origins
 def usage(request, resource, visa, time, project=None):
     resource = get_object_or_404(Resource, slug=resource)
     member = get_object_or_404(Member, visa=visa)
@@ -36,6 +48,7 @@ def usage(request, resource, visa, time, project=None):
     return HttpResponse("ok")
 
 
+@allow_all_origins
 def items(request):
     categories = ResourceCategory.objects.all()
 
@@ -68,6 +81,7 @@ def items(request):
     return JsonResponse(ret, safe=False)
 
 
+@allow_all_origins
 def check(request, api_key, name, surname):
     if CheckKey.objects.filter(key=api_key).first() is None:
         return HttpResponse(status=403)
@@ -86,6 +100,7 @@ def check(request, api_key, name, surname):
     return HttpResponse(response)
 
 
+@allow_all_origins
 def projects(request, visa):
     user = get_object_or_404(Member, visa=visa)
     projects = [project.name for project in Project.objects.filter(member=user)]
