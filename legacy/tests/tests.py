@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from invoicing.models import Resource
 from legacy.models import CheckKey
 from members.models import Member, Project
 
@@ -17,6 +18,8 @@ class LegacyTests(TestCase):
 
         Project.objects.create(name='p1', member=member)
         Project.objects.create(name='p2', member=member)
+
+        Resource.objects.create(name='resource', slug='resource', price_member=3, price_not_member=4)
 
 
 
@@ -74,3 +77,8 @@ class LegacyTests(TestCase):
         url = reverse('legacy:projects', args=('visa',))
         response = self.client.get(url)
         self.assertJSONEqual(response.content, ['p1', 'p2'])
+
+    def test_decimal_usage(self):
+        url = reverse('legacy:usage', args=('resource', 'visa', '0.1'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)

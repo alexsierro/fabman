@@ -41,7 +41,7 @@ def usage(request, resource, visa, time, project=None):
     if project:
         project = Project.objects.get(member=member, name=project)
 
-    qty = int(time) / Decimal(resource.logger_multiplier)
+    qty = Decimal(time) / Decimal(resource.logger_multiplier)
 
     usage = Usage.objects.create(resource=resource, member=member, project=project, qty=qty, total_price=0)
 
