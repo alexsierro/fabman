@@ -25,10 +25,11 @@ if __name__ == '__main__':
 
             if name != 'Nom':
                 member, created = Member.objects.get_or_create(
-                    name=name,
-                    surname=surname
+                    visa=visa
                 )
 
+                member.name = name
+                member.surname = surname
                 member.address = address
                 member.locality = locality
 
