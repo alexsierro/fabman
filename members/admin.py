@@ -4,6 +4,7 @@ from django.utils.html import format_html
 
 from .models import Member, Project
 from invoicing.models import Invoice
+from django.http import HttpResponse
 
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -16,6 +17,18 @@ admin.site.register(Project, ProjectAdmin)
 
 
 class MemberAdmin(admin.ModelAdmin):
+
+    actions = ['export_as_mail_list']
+
+    def export_as_mail_list(self, request, queryset):
+        response = HttpResponse()
+
+        mails = [member.mail for member in queryset if member.mail]
+        response.write(';'.join(mails))
+        return response
+
+    export_as_mail_list.short_description = "Export Email List"
+
 
     def members_actions(self, obj):
         open_invoices = Invoice.objects.filter(member=obj).exclude(status__in=('paid', 'cancelled')).count()
