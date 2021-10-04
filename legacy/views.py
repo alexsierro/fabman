@@ -93,10 +93,8 @@ def check(request, api_key, email):
 
     response = 'not a member'
 
-    members = Member.objects.all()
-    for member in members:
-        if member.mail and clean(member.mail) == clean(email):
-            response = "ok"
+    if Member.objects.filter(mail=email).exists():
+        response = "ok"
 
     return HttpResponse(response)
 
