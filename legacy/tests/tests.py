@@ -11,7 +11,7 @@ from django.utils.encoding import force_text
 class LegacyTests(TestCase):
 
     def setUp(self):
-        member = Member.objects.create(name='Name', surname='Surname', visa='visa', rfid='1234')
+        member = Member.objects.create(name='Name', surname='Surname', visa='visa', rfid='1234', mail='member@fablab')
         Member.objects.create(visa='visaStaff', rfid='5678', is_staff=True)
 
         CheckKey.objects.create(key='keykey')
@@ -49,27 +49,27 @@ class LegacyTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_check_member(self):
-        url = reverse('legacy:check', args=('keykey', 'Name', 'Surname'))
+        url = reverse('legacy:check', args=('keykey', 'member@fablab'))
         response = self.client.get(url)
         self.assertEqual(force_text(response.content), 'ok')
 
     def test_check_member_special_chars(self):
-        url = reverse('legacy:check', args=('keykey', 'Name', 'Surname  +++ ---  ... $$$'))
+        url = reverse('legacy:check', args=('keykey', 'member @fablab'))
         response = self.client.get(url)
         self.assertEqual(force_text(response.content), 'ok')
 
     def test_check_member_no_ascii(self):
-        url = reverse('legacy:check', args=('keykey', 'Nâme', 'Sürnâme'))
+        url = reverse('legacy:check', args=('keykey', 'mémber@fàblab'))
         response = self.client.get(url)
         self.assertEqual(force_text(response.content), 'ok')
 
     def test_check_not_a_member(self):
-        url = reverse('legacy:check', args=('keykey', 'Name', 'Name'))
+        url = reverse('legacy:check', args=('keykey', 'no-member@fablab'))
         response = self.client.get(url)
         self.assertEqual(force_text(response.content), 'not a member')
 
     def test_check_invalid_key(self):
-        url = reverse('legacy:check', args=('oops', 'Name', 'Name'))
+        url = reverse('legacy:check', args=('oops', 'member@fablab'))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
 

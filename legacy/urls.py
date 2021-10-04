@@ -10,5 +10,5 @@ urlpatterns = [
     path('usage/<resource>/<visa>/<time>/<project>', usage, name='usage'),
     path('items', items, name='items'),
     path('projects/<visa>', projects, name='projects'),
-    path('check/<api_key>/<name>/<surname>', check, name='check')
+    path('check/<api_key>/<email>', check, name='check')
 ]

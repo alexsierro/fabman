@@ -2,6 +2,7 @@ import re
 from decimal import Decimal
 
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from unidecode import unidecode
@@ -82,9 +83,9 @@ def items(request):
 
 
 @allow_all_origins
-def check(request, api_key, name, surname):
+def check(request, api_key, email):
     if CheckKey.objects.filter(key=api_key).first() is None:
-        return HttpResponse(status=403)
+        raise PermissionDenied()
 
     def clean(text):
         return unidecode(re.sub('\W+', '', text).lower())
@@ -94,7 +95,7 @@ def check(request, api_key, name, surname):
 
     members = Member.objects.all()
     for member in members:
-        if clean(name) == clean(member.name) and clean(surname) == clean(member.surname):
+        if member.mail and clean(member.mail) == clean(email):
             response = "ok"
 
     return HttpResponse(response)
