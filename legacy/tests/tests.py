@@ -56,12 +56,12 @@ class LegacyTests(TestCase):
     def test_check_member_special_chars(self):
         url = reverse('legacy:check', args=('keykey', 'member @fablab'))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'ok')
+        self.assertEqual(force_text(response.content), 'not a member')
 
     def test_check_member_no_ascii(self):
         url = reverse('legacy:check', args=('keykey', 'mémber@fàblab'))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'ok')
+        self.assertEqual(force_text(response.content), 'not a member')
 
     def test_check_not_a_member(self):
         url = reverse('legacy:check', args=('keykey', 'no-member@fablab'))
