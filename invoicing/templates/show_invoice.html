@@ -166,19 +166,6 @@ grid-column: 1/4;
             {% endif %}
             {% endfor %}
 
-            <tr>
-                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Utilisation machine</td>
-                <td> CHF </td>
-                <td class="chiffre" style="font-weight: bold;">{{ amount_machine_usages|format_currency }}</td>
-            </tr>
-
-
-            <tr>
-                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Autre</td>
-                <td> CHF </td>
-                <td class="chiffre" style="font-weight: bold;">{{ amount_other_usages|format_currency }}</td>
-            </tr>
-
             {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
             <tr>
                 <td colspan="5" style="text-align: right; padding-right : 5mm; font-weight: bold; border-top solide 2px">Sous-total</td>
