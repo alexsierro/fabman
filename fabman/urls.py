@@ -26,10 +26,12 @@ urlpatterns = [
     path('members/', include('members.urls')),
     path('invoicing/', include('invoicing.urls')),
     path('admin/', admin.site.urls),
-    path('', views.index),
     path('', include('legacy.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \
   + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if not settings.DEBUG:
+    urlpatterns += path('', views.index)
 
 
 from django.contrib import admin
