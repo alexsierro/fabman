@@ -31,7 +31,7 @@ urlpatterns = [
   + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if not settings.DEBUG:
-    urlpatterns += path('', views.index)
+    urlpatterns.append(path('', views.index))
 
 
 from django.contrib import admin
