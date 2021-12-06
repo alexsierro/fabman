@@ -24,7 +24,7 @@ class MemberAdmin(admin.ModelAdmin):
 
         mails = [member.mail for member in queryset if member.mail and member.is_member]
         response.write(';'.join(mails))
-        return
+        return response
 
     export_as_mail_list.short_description = "Export Email as List"
 
