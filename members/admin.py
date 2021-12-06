@@ -18,16 +18,25 @@ admin.site.register(Project, ProjectAdmin)
 
 class MemberAdmin(admin.ModelAdmin):
 
-    actions = ['export_as_mail_list']
+    actions = ['export_as_mail_list', 'export_as_mail_csv']
 
     def export_as_mail_list(self, request, queryset):
         response = HttpResponse()
 
-        mails = [member.mail for member in queryset if member.mail]
+        mails = [member.mail for member in queryset if member.mail and member.is_member]
         response.write(';'.join(mails))
+        return
+
+    export_as_mail_list.short_description = "Export Email as List"
+
+    def export_as_mail_csv(self, request, queryset):
+        response = HttpResponse()
+
+        mails = [member.mail for member in queryset if member.mail and member.is_member]
+        response.write('\n'.join(mails))
         return response
 
-    export_as_mail_list.short_description = "Export Email List"
+    export_as_mail_csv.short_description = "Export Email as CSV"
 
 
     def members_actions(self, obj):
