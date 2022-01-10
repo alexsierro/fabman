@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense
+    Expense, Payment
 
 
 @admin.action(description="Payé")
@@ -65,7 +65,15 @@ class InvoiceAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
+
 admin.site.register(Invoice, InvoiceAdmin)
+
+
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['invoice_number', 'invoice_amount', 'amount_due']
+
+
+admin.site.register(Payment, PaymentAdmin)
 admin.site.register(ResourceCategory)
 admin.site.register(ResourceWidget)
 admin.site.register(ResourceUnit)
@@ -108,7 +116,7 @@ class UsageAdmin(admin.ModelAdmin):
                     'valid', 'invoice']
     list_display_links = ['member', 'invoice']
     list_filter = ['valid', IsInvoicedFilter, 'resource']
-    search_fields = ['member__name', 'member__surname']
+    search_fields = ['member__name', 'member__surname', 'invoice__invoice_number']
     readonly_fields = ['total_price']
 
     def has_change_permission(self, request, obj=None):
