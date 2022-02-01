@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dbbackup',  # django-dbbackup
+    'django.contrib.humanize'
 ]
 
 MIDDLEWARE = [

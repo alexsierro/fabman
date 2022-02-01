@@ -117,6 +117,13 @@ class Usage(models.Model):
         return f'{self.member} / {self.qty} {self.resource.unit} {self.resource}'
 
 
+class UsageSummary(Usage):
+    class Meta:
+        proxy = True
+        verbose_name = "Usage Summary"
+        verbose_name_plural = "Usages Summary"
+
+
 @receiver(pre_save, sender=Usage)
 def usage_pre_save(sender, instance, **kwargs):
     usage = instance

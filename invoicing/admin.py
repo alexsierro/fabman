@@ -1,9 +1,11 @@
 from django.contrib import admin
+from django.db.models import Count, Sum, DateTimeField, Min, Max, Q
+from django.db.models.functions import Trunc
 from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense
+    Expense, UsageSummary
 
 
 @admin.action(description="Payé")
@@ -136,3 +138,90 @@ class ExpenseAdmin(admin.ModelAdmin):
 
 admin.site.register(AccountEntry, AccountEntryAdmin)
 admin.site.register(Expense, ExpenseAdmin)
+
+
+def get_next_in_date_hierarchy(request, date_hierarchy):
+    if date_hierarchy + '__day' in request.GET:
+        return 'hour'
+
+    if date_hierarchy + '__month' in request.GET:
+        return 'day'
+
+    if date_hierarchy + '__year' in request.GET:
+        return 'week'
+
+    return 'month'
+
+
+class UsageSummaryAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/usage_summary_change_list.html'
+    actions = None
+    date_hierarchy = 'date'
+    # Prevent additional queries for pagination.
+    show_full_result_count = False
+
+    list_filter = (
+        'resource__name',
+    )
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(
+            request,
+            extra_context=extra_context
+        )
+
+
+
+
+        try:
+            qs = response.context_data['cl'].queryset
+        except (AttributeError, KeyError):
+            return response
+
+        metrics = {
+            'total': Count('resource'),
+            'total_used': Sum('total_price'),
+            'total_invoiced': Sum('total_price', filter=Q(invoice__isnull=False)),
+            'total_paid': Sum('total_price', filter=Q(invoice__status='paid'))
+        }
+
+        response.context_data['summary'] = list(
+            qs
+            .values('resource__name')
+            .annotate(**metrics)
+            .order_by('-total_used')
+        )
+
+        response.context_data['summary_total'] = dict(
+            qs.aggregate(**metrics)
+        )
+
+
+        # Chart
+
+        period = get_next_in_date_hierarchy(request, self.date_hierarchy)
+        response.context_data['period'] = period
+        summary_over_time = qs.annotate(
+            period=Trunc('date', period, output_field=DateTimeField()),
+        ).values('period').\
+            annotate(total=Sum('total_price')).\
+            order_by('period')
+
+        summary_range = summary_over_time.aggregate(
+            low=Min('total'),
+            high=Max('total'),
+        )
+        high = summary_range.get('high', 0)
+        low = summary_range.get('low', 0)
+
+        response.context_data['summary_over_time'] = [{
+            'period': x['period'],
+            'total': x['total'] or 0,
+            'pct': \
+               ((x['total'] or 0) - low) / (high - low) * 100
+               if high > low else 0,
+        } for x in summary_over_time]
+
+        return response
+
+admin.site.register(UsageSummary, UsageSummaryAdmin)

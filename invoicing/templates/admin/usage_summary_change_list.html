@@ -1,0 +1,124 @@
+{% extends "admin/change_list.html" %}
+
+{% load i18n %}
+{% load humanize %}
+{% load mathtags %}
+{% load tz %}
+
+{% block content_title %}
+    <h1> {% trans 'Usages Summary' %} </h1>
+{% endblock %}
+
+
+{% block result_list %}
+
+<div class="results">
+    <table>
+        <thead>
+            <tr>
+                <th> <div class="text"> <a href="#">Category </a> </div> </th>
+                <th> <div class="text"> <a href="#">Total Qty </a> </div> </th>
+                <th> <div class="text"> <a href="#">CHF used </a> </div> </th>
+                <th> <div class="text"> <a href="#">CHF invoiced </a> </div> </th>
+                <th> <div class="text"> <a href="#">CHF paid </a> </div> </th>
+                <th> <div class="text"> <a href="#"><strong>% Of Total Sales</strong></a> </div> </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in summary %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+                <td> {{ row.resource__name }} </td>
+                <td> {{ row.total }} </td>
+                <td> {{ row.total_used| default:0 }} </td>
+                <td> {{ row.total_invoiced | default:0 }} </td>
+                <td> {{ row.total_paid| default:0 }} </td>
+                <td><strong> {{ row.total_sales | default:0 }} </strong> </td>
+            </tr>
+            {% endfor %}
+            <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
+                <td> Total </td>
+                <td> {{ summary_total.total | intcomma }} </td>
+                <td> {{ summary_total.total_sales | default:0 }} </td>
+                <td> {{ summary_total.total_sales | default:0 }} </td>
+                <td> {{ summary_total.total_sales | default:0 }} </td>
+                <td> 100% </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h2> {% blocktrans %} Sales time (by {{ period}}) {% endblocktrans %} </h2>
+
+<style>
+.bar-chart {
+  height: 160px;
+  padding-top: 60px;
+  display: flex;
+  justify-content: space-around;
+  overflow: hidden;
+
+}
+.bar-chart .bar {
+    background-color: #79aec8;
+    flex: 100%;
+    align-self: flex-end;
+    margin-right: 2px;
+    position: relative;
+}
+.bar-chart .bar:last-child {
+    margin: 0;
+}
+.bar-chart .bar:hover {
+    background-color: #417690;
+}
+
+.bar-chart .bar .bar-tooltip {
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    position: relative;
+    z-index: 999;
+}
+.bar-chart .bar .bar-tooltip {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-weight: bold;
+    opacity: 0;
+}
+.bar-chart .bar:first-child .bar-tooltip {
+    transform: initial;
+    text-align: initial;
+    left: 0;
+}
+.bar-chart .bar:last-child .bar-tooltip {
+    transform: initial;
+    text-align: right;
+    right: 0;
+    left: initial;
+}
+.bar-chart .bar:hover .bar-tooltip {
+    opacity: 1;
+}
+</style>
+
+{% timezone 'UTC' %}
+<div class="results">
+    <div class="bar-chart">
+    {% for x in summary_over_time %}
+        <div class="bar" style="height:{{x.pct}}%">
+            <div class="bar-tooltip">
+                {{x.total }}<br>
+                {{x.period | date:"d/m/Y H:i"}}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+{% endtimezone %}
+{% endblock %}
+
+{% block pagination %}{% endblock %}
