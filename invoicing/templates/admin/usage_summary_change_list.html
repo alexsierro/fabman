@@ -37,9 +37,9 @@
             <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
                 <td> Total </td>
                 <td class="la"> {{ summary_total.total | intcomma }} </td>
-                <td class="la"> {{ summary_total.total_sales | default:0 | format_currency }} </td>
-                <td class="la"> {{ summary_total.total_sales | default:0 | format_currency }} </td>
-                <td class="la"> {{ summary_total.total_sales | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_used | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_invoiced | default:0 | format_currency }} </td>
+                <td class="la"> {{ summary_total.total_paid | default:0 | format_currency}} </td>
             </tr>
         </tbody>
     </table>
