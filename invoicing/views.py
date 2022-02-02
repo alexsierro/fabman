@@ -17,7 +17,7 @@ def prepare(request, create=False):
     invoice_number = invoice_number_max + 1
 
     member = Member.objects.get(pk=member_id)
-    usages = Usage.objects.filter(member=member, valid=True, invoice=None)
+    usages = Usage.objects.filter(member=member, invoice=None)
 
     total_amount = usages.aggregate(total=Sum('total_price'))['total'] or 0
 
