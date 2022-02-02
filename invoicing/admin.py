@@ -107,9 +107,9 @@ class IsInvoicedFilter(admin.SimpleListFilter):
 
 class UsageAdmin(admin.ModelAdmin):
     list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'unit_price', 'total_price',
-                    'valid', 'invoice']
+                    'invoice']
     list_display_links = ['member', 'invoice']
-    list_filter = ['valid', IsInvoicedFilter, 'resource']
+    list_filter = [IsInvoicedFilter, 'resource']
     search_fields = ['member__name', 'member__surname']
     readonly_fields = ['total_price']
 
@@ -160,18 +160,11 @@ class UsageSummaryAdmin(admin.ModelAdmin):
     # Prevent additional queries for pagination.
     show_full_result_count = False
 
-    list_filter = (
-        'resource__name',
-    )
-
     def changelist_view(self, request, extra_context=None):
         response = super().changelist_view(
             request,
             extra_context=extra_context
         )
-
-
-
 
         try:
             qs = response.context_data['cl'].queryset

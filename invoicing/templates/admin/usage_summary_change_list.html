@@ -4,6 +4,7 @@
 {% load humanize %}
 {% load mathtags %}
 {% load tz %}
+{% load app_filters %}
 
 {% block content_title %}
     <h1> {% trans 'Usages Summary' %} </h1>
@@ -17,39 +18,42 @@
         <thead>
             <tr>
                 <th> <div class="text"> <a href="#">Category </a> </div> </th>
-                <th> <div class="text"> <a href="#">Total Qty </a> </div> </th>
-                <th> <div class="text"> <a href="#">CHF used </a> </div> </th>
-                <th> <div class="text"> <a href="#">CHF invoiced </a> </div> </th>
-                <th> <div class="text"> <a href="#">CHF paid </a> </div> </th>
-                <th> <div class="text"> <a href="#"><strong>% Of Total Sales</strong></a> </div> </th>
+                <th> <div class="text, la"> <a href="#">Total Qty </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">CHF used </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">CHF invoiced </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">CHF paid </a> </div> </th>
             </tr>
         </thead>
         <tbody>
             {% for row in summary %}
             <tr class="{% cycle 'row1' 'row2' %}">
-                <td> {{ row.resource__name }} </td>
-                <td> {{ row.total }} </td>
-                <td> {{ row.total_used| default:0 }} </td>
-                <td> {{ row.total_invoiced | default:0 }} </td>
-                <td> {{ row.total_paid| default:0 }} </td>
-                <td><strong> {{ row.total_sales | default:0 }} </strong> </td>
+                <td width="20%"> {{ row.resource__name }} </td>
+                <td class="la"> {{ row.total }} </td>
+                <td class="la"> {{ row.total_used| default:0 | format_currency }} </td>
+                <td class="la"> {{ row.total_invoiced | default:0 | format_currency }} </td>
+                <td class="la"> {{ row.total_paid| default:0 | format_currency }} </td>
             </tr>
             {% endfor %}
             <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
                 <td> Total </td>
-                <td> {{ summary_total.total | intcomma }} </td>
-                <td> {{ summary_total.total_sales | default:0 }} </td>
-                <td> {{ summary_total.total_sales | default:0 }} </td>
-                <td> {{ summary_total.total_sales | default:0 }} </td>
-                <td> 100% </td>
+                <td class="la"> {{ summary_total.total | intcomma }} </td>
+                <td class="la"> {{ summary_total.total_sales | default:0 | format_currency }} </td>
+                <td class="la"> {{ summary_total.total_sales | default:0 | format_currency }} </td>
+                <td class="la"> {{ summary_total.total_sales | default:0 | format_currency}} </td>
             </tr>
         </tbody>
     </table>
 </div>
 
-<h2> {% blocktrans %} Sales time (by {{ period}}) {% endblocktrans %} </h2>
+
 
 <style>
+
+.la {
+    text-align: right;
+
+}
+
 .bar-chart {
   height: 160px;
   padding-top: 60px;
@@ -104,6 +108,8 @@
     opacity: 1;
 }
 </style>
+
+<h2> {% blocktrans %} CHF Used (by {{ period}}) {% endblocktrans %} </h2>
 
 {% timezone 'UTC' %}
 <div class="results">

@@ -96,7 +96,6 @@ class Usage(models.Model):
     unit_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     total_price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, default=None, null=True, blank=True)
-    valid = models.BooleanField(default=True)
     edited_by = models.ForeignKey('members.Member', related_name='editor', on_delete=models.PROTECT, default=None,
                                   null=True, blank=True)
     comment = models.CharField(max_length=200, blank=True)
