@@ -56,7 +56,7 @@ class MemberAdmin(admin.ModelAdmin):
 
     list_display = ['members_actions', 'name', 'surname', 'rfid', 'is_member', 'is_staff', 'is_committee']
     list_display_links = ['name', 'surname']
-    search_fields = ['name', 'surname', 'rfid']
+    search_fields = ['name', 'surname', 'rfid', 'visa']
     ordering = ['name', 'surname']
 
 
