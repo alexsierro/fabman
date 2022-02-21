@@ -29,6 +29,7 @@ def cancelled(modeladmin, request, queryset):
 
 
 class InvoiceAdmin(admin.ModelAdmin):
+    change_list_template = "admin/invoice_change_list.html"
 
     def invoice_actions(self, obj):
         if obj.member is not None:

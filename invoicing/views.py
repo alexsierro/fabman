@@ -76,7 +76,8 @@ def prepare(request, create=False):
             'deduction_machine': deduction_machine,
             'cash_before': cash_before,
             'cash_after': cash_after,
-            'deduction_cash': deduction_cash
+            'deduction_cash': deduction_cash,
+            'site_title': 'Invoice preview'
             }
 
 
@@ -89,12 +90,12 @@ def preview(request):
         .order_by('name', 'surname')
 
     if not request.POST:
-        return render(request, 'invoice.html', {'choice_member': choice_member})
+        return render(request, 'preview_invoice.html', {'choice_member': choice_member})
 
     else:
         result = prepare(request)
         result['choice_member'] = choice_member
-        return render(request, 'invoice.html', result)
+        return render(request, 'preview_invoice.html', result)
 
 
 def create(request):

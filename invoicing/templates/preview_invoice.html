@@ -1,0 +1,129 @@
+{% extends "admin/base.html" %}
+{% load app_filters %}
+{% block content %}
+
+    <style>
+    table
+    {
+    border-collapse: collapse;
+
+    }
+
+    </style>
+
+    <form action="{% url 'preview_invoice' %}" method="post">
+        {% csrf_token %}
+        <select name="member_id">
+            {% for member in choice_member %}
+        <option value="{{ member.pk }}"{% if invoice and invoice.member == member %} selected="selected"{% endif %}>{{ member.name}} {{ member.surname }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Preview">
+    </form>
+
+    {% if invoice %}
+        <h1>Apercu : Facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
+
+        <div style="border-style: solide; display: grid; grid-template-columns: 70mm 50mm 99mm">
+
+            <div style="grid-column: 3; grid-row: 2">
+                <p> {{ member_info.name }} {{ member_info.surname }}<br>
+                    {{ member_info.address|default_if_none:" " }}<br>
+                    {{ member_info.npa|default_if_none:" " }} {{ member_info.locality|default_if_none:" " }}<br>
+                </p>
+            </div>
+
+            <div  style="grid-column-start: 1;grid-column-end: 4;grid-row: 3">
+
+                <h1>Facture n° {{ invoice.invoice_number }}</h1>
+
+                <table style="width:100%">
+                    <tr>
+                        <th style="width:25%">Items</th>
+                        <th style="width:25%">Quantité</th>
+                        <th style="width:25%">Prix</th>
+                        <th style="width:25%">Total</th>
+                    </tr>
+
+                    {% regroup usages_anotated by project__name as usages_list %}
+
+                    {% for project__name, project_usages in usages_list %}
+                        <tr>
+                            <td colspan="4"> <h2>Project : {{ project__name|default_if_none:"Sans projet" }} </h2></td>
+                        </tr>
+                        {% for usage in project_usages %}
+                            <tr class="detail">
+                                <td>{{ usage.resource__name }}</td>
+                                <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
+                                <td>{{ usage.unit_price|format_currency }}</td>
+                                <td>{{ usage.total_price|format_currency }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>Sous total</td>
+                            <td>{{ project_usages|running_total|floatformat:"-2" }}</td>
+                        </tr>
+                    {% endfor %}
+                        <td></td>
+                        <td></td>
+                        <td>Total intermédiaire</td>
+                        <td>{{ invoice.amount|floatformat:"-2" }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4"> <h3>Déduction heures d'animation</h3></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>Déduction</td>
+                        <td>{{ deduction_machine|floatformat:"-2" }}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>Avoir machine restant</td>
+                        <td>{{ amount_machine_after|floatformat:"-2" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="4"> <h3>Déduction avoir cash</h3></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>Déduction</td>
+                        <td>{{ deduction_cash|floatformat:"-2" }}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>Avoir cash restant</td>
+                        <td>{{ cash_after|floatformat:"-2" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td><b>Solde à payer </b></td>
+                        <td><b>{{ invoice.amount_due|floatformat:"-2" }}</b></td>
+                    </tr>
+
+                </table>
+            </div>
+        </div>
+        <form action="{% url 'create_invoice' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="member_id" value="{{ invoice.member_id }}">
+            <input type="submit" value="Créer facture">
+        </form>
+    {% endif %}
+{% endblock %}
