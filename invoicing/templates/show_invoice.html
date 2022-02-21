@@ -118,7 +118,7 @@ grid-column: 1/4;
     </div>
 
     <div class="commentaire">
-        <h2>Facture N° {{ invoice.invoice_number }}</h2>
+        <h2>{% if invoice.status == "rappel1" %} Rappel : {% endif %} {% if invoice.status == "rappel2" %} 2e rappel : {% endif %} Facture N° {{ invoice.invoice_number }}</h2>
         {% if invoice.comments %}
         <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
         {%  endif %}
