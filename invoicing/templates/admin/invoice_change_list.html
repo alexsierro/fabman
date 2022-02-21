@@ -1,0 +1,9 @@
+{% extends 'admin/change_list.html' %}
+
+{% block object-tools %}
+    <div>
+<a class="button" href="/invoicing/preview" target="_blank">Create new invoice</a>
+    </div>
+    <br />
+    {{ block.super }}
+{% endblock %}
