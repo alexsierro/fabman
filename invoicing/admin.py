@@ -1,6 +1,9 @@
+import csv
+import datetime
+
 from django.contrib import admin
-from django.db.models import Count, Sum, DateTimeField, Min, Max, Q
-from django.db.models.functions import Trunc
+from django.db.models import Count, Sum, Q
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -45,7 +48,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
     list_display_links = ['invoice_number', ]
-    readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash',]
+    readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', ]
     search_fields = ['member__name', 'member__surname']
     actions = [paide, rappel1, rappel2, cancelled]
     list_filter = ['status']
@@ -67,6 +70,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
 
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(ResourceCategory)
@@ -107,6 +111,30 @@ class IsInvoicedFilter(admin.SimpleListFilter):
 
 
 class UsageAdmin(admin.ModelAdmin):
+
+    def export_as_csv(self, request, queryset):
+
+        response = HttpResponse(content_type='text/csv')
+
+        response['Content-Disposition'] = 'attachment; filename={}.csv'.format('usages')
+        writer = csv.writer(response)
+
+        writer.writerow(['id', 'member', 'resource', 'qty', 'unit_price', 'total_price', 'date used', 'date invoiced', 'date_paid'])
+        for usage in queryset:
+            date_invoice = ''
+            date_paid = ''
+
+            if usage.invoice:
+                date_invoice = usage.invoice.date_invoice
+                date_paid = usage.invoice.date_paid
+
+            row = writer.writerow(
+                [usage.id, usage.member, usage.resource.name, usage.qty, usage.unit_price, usage.total_price,
+                 usage.date, date_invoice, date_paid])
+
+        return response
+
+    actions = ['export_as_csv']
     list_display = ['date', 'member', 'project', 'resource', 'qty', 'get_resource_unit', 'unit_price', 'total_price',
                     'invoice']
     list_display_links = ['member', 'invoice']
@@ -141,27 +169,48 @@ admin.site.register(AccountEntry, AccountEntryAdmin)
 admin.site.register(Expense, ExpenseAdmin)
 
 
-def get_next_in_date_hierarchy(request, date_hierarchy):
-    if date_hierarchy + '__day' in request.GET:
-        return 'hour'
+class DateYearFilter(admin.SimpleListFilter):
+    title = 'year'
+    parameter_name = 'date'
 
-    if date_hierarchy + '__month' in request.GET:
-        return 'day'
+    def lookups(self, request, model_admin):
+        # Choices to propose are all the years from the start
+        firstyear = Usage.objects.order_by('date').first().date.year  # First year of the history
+        currentyear = datetime.datetime.now().year  # Current year
+        years = []  # Declaration of the list that'll contain the missing years
+        for x in range(currentyear - firstyear):  # Fill the list with the missing years
+            yearinloop = firstyear + x
+            years.insert(0, (str(yearinloop), str(yearinloop)))
+        years.insert(0, (str(currentyear), str(currentyear)))
+        return years
 
-    if date_hierarchy + '__year' in request.GET:
-        return 'week'
+    def queryset(self, request, queryset):
+        print('filter')
 
-    return 'month'
+        if self.value():  # If a year is set, we filter by year else not
+            year = self.value()
+
+            qs = queryset.filter(
+                Q(date__year=year) |
+                Q(invoice__date_invoice__year=year) |
+                Q(invoice__date_paid__year=year)
+            )
+            setattr(qs, 'year', year)
+            return qs
+
+        else:
+            return queryset
 
 
 class UsageSummaryAdmin(admin.ModelAdmin):
     change_list_template = 'admin/usage_summary_change_list.html'
     actions = None
-    date_hierarchy = 'date'
     # Prevent additional queries for pagination.
     show_full_result_count = False
+    list_filter = [DateYearFilter]
 
     def changelist_view(self, request, extra_context=None):
+        print('changelist_view')
         response = super().changelist_view(
             request,
             extra_context=extra_context
@@ -172,50 +221,41 @@ class UsageSummaryAdmin(admin.ModelAdmin):
         except (AttributeError, KeyError):
             return response
 
-        metrics = {
-            'total': Count('resource'),
-            'total_used': Sum('total_price'),
-            'total_invoiced': Sum('total_price', filter=Q(invoice__isnull=False)),
-            'total_paid': Sum('total_price', filter=Q(invoice__status='paid'))
-        }
+        year = request.GET.get('date')
+        print(year)
+
+        if year:
+            metrics = {
+                'total': Count('resource'),
+                'total_used': Sum('total_price', filter=Q(date__year=year)),
+                'total_invoiced': Sum('total_price', filter=(
+                        Q(invoice__date_invoice__year=year))),
+                'total_paid': Sum('total_price', filter=(
+                        Q(invoice__date_paid__year=year)))
+            }
+
+        else:
+            metrics = {
+                'total': Count('resource'),
+                'total_used': Sum('total_price'),
+                'total_invoiced': Sum('total_price', filter=(
+                            Q(invoice__isnull=False))),
+                'total_paid': Sum('total_price', filter=(
+                            Q(invoice__date_paid__isnull=False) ))
+            }
 
         response.context_data['summary'] = list(
             qs
-            .values('resource__name')
-            .annotate(**metrics)
-            .order_by('-total_used')
+                .values('resource__name')
+                .annotate(**metrics)
+                .order_by('-total_used')
         )
 
         response.context_data['summary_total'] = dict(
             qs.aggregate(**metrics)
         )
 
-
-        # Chart
-
-        period = get_next_in_date_hierarchy(request, self.date_hierarchy)
-        response.context_data['period'] = period
-        summary_over_time = qs.annotate(
-            period=Trunc('date', period, output_field=DateTimeField()),
-        ).values('period').\
-            annotate(total=Sum('total_price')).\
-            order_by('period')
-
-        summary_range = summary_over_time.aggregate(
-            low=Min('total'),
-            high=Max('total'),
-        )
-        high = summary_range.get('high', 0)
-        low = summary_range.get('low', 0)
-
-        response.context_data['summary_over_time'] = [{
-            'period': x['period'],
-            'total': x['total'] or 0,
-            'pct': \
-               ((x['total'] or 0) - low) / (high - low) * 100
-               if high > low else 0,
-        } for x in summary_over_time]
-
         return response
+
 
 admin.site.register(UsageSummary, UsageSummaryAdmin)
