@@ -149,7 +149,13 @@ grid-column: 1/4;
             {% endif %}
             {% for usage in project_usages %}
             <tr class="detail">
-                <td>{{ usage.resource__name }}</td>
+                <td>
+                    {% if usage.comment%}
+                         {{ usage.comment }}
+                    {% else %}
+                         {{ usage.resource__name }}
+                    {% endif %}
+                </td>
                 <td > {{ usage.resource__unit__name}}</td>
                 <td class="chiffre" style="padding-right:15mm">{{ usage.qty|floatformat:"-2" }}</td>
                 <td>CHF</td>

@@ -23,6 +23,7 @@ def prepare(request, create=False):
 
     usages_annotated = usages.values('resource__name',
                                      'resource__unit__name',
+                                     'comment',
                                      'unit_price',
                                      'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')
                                                                ).order_by('project__name')
@@ -123,6 +124,7 @@ def show(request, invoice_number):
 
     usages = Usage.objects.filter(invoice=invoice)
     usages_annotated = usages.values('resource__name',
+                                     'comment',
                                      'resource__unit__name',
                                      'unit_price',
                                      'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')

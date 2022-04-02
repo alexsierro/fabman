@@ -53,7 +53,13 @@
                         </tr>
                         {% for usage in project_usages %}
                             <tr class="detail">
-                                <td>{{ usage.resource__name }}</td>
+                                <td>
+                                    {% if usage.comment%}
+                                         {{ usage.comment }}
+                                    {% else %}
+                                         {{ usage.resource__name }}
+                                    {% endif %}
+                                </td>
                                 <td>{{ usage.qty|floatformat:"-2" }} {{ usage.resource__unit__name}}</td>
                                 <td>{{ usage.unit_price|format_currency }}</td>
                                 <td>{{ usage.total_price|format_currency }}</td>
