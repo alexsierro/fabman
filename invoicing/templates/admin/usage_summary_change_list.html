@@ -18,7 +18,8 @@
         <thead>
             <tr>
                 <th> <div class="text"> <a href="#">Category </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">Total Qty </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">Qty used</a> </div> </th>
+                <th> <div class="text, la"> <a href="#">Unit</a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF used </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF invoiced </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF paid </a> </div> </th>
@@ -28,7 +29,8 @@
             {% for row in summary %}
             <tr class="{% cycle 'row1' 'row2' %}">
                 <td width="20%"> {{ row.resource__name }} </td>
-                <td class="la"> {{ row.total }} </td>
+                <td class="la"> {{ row.qty_used| default:0 | format_quantity }}</td>
+                <td class="la"> {{ row.resource__unit__name }}</td>
                 <td class="la"> {{ row.total_used| default:0 | format_currency }} </td>
                 <td class="la"> {{ row.total_invoiced | default:0 | format_currency }} </td>
                 <td class="la"> {{ row.total_paid| default:0 | format_currency }} </td>
@@ -36,7 +38,8 @@
             {% endfor %}
             <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
                 <td> Total </td>
-                <td class="la"> {{ summary_total.total | intcomma }} </td>
+                <td class="la"></td>
+                <td class="la"></td>
                 <td class="la"> {{ summary_total.total_used | default:0 | format_currency}} </td>
                 <td class="la"> {{ summary_total.total_invoiced | default:0 | format_currency }} </td>
                 <td class="la"> {{ summary_total.total_paid | default:0 | format_currency}} </td>
@@ -108,23 +111,6 @@
     opacity: 1;
 }
 </style>
-
-<h2> {% blocktrans %} CHF Used (by {{ period}}) {% endblocktrans %} </h2>
-
-{% timezone 'UTC' %}
-<div class="results">
-    <div class="bar-chart">
-    {% for x in summary_over_time %}
-        <div class="bar" style="height:{{x.pct}}%">
-            <div class="bar-tooltip">
-                {{x.total }}<br>
-                {{x.period | date:"d/m/Y H:i"}}
-            </div>
-        </div>
-    {% endfor %}
-    </div>
-</div>
-{% endtimezone %}
 {% endblock %}
 
 {% block pagination %}{% endblock %}

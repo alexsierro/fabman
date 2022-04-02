@@ -226,7 +226,7 @@ class UsageSummaryAdmin(admin.ModelAdmin):
 
         if year:
             metrics = {
-                'total': Count('resource'),
+                'qty_used': Sum('qty'),
                 'total_used': Sum('total_price', filter=Q(date__year=year)),
                 'total_invoiced': Sum('total_price', filter=(
                         Q(invoice__date_invoice__year=year))),
@@ -236,7 +236,7 @@ class UsageSummaryAdmin(admin.ModelAdmin):
 
         else:
             metrics = {
-                'total': Count('resource'),
+                'qty_used': Sum('qty'),
                 'total_used': Sum('total_price'),
                 'total_invoiced': Sum('total_price', filter=(
                             Q(invoice__isnull=False))),
@@ -246,7 +246,7 @@ class UsageSummaryAdmin(admin.ModelAdmin):
 
         response.context_data['summary'] = list(
             qs
-                .values('resource__name')
+                .values('resource__name', 'resource__unit__name')
                 .annotate(**metrics)
                 .order_by('-total_used')
         )
