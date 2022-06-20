@@ -126,7 +126,10 @@ def check(request, api_key, email):
 
 @allow_all_origins
 def projects(request, visa):
-    user = get_object_or_404(Member, visa=visa)
-    projects = [project.name for project in Project.objects.filter(member=user)]
+    user = Member.objects.filter(visa=visa).first()
+    if user:
+        projects = [project.name for project in Project.objects.filter(member=user)]
+    else:
+        projects = []
 
     return JsonResponse(projects, safe=None)
