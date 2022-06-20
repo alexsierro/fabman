@@ -8,6 +8,8 @@ class ProjectCard(models.Model):
     project = models.ForeignKey('members.Project', on_delete=models.PROTECT, null=False)
     rfid = models.CharField(max_length=200, default=None, null=True, blank=True)
 
+    def __str__(self):
+        return f'{self.project} {self.rfid}'
 
 class Member(models.Model):
     INSCRIPTION_STATE = [
@@ -56,6 +58,6 @@ class Project(models.Model):
 
     def __str__(self):
         if self.member:
-            return f'{self.member.visa}/{self.name}'
+            return f'{self.name}@{self.member.visa}'
         else:
             return f'{self.name}'
