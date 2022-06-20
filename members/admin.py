@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import Member, Project
+from .models import Member, Project, ProjectCard
 from invoicing.models import Invoice
 from django.http import HttpResponse
 import csv
@@ -14,6 +14,13 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Project, ProjectAdmin)
+
+
+class ProjectCardAdmin(admin.ModelAdmin):
+    list_display = ['project', 'rfid']
+
+
+admin.site.register(ProjectCard, ProjectCardAdmin)
 
 
 class MemberAdmin(admin.ModelAdmin):

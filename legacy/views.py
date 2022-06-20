@@ -3,13 +3,13 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import get_object_or_404
 from unidecode import unidecode
 
 from invoicing.models import Resource, Usage, ResourceCategory
 from legacy.models import CheckKey
-from members.models import Member, Project
+from members.models import Member, Project, ProjectCard
 
 
 def allow_all_origins(func):
@@ -23,21 +23,46 @@ def allow_all_origins(func):
 
 @allow_all_origins
 def user(request, uid):
-    member = get_object_or_404(Member, rfid=uid)
-    return HttpResponse(member.visa)
+    member = Member.objects.filter(rfid=uid).first()
+    if member:
+        return HttpResponse(member.visa)
+
+    project_card = ProjectCard.objects.filter(rfid=uid).first()
+    if project_card:
+        return HttpResponse(f'{project_card.project.name}@{project_card.project.member.visa}')
+
+    raise Http404()
 
 
 @allow_all_origins
 def user2(request, uid):
-    member = get_object_or_404(Member, rfid=uid)
-    response = {'visa': member.visa, 'animateur': member.is_staff}
-    return JsonResponse(response)
+    member = Member.objects.filter(rfid=uid).first()
+    if member:
+        response = {'visa': member.visa, 'animateur': member.is_staff}
+        return JsonResponse(response)
 
+    project_card = ProjectCard.objects.filter(rfid=uid).first()
+    if project_card:
+        visa = f'{project_card.project.name}@{project_card.project.member.visa}'
+        response = {'visa': visa, 'animateur': False}
+        return JsonResponse(response)
+
+    raise Http404()
 
 @allow_all_origins
 def usage(request, resource, visa, time, project=None):
     resource = get_object_or_404(Resource, slug=resource)
-    member = get_object_or_404(Member, visa=visa)
+    member = Member.objects.filter(visa=visa).first()
+
+    if member is None:
+        # try to find a project@visa structure, useful for ProjectCard
+        splitted = visa.rsplit('@',1)
+        if len(splitted) == 2:
+            visa = splitted[1]
+            project = splitted[0]
+            member = get_object_or_404(Member, visa=visa)
+        else:
+            raise Http404()
 
     if project:
         project = Project.objects.get(member=member, name=project)

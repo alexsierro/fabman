@@ -4,6 +4,11 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class ProjectCard(models.Model):
+    project = models.ForeignKey('members.Project', on_delete=models.PROTECT, null=False)
+    rfid = models.CharField(max_length=200, default=None, null=True, blank=True)
+
+
 class Member(models.Model):
     INSCRIPTION_STATE = [
         ('not member', 'not member'),
@@ -38,7 +43,8 @@ class Member(models.Model):
     is_committee = models.BooleanField('Comité', default=False)
     bank_name = models.CharField(max_length=200, default=None, null=True, blank=True)
     iban = models.CharField(max_length=200, default=None, null=True, blank=True)
-    #inscription_state = models.CharField(max_length=20, choices=INSCRIPTION_STATE, default='not member')
+
+    # inscription_state = models.CharField(max_length=20, choices=INSCRIPTION_STATE, default='not member')
 
     def __str__(self):
         return f'{self.name} {self.surname}'
@@ -51,7 +57,5 @@ class Project(models.Model):
     def __str__(self):
         if self.member:
             return f'{self.member.visa}/{self.name}'
-        else :
+        else:
             return f'{self.name}'
-
-

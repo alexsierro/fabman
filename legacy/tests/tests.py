@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from invoicing.models import Resource
 from legacy.models import CheckKey
-from members.models import Member, Project
+from members.models import Member, Project, ProjectCard
 
 from django.utils.encoding import force_text
 
@@ -12,14 +12,17 @@ class LegacyTests(TestCase):
 
     def setUp(self):
         member = Member.objects.create(name='Name', surname='Surname', visa='visa', rfid='1234', mail='member@fablab')
-        Member.objects.create(visa='visaStaff', rfid='5678', is_staff=True)
+        member_staff = Member.objects.create(visa='visaStaff', rfid='5678', is_staff=True)
 
         CheckKey.objects.create(key='keykey')
 
-        Project.objects.create(name='p1', member=member)
-        Project.objects.create(name='p2', member=member)
+        p1 = Project.objects.create(name='p1', member=member)
+        p2 = Project.objects.create(name='p2', member=member)
+        p3 = Project.objects.create(name='p3', member=member_staff)
 
         Resource.objects.create(name='resource', slug='resource', price_member=3, price_not_member=4)
+
+        ProjectCard.objects.create(project=p3, rfid='project-card-rfid')
 
 
 
@@ -80,5 +83,21 @@ class LegacyTests(TestCase):
 
     def test_decimal_usage(self):
         url = reverse('legacy:usage', args=('resource', 'visa', '0.1'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_project_card_user(self):
+        url = reverse('legacy:user', args=('project-card-rfid',))
+        response = self.client.get(url)
+        self.assertEqual(force_text(response.content), 'p3@visaStaff')
+
+    def test_project_card_user2(self):
+        url = reverse('legacy:user2', args=('project-card-rfid',))
+        response = self.client.get(url)
+        # subprojects never have "animateur" flag set
+        self.assertJSONEqual(force_text(response.content), {"visa": "p3@visaStaff", "animateur": False})
+
+    def test_project_card_usage(self):
+        url = reverse('legacy:usage', args=('resource', 'p3@visaStaff', '0.1'))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
