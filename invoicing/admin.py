@@ -226,7 +226,7 @@ class UsageSummaryAdmin(admin.ModelAdmin):
 
         if year:
             metrics = {
-                'qty_used': Sum('qty'),
+                'qty_used': Sum('qty', filter=Q(date__year=year)),
                 'total_used': Sum('total_price', filter=Q(date__year=year)),
                 'total_invoiced': Sum('total_price', filter=(
                         Q(invoice__date_invoice__year=year))),
