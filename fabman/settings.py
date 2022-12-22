@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'invoicing.apps.InvoicingConfig',
     'animation.apps.AnimationConfig',
     'members.apps.MembersConfig',
+    'accounting.apps.AccountingConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

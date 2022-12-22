@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from django.dispatch import receiver
 from invoicing.tariff import *
+from accounting.models import Account
 
 
 class Invoice(models.Model):
@@ -76,6 +77,7 @@ class ResourceUnit(models.Model):
 class Resource(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200)
+    account = models.ForeignKey(Account, on_delete=models.PROTECT, default=None, null=True, blank=True)
     unit = models.ForeignKey(ResourceUnit, on_delete=models.PROTECT, default=None, null=True, blank=True)
     widget = models.ForeignKey(ResourceWidget, on_delete=models.PROTECT, default=None, null=True, blank=True)
     category = models.ForeignKey(ResourceCategory, on_delete=models.PROTECT, default=None, null=True, blank=True)
