@@ -24,7 +24,18 @@ class Member(models.Model):
         ('passif', 'passif'),
         ('angel', 'angel'),
         ('alias', 'alias de facturation'),
+        ('no_member', 'non-membre'),
+        ('hes', 'cours hes')
     ]
+
+    SUBSCRIPTION_STATUS = [
+        ('subscribing ', '0 - Formulaire remplis'),
+        ('invoiced', '1 - Facture envoyée'),
+        ('active', '2 - Active'),
+        ('overdue', '3 - Débiteur'),
+        ('resigned', '4 - Démission'),
+    ]
+
 
     user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, null=True, blank=True)
     name = models.CharField('Nom', max_length=200)
@@ -38,6 +49,7 @@ class Member(models.Model):
     phone_number = models.CharField('Téléphone', max_length=25, default=None, null=True, blank=True)
     is_member = models.BooleanField('Membre', default=False)
     member_type = models.CharField(max_length=20, choices=MEMBER_TYPE, default=None, null=True, blank=True)
+    subscription_status = models.CharField("Etat de l'inscription", max_length=20, choices=SUBSCRIPTION_STATUS, default='active', null=False, blank=False)
     date_added = models.DateField('Date ajout', default=date.today, null=True, blank=True)
     is_resigned = models.BooleanField('Démission', default=False)
     date_resigned = models.DateField('Date démission', default=None, null=True, blank=True)
