@@ -59,7 +59,7 @@ admin.site.register(ExpenseType)
 
 
 class ResourceAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'widget', 'category', 'unit', 'logger_multiplier', 'price_member',
+    list_display = ['name', 'slug', 'account', 'widget', 'category', 'unit', 'logger_multiplier', 'price_member',
                     'price_not_member', 'price_consumable_only', 'payable_by_animation_hours']
     list_display_links = ['name']
     list_filter = ['category', 'payable_by_animation_hours']
