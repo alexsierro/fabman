@@ -43,7 +43,7 @@ class MemberAdmin(admin.ModelAdmin):
 
         writer = csv.writer(response)
 
-        mails = [member.mail for member in queryset if member.mail and member.is_in_mail_list()]
+        mails = [member.mail for member in queryset if member.mail and member.is_in_mail_list]
         for mail in mails:
             writer.writerow([mail])
 
