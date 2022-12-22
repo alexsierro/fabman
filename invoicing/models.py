@@ -7,6 +7,7 @@ from django.db.models.signals import pre_save, pre_delete
 from django.utils import timezone
 
 from django.dispatch import receiver
+from invoicing.tariff import *
 
 
 class Invoice(models.Model):
@@ -19,9 +20,12 @@ class Invoice(models.Model):
     ]
 
     PAYMENT_METHOD = [
-        ('cash', 'cash'),
-        ('twint', 'twint'),
-        ('bank', 'bank'),
+        ('cash', 'Cash'),
+        ('twint', 'Twint'),
+        ('bank', 'Banque'),
+        ('frais', 'Note de frais'),
+        ('perte', 'Non récupérable'),
+        ('interne', 'Payée par le FabLab')
     ]
 
     invoice_number = models.IntegerField(unique=True)
@@ -80,6 +84,7 @@ class Resource(models.Model):
 
     price_member = models.DecimalField(max_digits=9, decimal_places=2)
     price_not_member = models.DecimalField(max_digits=9, decimal_places=2)
+    price_consumable_only = models.DecimalField(max_digits=9, decimal_places=2)
 
     payable_by_animation_hours = models.BooleanField(default=False)
 
@@ -128,8 +133,15 @@ def usage_pre_save(sender, instance, **kwargs):
     usage = instance
 
     if usage.id is None:
-        if usage.member.is_member:
+
+        tariff = usage.member.get_tariff
+
+        if tariff == TARIFF_MEMBER:
             usage.unit_price = usage.resource.price_member
+
+        elif tariff == TARIFF_CONSUMABLE_ONLY:
+            usage.unit_price = usage.resource.price_consumable_only
+
         else:
             usage.unit_price = usage.resource.price_not_member
 

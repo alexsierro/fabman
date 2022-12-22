@@ -11,26 +11,6 @@ from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, Re
     Expense, UsageSummary
 
 
-@admin.action(description="Payé")
-def paide(modeladmin, request, queryset):
-    queryset.update(status='paid')
-
-
-@admin.action(description="1er rappel")
-def rappel1(modeladmin, request, queryset):
-    queryset.update(status='rappel1')
-
-
-@admin.action(description="2ème rappel")
-def rappel2(modeladmin, request, queryset):
-    queryset.update(status='rapell2')
-
-
-@admin.action(description="Annuler la facture")
-def cancelled(modeladmin, request, queryset):
-    queryset.update(status='cancelled')
-
-
 class InvoiceAdmin(admin.ModelAdmin):
     change_list_template = "admin/invoice_change_list.html"
 
@@ -50,7 +30,6 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display_links = ['invoice_number', ]
     readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', ]
     search_fields = ['member__name', 'member__surname']
-    actions = [paide, rappel1, rappel2, cancelled]
     list_filter = ['status']
 
     def get_search_results(self, request, queryset, search_term):
@@ -81,7 +60,7 @@ admin.site.register(ExpenseType)
 
 class ResourceAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'widget', 'category', 'unit', 'logger_multiplier', 'price_member',
-                    'price_not_member', 'payable_by_animation_hours']
+                    'price_not_member', 'price_consumable_only', 'payable_by_animation_hours']
     list_display_links = ['name']
     list_filter = ['category', 'payable_by_animation_hours']
 

@@ -18,17 +18,21 @@ if __name__ == '__main__':
     cotiEtudiant = Resource.objects.get(slug='cotisation-etudiant')
     cotiPassif = Resource.objects.get(slug='cotisation-passif')
 
-    members = Member.objects.filter(is_member=True, is_resigned=False, date_resigned__isnull=True) #, is_resigned=False, date_resigned__isnull=False)
+    members = Member.objects.filter(is_resigned=False, date_resigned__isnull=True) #, is_resigned=False, date_resigned__isnull=False)
 
     for member in members:
 
         print(member)
+        if member.member_type in ['membre', 'etudiant', 'passif', 'alias']:
 
-        coti = cotiEtudiant if member.member_type == 'etudiant' else cotiMembre
+            if member.member_type == 'etudiant':
+                coti = cotiEtudiant
+            elif member.member_type == 'passi':
+                coti = cotiPassif
+            else:
+                coti = cotiMembre
 
-        usage = Usage.objects.create(member=member, resource=coti, qty=1)
+            usage = Usage.objects.create(member=member, resource=coti, qty=1)
 
-        if not member.is_staff:
-            credit = AccountEntry.objects.create(member=member, amount_machine=50)
-
-
+            if not member.is_staff:
+                credit = AccountEntry.objects.create(member=member, amount_machine=50)

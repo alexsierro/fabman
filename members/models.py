@@ -2,6 +2,7 @@ from datetime import date
 
 from django.db import models
 from django.contrib.auth.models import User
+from invoicing.tariff import *
 
 
 class ProjectCard(models.Model):
@@ -19,17 +20,18 @@ class Member(models.Model):
     ]
 
     MEMBER_TYPE = [
-        ('membre', 'membre'),
-        ('etudiant', 'étudiant'),
-        ('passif', 'passif'),
-        ('angel', 'angel'),
-        ('alias', 'alias de facturation'),
-        ('no_member', 'non-membre'),
-        ('hes', 'cours hes')
+        ('membre', 'Membre'),
+        ('etudiant', 'Etudiant'),
+        ('passif', 'Passif'),
+        ('angel', 'Angel'),
+        ('alias', 'Alias de facturation'),
+        ('no_member', 'Non-membre'),
+        ('hes', 'HES cours ou labo'),
+        ('interne', 'Interne'),
     ]
 
     SUBSCRIPTION_STATUS = [
-        ('subscribing ', '0 - Formulaire remplis'),
+        ('subscribing ', '0 - Formulaire rempli'),
         ('invoiced', '1 - Facture envoyée'),
         ('active', '2 - Active'),
         ('overdue', '3 - Débiteur'),
@@ -47,9 +49,8 @@ class Member(models.Model):
     visa = models.CharField(max_length=3, default=None, null=True, blank=True, unique=True)
     mail = models.EmailField('Email', max_length=200, default=None, null=True, blank=True)
     phone_number = models.CharField('Téléphone', max_length=25, default=None, null=True, blank=True)
-    is_member = models.BooleanField('Membre', default=False)
-    member_type = models.CharField(max_length=20, choices=MEMBER_TYPE, default=None, null=True, blank=True)
-    subscription_status = models.CharField("Etat de l'inscription", max_length=20, choices=SUBSCRIPTION_STATUS, default='active', null=False, blank=False)
+    member_type = models.CharField(max_length=20, choices=MEMBER_TYPE, default='membre', null=False, blank=False)
+    subscription_status = models.CharField("Etat de l'inscription", max_length=20, choices=SUBSCRIPTION_STATUS, default='subscribing', null=False, blank=False)
     date_added = models.DateField('Date ajout', default=date.today, null=True, blank=True)
     is_resigned = models.BooleanField('Démission', default=False)
     date_resigned = models.DateField('Date démission', default=None, null=True, blank=True)
@@ -58,7 +59,20 @@ class Member(models.Model):
     bank_name = models.CharField(max_length=200, default=None, null=True, blank=True)
     iban = models.CharField(max_length=200, default=None, null=True, blank=True)
 
-    # inscription_state = models.CharField(max_length=20, choices=INSCRIPTION_STATE, default='not member')
+    @property
+    def get_tariff(self):
+        if self.subscription_status not in ['resigned']:
+            if self.member_type in ['membre', 'etudiant', 'angel', 'alias'] :
+                return TARIFF_MEMBER
+
+            elif self.member_type in ['hes', 'interne']:
+                return TARIFF_CONSUMABLE_ONLY
+
+        return TARIFF_NO_MEMBER
+
+    @property
+    def is_in_mail_list(self):
+        return self.subscription_status not in ['resigned'] and self.member_type not in['no_member']
 
     def __str__(self):
         return f'{self.name} {self.surname}'

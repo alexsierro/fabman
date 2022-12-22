@@ -20,10 +20,10 @@ class UsageSummaryTests(TestCase):
 
     def test_usage_summary_mix(self):
 
-        r1 = Resource.objects.create(price_member=10, price_not_member=20, name='resource1')
-        r2 = Resource.objects.create(price_member=100, price_not_member=200, name='resource2')
+        r1 = Resource.objects.create(price_member=10, price_not_member=20, price_consumable_only=5, name='resource1')
+        r2 = Resource.objects.create(price_member=100, price_not_member=200, price_consumable_only=50, name='resource2')
 
-        m = Member.objects.create(name='Member', is_member=True)
+        m = Member.objects.create(name='Member', member_type='membre', subscription_status='active')
 
         u1 = Usage.objects.create(member=m, resource=r1, qty=5)
         u2 = Usage.objects.create(member=m, resource=r2, qty=8)

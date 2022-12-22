@@ -29,7 +29,7 @@ class MemberAdmin(admin.ModelAdmin):
     def export_as_mail_list(self, request, queryset):
         response = HttpResponse()
 
-        mails = [member.mail for member in queryset if member.mail and member.is_member]
+        mails = [member.mail for member in queryset if member.mail and member.is_in_mail_list]
         response.write(';'.join(mails))
         return response
 
@@ -43,7 +43,7 @@ class MemberAdmin(admin.ModelAdmin):
 
         writer = csv.writer(response)
 
-        mails = [member.mail for member in queryset if member.mail and member.is_member]
+        mails = [member.mail for member in queryset if member.mail and member.is_in_mail_list()]
         for mail in mails:
             writer.writerow([mail])
 
@@ -61,10 +61,11 @@ class MemberAdmin(admin.ModelAdmin):
         return format_html('<a class="button" href="{}" style="background-color:{}"target="_blank">Invoices ({})</a>',
                            reverse('show_members', args=[obj.pk]), color, open_invoices)
 
-    list_display = ['members_actions', 'name', 'surname', 'rfid', 'is_member', 'is_staff', 'is_committee']
+    list_display = ['members_actions', 'name', 'surname', 'rfid', 'is_staff', 'is_committee']
     list_display_links = ['name', 'surname']
     search_fields = ['name', 'surname', 'rfid', 'visa']
     ordering = ['name', 'surname']
+    readonly_fields = ['get_tariff', 'is_in_mail_list']
 
 
 admin.site.register(Member, MemberAdmin)

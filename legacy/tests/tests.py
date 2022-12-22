@@ -20,7 +20,7 @@ class LegacyTests(TestCase):
         p2 = Project.objects.create(name='p2', member=member)
         p3 = Project.objects.create(name='p3', member=member_staff)
 
-        Resource.objects.create(name='resource', slug='resource', price_member=3, price_not_member=4)
+        Resource.objects.create(name='resource', slug='resource', price_member=3, price_not_member=4, price_consumable_only=2)
 
         ProjectCard.objects.create(project=p3, rfid='project-card-rfid')
 

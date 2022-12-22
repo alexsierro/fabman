@@ -32,7 +32,7 @@ class InvoicePreviewTests(TestCase):
 
         member1 = Member.objects.create(name='Name1', surname='Surname')
         member2 = Member.objects.create(name='Name2', surname='Surname')
-        resource = Resource.objects.create(name='Resource', price_member=10, price_not_member=20, slug='res')
+        resource = Resource.objects.create(name='Resource', price_member=10, price_not_member=20, price_consumable_only=5, slug='res')
         Usage.objects.create(member=member1, resource=resource, qty=5)
 
         response = self.client.get(reverse('preview_invoice'))
@@ -48,7 +48,7 @@ class InvoicePreviewTests(TestCase):
 
         member1 = Member.objects.create(name='Name1', surname='Surname')
         member2 = Member.objects.create(name='Name2', surname='Surname')
-        resource = Resource.objects.create(name='Resource', price_member=10, price_not_member=20, slug='res')
+        resource = Resource.objects.create(name='Resource', price_member=10, price_not_member=20, price_consumable_only=5, slug='res')
         invoice = Invoice.objects.create(member=member1, amount=50, invoice_number='20210001')
         usage = Usage.objects.create(member=member1, resource=resource, qty=5, invoice=invoice)
 
@@ -63,9 +63,9 @@ class InvoicePreviewTests(TestCase):
 
         self.client.force_login(self.staff_user)
 
-        member1 = Member.objects.create(name='Name1', surname='Surname', is_member=True)
+        member1 = Member.objects.create(name='Name1', surname='Surname', member_type='membre', subscription_status='active')
         member2 = Member.objects.create(name='Name2', surname='Surname')
-        resource = Resource.objects.create(name='Resource', price_member=10, price_not_member=20, slug='res')
+        resource = Resource.objects.create(name='Resource', price_member=10, price_not_member=20, price_consumable_only=5, slug='res')
         usage = Usage.objects.create(member=member1, resource=resource, qty=5)
 
         response = self.client.post(reverse('preview_invoice'), {'member_id': member1.id})
@@ -80,13 +80,13 @@ class InvoicePreviewTests(TestCase):
 
         self.client.force_login(self.staff_user)
 
-        member1 = Member.objects.create(name='Name1', surname='Surname', is_member=True, locality='City')
+        member1 = Member.objects.create(name='Name1', surname='Surname', member_type='membre', subscription_status='active', locality='City')
 
         AccountEntry.objects.create(member=member1, amount_machine=75)
         AccountEntry.objects.create(member=member1, amount_cash=4)
 
-        resource1 = Resource.objects.create(name='Resource1', price_member=10, price_not_member=1, slug='res1', payable_by_animation_hours=True)
-        resource2 = Resource.objects.create(name='Resource2', price_member=10, price_not_member=1, slug='res2')
+        resource1 = Resource.objects.create(name='Resource1', price_member=10, price_not_member=1, price_consumable_only=0.5, slug='res1', payable_by_animation_hours=True)
+        resource2 = Resource.objects.create(name='Resource2', price_member=10, price_not_member=1, price_consumable_only=0.5, slug='res2')
 
         usage1 = Usage.objects.create(member=member1, resource=resource1, qty=5)
         usage2 = Usage.objects.create(member=member1, resource=resource2, qty=10)
