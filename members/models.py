@@ -63,12 +63,12 @@ class Member(models.Model):
     def get_tariff(self):
         if self.subscription_status not in ['resigned']:
             if self.member_type in ['membre', 'etudiant', 'angel', 'alias'] :
-                return TARIFF_MEMBER
+                return PRICE_MEMBER
 
             elif self.member_type in ['hes', 'interne']:
-                return TARIFF_CONSUMABLE_ONLY
+                return PRICE_CONSUMABLE_ONLY
 
-        return TARIFF_NO_MEMBER
+        return PRICE_NON_MEMBER
 
     @property
     def is_in_mail_list(self):

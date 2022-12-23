@@ -1,3 +1,3 @@
-TARIFF_MEMBER = 'member'
-TARIFF_NO_MEMBER = 'no_member'
-TARIFF_CONSUMABLE_ONLY = 'consumable_only'
+PRICE_MEMBER = 'price_member'
+PRICE_NON_MEMBER = 'price_non_member'
+PRICE_CONSUMABLE_ONLY = 'price_consumable_only'

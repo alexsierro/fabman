@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from unidecode import unidecode
 
 from invoicing.models import Resource, Usage, ResourceCategory
+from invoicing.tariff import PRICE_MEMBER, PRICE_NON_MEMBER, PRICE_CONSUMABLE_ONLY
 from legacy.models import CheckKey
 from members.models import Member, Project, ProjectCard
 
@@ -38,7 +39,7 @@ def user(request, uid):
 def user2(request, uid):
     member = Member.objects.filter(rfid=uid).first()
     if member:
-        response = {'visa': member.visa, 'animateur': member.is_staff}
+        response = {'visa': member.visa, 'animateur': member.is_staff, 'tariff': member.get_tariff}
         return JsonResponse(response)
 
     project_card = ProjectCard.objects.filter(rfid=uid).first()
@@ -101,11 +102,51 @@ def items(request):
 
             category_items.append(item)
 
-        entry = {'category': category.name, 'items': category_items}
-        ret.append(entry)
+        if len(category_items) > 0:
+            entry = {'category': category.name, 'items': category_items}
+            ret.append(entry)
 
     return JsonResponse(ret, safe=False)
 
+
+def fill_category(category, list):
+    # recursively fill the category with subcategories and items
+    name = category.name if category else 'root'
+    entry = {'type': 'category', 'name': name}
+
+    category_items = []
+
+    sub_categories = ResourceCategory.objects.filter(parent=category)
+    for subcategory in sub_categories:
+        fill_category(subcategory, category_items)
+
+    resources = Resource.objects.filter(category=category).exclude(widget=None)
+    for resource in resources:
+        item = {
+            'type': 'item',
+            'slug': resource.slug,
+            'name': resource.name,
+            'widget': resource.widget.name,
+            'unit': resource.unit.name,
+            PRICE_MEMBER: resource.price_member,
+            PRICE_NON_MEMBER: resource.price_not_member,
+            PRICE_CONSUMABLE_ONLY: resource.price_consumable_only
+        }
+
+        if resource.on_submit:
+            item['on_submit'] = resource.on_submit
+
+        category_items.append(item)
+
+    entry['items'] = category_items
+    list.append(entry)
+
+
+@allow_all_origins
+def items2(request):
+    list = []
+    fill_category(None, list)
+    return JsonResponse(list, safe=False)
 
 @allow_all_origins
 def check(request, api_key, email):

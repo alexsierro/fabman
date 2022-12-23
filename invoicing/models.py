@@ -52,6 +52,7 @@ class Invoice(models.Model):
 
 class ResourceCategory(models.Model):
     name = models.CharField(max_length=200)
+    parent = models.ForeignKey('invoicing.ResourceCategory', on_delete=models.PROTECT, default=None, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "Resource categories"
@@ -138,10 +139,10 @@ def usage_pre_save(sender, instance, **kwargs):
 
         tariff = usage.member.get_tariff
 
-        if tariff == TARIFF_MEMBER:
+        if tariff == PRICE_MEMBER:
             usage.unit_price = usage.resource.price_member
 
-        elif tariff == TARIFF_CONSUMABLE_ONLY:
+        elif tariff == PRICE_CONSUMABLE_ONLY:
             usage.unit_price = usage.resource.price_consumable_only
 
         else:

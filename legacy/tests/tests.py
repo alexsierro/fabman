@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
+from unicodedata import name
 
-from invoicing.models import Resource
+from invoicing.models import Resource, ResourceCategory, ResourceWidget, ResourceUnit
 from legacy.models import CheckKey
 from members.models import Member, Project, ProjectCard
 
@@ -20,7 +21,14 @@ class LegacyTests(TestCase):
         p2 = Project.objects.create(name='p2', member=member)
         p3 = Project.objects.create(name='p3', member=member_staff)
 
-        Resource.objects.create(name='resource', slug='resource', price_member=3, price_not_member=4, price_consumable_only=2)
+        cat10 = ResourceCategory.objects.create(name='cat10', parent=None)
+        cat20 = ResourceCategory.objects.create(name='cat20', parent=None)
+        cat21 = ResourceCategory.objects.create(name='cat21', parent=cat20)
+
+        widget = ResourceWidget.objects.create(name='widget')
+        unit = ResourceUnit.objects.create(name='unit')
+
+        Resource.objects.create(name='resource', slug='resource', price_member=3, price_not_member=4, price_consumable_only=2, category=cat21, widget=widget, unit=unit)
 
         ProjectCard.objects.create(project=p3, rfid='project-card-rfid')
 
@@ -39,12 +47,12 @@ class LegacyTests(TestCase):
     def test_user2_animator(self):
         url = reverse('legacy:user2', args=('5678',))
         response = self.client.get(url)
-        self.assertJSONEqual(force_text(response.content), {"visa": "visaStaff", "animateur": True})
+        self.assertJSONEqual(force_text(response.content), {"visa": "visaStaff", "animateur": True, "tariff": "price_member"})
 
     def test_user2_not_animator(self):
         url = reverse('legacy:user2', args=('1234',))
         response = self.client.get(url)
-        self.assertJSONEqual(force_text(response.content), {"visa": "visa", "animateur": False})
+        self.assertJSONEqual(force_text(response.content), {"visa": "visa", "animateur": False, "tariff": "price_member"})
 
     def test_user2_not_existing(self):
         url = reverse('legacy:user2', args=('9999',))
@@ -101,3 +109,30 @@ class LegacyTests(TestCase):
         url = reverse('legacy:usage', args=('resource', 'p3@visaStaff', '0.1'))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+    def test_items2(self):
+        url = reverse('legacy:items2')
+        response = self.client.get(url)
+        print(response.content)
+        self.assertJSONEqual(force_text(response.content),
+                             [{"type": "category",
+                               "name": "root",
+                               "items": [
+                                   {"type": "category",
+                                    "name": "cat10",
+                                    "items": [
+
+                                    ]},
+                                   {"type": "category",
+                                    "name": "cat20",
+                                    "items": [
+                                        {"type": "category",
+                                         "name": "cat21",
+                                         "items": [
+                                             {"type": "item", "slug": "resource", "name": "resource",
+                                              "widget": "widget", "unit": "unit", "price_member": "3.00",
+                                              "price_non_member": "4.00", "price_consumable_only": "2.00"}
+                                         ]}
+                                    ]}
+                               ]}
+                              ])
