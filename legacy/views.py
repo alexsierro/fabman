@@ -123,7 +123,7 @@ def fill_category(category, list):
     resources = Resource.objects.filter(category=category).exclude(widget=None)
     for resource in resources:
         item = {
-            'type': 'item',
+            'type': 'resource',
             'slug': resource.slug,
             'name': resource.name,
             'widget': resource.widget.name,

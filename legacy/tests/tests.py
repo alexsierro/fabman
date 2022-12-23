@@ -129,7 +129,7 @@ class LegacyTests(TestCase):
                                         {"type": "category",
                                          "name": "cat21",
                                          "items": [
-                                             {"type": "item", "slug": "resource", "name": "resource",
+                                             {"type": "resource", "slug": "resource", "name": "resource",
                                               "widget": "widget", "unit": "unit", "price_member": "3.00",
                                               "price_non_member": "4.00", "price_consumable_only": "2.00"}
                                          ]}
