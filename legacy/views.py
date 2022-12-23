@@ -120,23 +120,24 @@ def fill_category(category, list):
     for subcategory in sub_categories:
         fill_category(subcategory, category_items)
 
-    resources = Resource.objects.filter(category=category).exclude(widget=None)
-    for resource in resources:
-        item = {
-            'type': 'resource',
-            'slug': resource.slug,
-            'name': resource.name,
-            'widget': resource.widget.name,
-            'unit': resource.unit.name,
-            PRICE_MEMBER: resource.price_member,
-            PRICE_NON_MEMBER: resource.price_not_member,
-            PRICE_CONSUMABLE_ONLY: resource.price_consumable_only
-        }
+    if category:  # avoid resources without category to be mapped with root category
+        resources = Resource.objects.filter(category=category).exclude(widget=None)
+        for resource in resources:
+            item = {
+                'type': 'resource',
+                'slug': resource.slug,
+                'name': resource.name,
+                'widget': resource.widget.name,
+                'unit': resource.unit.name,
+                PRICE_MEMBER: resource.price_member,
+                PRICE_NON_MEMBER: resource.price_not_member,
+                PRICE_CONSUMABLE_ONLY: resource.price_consumable_only
+            }
 
-        if resource.on_submit:
-            item['on_submit'] = resource.on_submit
+            if resource.on_submit:
+                item['on_submit'] = resource.on_submit
 
-        category_items.append(item)
+            category_items.append(item)
 
     entry['items'] = category_items
     list.append(entry)
