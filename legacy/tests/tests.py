@@ -103,7 +103,7 @@ class LegacyTests(TestCase):
         url = reverse('legacy:user2', args=('project-card-rfid',))
         response = self.client.get(url)
         # subprojects never have "animateur" flag set
-        self.assertJSONEqual(force_text(response.content), {"visa": "p3@visaStaff", "animateur": False})
+        self.assertJSONEqual(force_text(response.content), {"visa": "p3@visaStaff", "animateur": False, "tariff": "price_member"})
 
     def test_project_card_usage(self):
         url = reverse('legacy:usage', args=('resource', 'p3@visaStaff', '0.1'))
