@@ -44,8 +44,9 @@ def user2(request, uid):
 
     project_card = ProjectCard.objects.filter(rfid=uid).first()
     if project_card:
-        visa = f'{project_card.project.name}@{project_card.project.member.visa}'
-        response = {'visa': visa, 'animateur': False}
+        member = project_card.project.member
+        visa = f'{project_card.project.name}@{member.visa}'
+        response = {'visa': visa, 'animateur': False, 'tariff': member.get_tariff}
         return JsonResponse(response)
 
     raise Http404()
