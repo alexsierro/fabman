@@ -12,6 +12,9 @@ ENV PYTHONUNBUFFERED 1
 RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev
 
+# install pillow dependencies
+RUN apk add -u zlib-dev jpeg-dev gcc musl-dev
+
 RUN apk add postgresql
 
 # install dependencies
