@@ -11,6 +11,7 @@ from invoicing.models import Resource, Usage, ResourceCategory
 from invoicing.tariff import PRICE_MEMBER, PRICE_NON_MEMBER, PRICE_CONSUMABLE_ONLY
 from legacy.models import CheckKey
 from members.models import Member, Project, ProjectCard
+from fabman.settings import MEDIA_URL
 
 
 def allow_all_origins(func):
@@ -110,16 +111,23 @@ def items(request):
     return JsonResponse(ret, safe=False)
 
 
-def fill_category(category, list):
+def fill_category(request, category, list):
     # recursively fill the category with subcategories and items
     name = category.name if category else 'root'
     entry = {'type': 'category', 'name': name}
+
+    if category and category.image:
+        if category.image.image:
+            domain = request.get_host()
+            entry['image'] = domain + MEDIA_URL + str(category.image.image)
+            if category.image.layout:
+                entry['layout'] = category.image.layout
 
     category_items = []
 
     sub_categories = ResourceCategory.objects.filter(parent=category)
     for subcategory in sub_categories:
-        fill_category(subcategory, category_items)
+        fill_category(request, subcategory, category_items)
 
     if category:  # avoid resources without category to be mapped with root category
         resources = Resource.objects.filter(category=category).exclude(widget=None)
@@ -135,6 +143,13 @@ def fill_category(category, list):
                 PRICE_CONSUMABLE_ONLY: resource.price_consumable_only
             }
 
+            if resource.image:
+                if resource.image.image:
+                    domain = request.get_host()
+                    item['image'] = domain + MEDIA_URL + str(resource.image.image)
+                    if resource.image.layout:
+                        item['layout'] = resource.image.layout
+
             if resource.on_submit:
                 item['on_submit'] = resource.on_submit
 
@@ -147,7 +162,7 @@ def fill_category(category, list):
 @allow_all_origins
 def items2(request):
     list = []
-    fill_category(None, list)
+    fill_category(request, None, list)
     return JsonResponse(list, safe=False)
 
 @allow_all_origins

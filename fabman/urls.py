@@ -25,6 +25,7 @@ from legacy import views as legacy_views
 urlpatterns = [
     path('members/', include('members.urls')),
     path('invoicing/', include('invoicing.urls')),
+    path('nonmember/', include('non_member.urls')),
     path('admin/', admin.site.urls),
     path('', include('legacy.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \

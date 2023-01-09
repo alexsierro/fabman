@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense, UsageSummary
+    Expense, UsageSummary, Image
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -50,8 +50,13 @@ class InvoiceAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
+class ImageAdmin(admin.ModelAdmin):
+    readonly_fields = ['image_tag']
+
+
 
 admin.site.register(Invoice, InvoiceAdmin)
+admin.site.register(Image, ImageAdmin)
 admin.site.register(ResourceCategory)
 admin.site.register(ResourceWidget)
 admin.site.register(ResourceUnit)

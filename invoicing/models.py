@@ -7,6 +7,8 @@ from django.db.models.signals import pre_save, pre_delete
 from django.utils import timezone
 
 from django.dispatch import receiver
+from django.utils.safestring import mark_safe
+
 from invoicing.tariff import *
 from accounting.models import Account
 
@@ -50,9 +52,47 @@ class Invoice(models.Model):
         return f'#{self.invoice_number} : {self.member.name} {self.member.surname} (CHF {self.amount_due})'
 
 
+import os
+from uuid import uuid4
+
+def unique_filename():
+    """
+    Enforce unique upload file names.
+    Usage:
+    class MyModel(models.Model):
+        file = ImageField(upload_to=unique_filename("path/to/upload/dir"))
+    """
+    import os, base64, datetime
+    def _func(instance, filename):
+        name, ext = os.path.splitext(filename)
+        name = base64.urlsafe_b64encode(str(datetime.datetime.now()).encode('utf-8')).decode('utf-8')
+        return name + ext
+    return _func
+
+
+
+IMAGE_LAYOUT = [
+    ('center', 'center'),
+    ('full', 'full')
+]
+class Image(models.Model):
+    name = models.CharField(max_length=200)
+    image = models.ImageField(default=None, null=True, blank=True)
+    layout = models.CharField(max_length=20, choices=IMAGE_LAYOUT, default=None, null=True, blank=True)
+
+    def image_tag(self):
+        return mark_safe('<img src="/media/%s" width="150" height="150" />' % (self.image))
+
+    image_tag.short_description = 'Preview'
+
+    def __str__(self):
+        return self.name
+
+
 class ResourceCategory(models.Model):
     name = models.CharField(max_length=200)
     parent = models.ForeignKey('invoicing.ResourceCategory', on_delete=models.PROTECT, default=None, null=True, blank=True)
+    image = models.ForeignKey('invoicing.Image', on_delete=models.PROTECT, default=None, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "Resource categories"
@@ -90,6 +130,9 @@ class Resource(models.Model):
     price_consumable_only = models.DecimalField(max_digits=9, decimal_places=2)
 
     payable_by_animation_hours = models.BooleanField(default=False)
+
+    image = models.ForeignKey('invoicing.Image', on_delete=models.PROTECT, default=None, null=True, blank=True)
+
 
     def __str__(self):
         return f'{self.name}'
