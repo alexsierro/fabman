@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense, UsageSummary, Image
+    Expense, UsageSummary, Image, AccountSummary
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -50,9 +50,9 @@ class InvoiceAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
+
 class ImageAdmin(admin.ModelAdmin):
     readonly_fields = ['image_tag']
-
 
 
 admin.site.register(Invoice, InvoiceAdmin)
@@ -103,7 +103,8 @@ class UsageAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = 'attachment; filename={}.csv'.format('usages')
         writer = csv.writer(response)
 
-        writer.writerow(['id', 'member', 'resource', 'qty', 'unit_price', 'total_price', 'date used', 'date invoiced', 'date_paid'])
+        writer.writerow(
+            ['id', 'member', 'resource', 'qty', 'unit_price', 'total_price', 'date used', 'date invoiced', 'date_paid'])
         for usage in queryset:
             date_invoice = ''
             date_paid = ''
@@ -213,9 +214,9 @@ class UsageSummaryAdmin(admin.ModelAdmin):
                 'qty_used': Sum('qty', filter=Q(date__year=year)),
                 'total_used': Sum('total_price', filter=Q(date__year=year)),
                 'total_invoiced': Sum('total_price', filter=(
-                        Q(invoice__date_invoice__year=year))),
+                    Q(invoice__date_invoice__year=year))),
                 'total_paid': Sum('total_price', filter=(
-                        Q(invoice__date_paid__year=year)))
+                    Q(invoice__date_paid__year=year)))
             }
 
         else:
@@ -223,16 +224,16 @@ class UsageSummaryAdmin(admin.ModelAdmin):
                 'qty_used': Sum('qty'),
                 'total_used': Sum('total_price'),
                 'total_invoiced': Sum('total_price', filter=(
-                            Q(invoice__isnull=False))),
+                    Q(invoice__isnull=False))),
                 'total_paid': Sum('total_price', filter=(
-                            Q(invoice__date_paid__isnull=False) ))
+                    Q(invoice__date_paid__isnull=False)))
             }
 
         response.context_data['summary'] = list(
             qs
-                .values('resource__name', 'resource__unit__name')
-                .annotate(**metrics)
-                .order_by('-total_used')
+            .values('resource__name', 'resource__unit__name')
+            .annotate(**metrics)
+            .order_by('-total_used')
         )
 
         response.context_data['summary_total'] = dict(
@@ -243,3 +244,62 @@ class UsageSummaryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UsageSummary, UsageSummaryAdmin)
+
+
+class AccountSummaryAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/account_summary_change_list.html'
+    actions = None
+    # Prevent additional queries for pagination.
+    show_full_result_count = False
+    list_filter = [DateYearFilter]
+
+    def changelist_view(self, request, extra_context=None):
+        print('changelist_view')
+        response = super().changelist_view(
+            request,
+            extra_context=extra_context
+        )
+
+        try:
+            qs = response.context_data['cl'].queryset
+        except (AttributeError, KeyError):
+            return response
+
+        year = request.GET.get('date')
+        print(year)
+
+        if year:
+            metrics = {
+                'qty_used': Sum('qty', filter=Q(date__year=year)),
+                'total_used': Sum('total_price', filter=Q(date__year=year)),
+                'total_invoiced': Sum('total_price', filter=(
+                    Q(invoice__date_invoice__year=year))),
+                'total_paid': Sum('total_price', filter=(
+                    Q(invoice__date_paid__year=year)))
+            }
+
+        else:
+            metrics = {
+                'qty_used': Sum('qty'),
+                'total_used': Sum('total_price'),
+                'total_invoiced': Sum('total_price', filter=(
+                    Q(invoice__isnull=False))),
+                'total_paid': Sum('total_price', filter=(
+                    Q(invoice__date_paid__isnull=False)))
+            }
+
+        response.context_data['summary'] = list(
+            qs
+            .values('resource__account__number', 'resource__account__name')
+            .annotate(**metrics)
+            .order_by('-total_used')
+        )
+
+        response.context_data['summary_total'] = dict(
+            qs.aggregate(**metrics)
+        )
+
+        return response
+
+
+admin.site.register(AccountSummary, AccountSummaryAdmin)

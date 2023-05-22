@@ -48,12 +48,13 @@ class Invoice(models.Model):
 
     def __str__(self):
         if self.member is None:
-            return(f'{self.invoice_number}')
+            return (f'{self.invoice_number}')
         return f'#{self.invoice_number} : {self.member.name} {self.member.surname} (CHF {self.amount_due})'
 
 
 import os
 from uuid import uuid4
+
 
 def unique_filename():
     """
@@ -67,14 +68,16 @@ def unique_filename():
         name, ext = os.path.splitext(filename)
         name = base64.urlsafe_b64encode(str(datetime.datetime.now()).encode('utf-8')).decode('utf-8')
         return name + ext
-    return _func
 
+    return _func
 
 
 IMAGE_LAYOUT = [
     ('center', 'center'),
     ('full', 'full')
 ]
+
+
 class Image(models.Model):
     name = models.CharField(max_length=200)
     image = models.ImageField(default=None, null=True, blank=True)
@@ -91,7 +94,8 @@ class Image(models.Model):
 
 class ResourceCategory(models.Model):
     name = models.CharField(max_length=200)
-    parent = models.ForeignKey('invoicing.ResourceCategory', on_delete=models.PROTECT, default=None, null=True, blank=True)
+    parent = models.ForeignKey('invoicing.ResourceCategory', on_delete=models.PROTECT, default=None, null=True,
+                               blank=True)
     image = models.ForeignKey('invoicing.Image', on_delete=models.PROTECT, default=None, null=True, blank=True)
 
     class Meta:
@@ -133,7 +137,6 @@ class Resource(models.Model):
 
     image = models.ForeignKey('invoicing.Image', on_delete=models.PROTECT, default=None, null=True, blank=True)
 
-
     def __str__(self):
         return f'{self.name}'
 
@@ -172,6 +175,13 @@ class UsageSummary(Usage):
         proxy = True
         verbose_name = "Usage Summary"
         verbose_name_plural = "Usages Summary"
+
+
+class AccountSummary(Usage):
+    class Meta:
+        proxy = True
+        verbose_name = "Account Summary"
+        verbose_name_plural = "Accounts Summary"
 
 
 @receiver(pre_save, sender=Usage)
