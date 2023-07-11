@@ -2,7 +2,7 @@ import csv
 import datetime
 
 from django.contrib import admin
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, F
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
@@ -254,7 +254,6 @@ class AccountSummaryAdmin(admin.ModelAdmin):
     list_filter = [DateYearFilter]
 
     def changelist_view(self, request, extra_context=None):
-        print('changelist_view')
         response = super().changelist_view(
             request,
             extra_context=extra_context
@@ -298,6 +297,64 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         response.context_data['summary_total'] = dict(
             qs.aggregate(**metrics)
         )
+
+        # --- Calculate Payment summary
+        if year:
+            metrics = {
+                'amount_due': Sum(F('amount') - F('amount_deduction_machine') - F('amount_deduction_cash'),
+                                  filter=Q(date_paid__year=year))
+            }
+
+        else:
+            metrics = {
+                'amount_due': Sum('amount', filter=Q(date_paid__isnull=False))
+            }
+
+        qs = Invoice.objects.all()
+        payement_methods = response.context_data['payment_methods'] = list(
+            qs
+            .values('payment_method')
+            .annotate(**metrics)
+        )
+
+        # --- Calculate Deduction summary
+
+        if year:
+            metrics = {
+                'deduction_cash': Sum('amount_deduction_cash', filter=Q(date_paid__year=year)),
+                'deduction_machine': Sum('amount_deduction_machine', filter=Q(date_paid__year=year))
+            }
+
+        else:
+            metrics = {
+                'deduction_cash': Sum('amount_deduction_cash', filter=Q(date_paid__isnull=False)),
+                'deduction_machine': Sum('amount_deduction_machine', filter=Q(date_paid__isnull=False)),
+            }
+
+        qs = Invoice.objects.all()
+        payment_deduction = (
+            qs
+            .aggregate(**metrics)
+        )
+
+        print(payment_deduction)
+
+        print(payment_deduction['deduction_cash'])
+
+        payement_methods.append({'payment_method': 'deduction machine', 'amount_due': payment_deduction['deduction_machine']})
+        payement_methods.append({'payment_method': 'deduction cash', 'amount_due': payment_deduction['deduction_cash']})
+
+        response.context_data['payement_methods'] = payement_methods
+
+        payment_total = 0
+        for method in payement_methods:
+            amount_due = method['amount_due']
+            if amount_due:
+                payment_total += amount_due
+        print(payment_total)
+        response.context_data['payment_total'] = payment_total
+
+
 
         return response
 

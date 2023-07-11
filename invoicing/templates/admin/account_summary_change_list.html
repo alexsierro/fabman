@@ -7,7 +7,7 @@
 {% load app_filters %}
 
 {% block content_title %}
-    <h1> {% trans 'Accounts Summary' %} </h1>
+    <h1> {% trans 'Accounts' %} </h1>
 {% endblock %}
 
 
@@ -37,7 +37,6 @@
             <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
                 <td> Total </td>
                 <td class="la"></td>
-                <td class="la"></td>
                 <td class="la"> {{ summary_total.total_used | default:0 | format_currency}} </td>
                 <td class="la"> {{ summary_total.total_invoiced | default:0 | format_currency }} </td>
                 <td class="la"> {{ summary_total.total_paid | default:0 | format_currency}} </td>
@@ -47,6 +46,33 @@
 </div>
 
 
+
+</br>
+<h1> {% trans 'Payments' %} </h1>
+
+<div class="results">
+<table>
+    <thead>
+        <tr>
+            <th> <div class="text"> <a href="#">Payment type</a> </div> </th>
+            <th class="la"> <div class="text"> <a href="#">Total amount</a> </div> </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in payement_methods %}
+        <tr class="{% cycle 'row1' 'row2' %}">
+            <td> {{ row.payment_method }}</td>
+            <td class="la"> {{ row.amount_due | default:0 | format_currency}} </td>
+        </tr>
+        {% endfor %}
+        <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
+            <td> Total </td>
+            <td class="la">{{ payment_total | default:0 | format_currency}}</td>
+
+        </tr>
+    </tbody>
+</table>
+</div>
 
 <style>
 
