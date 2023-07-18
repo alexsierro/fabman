@@ -26,7 +26,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         else:
             return ''
 
-    list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'amount_due', 'status', 'comments']
+    list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'date_paid', 'amount_due', 'status', 'comments']
     list_display_links = ['invoice_number', ]
     readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', ]
     search_fields = ['member__name', 'member__surname']
