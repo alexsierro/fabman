@@ -22,6 +22,8 @@
                 <th> <div class="text, la"> <a href="#">CHF used </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF invoiced </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF paid </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">CHF diff </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">CHF postpaid </a> </div> </th>
             </tr>
         </thead>
         <tbody>
@@ -32,6 +34,8 @@
                 <td class="la"> {{ row.total_used| default:0 | format_currency }} </td>
                 <td class="la"> {{ row.total_invoiced | default:0 | format_currency }} </td>
                 <td class="la"> {{ row.total_paid| default:0 | format_currency }} </td>
+                <td class="la"> {{ row.total_diff | default:0 | format_currency }} </td>
+                <td class="la"> {{ row.total_postpaid| default:0 | format_currency }} </td>
             </tr>
             {% endfor %}
             <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
@@ -40,6 +44,8 @@
                 <td class="la"> {{ summary_total.total_used | default:0 | format_currency}} </td>
                 <td class="la"> {{ summary_total.total_invoiced | default:0 | format_currency }} </td>
                 <td class="la"> {{ summary_total.total_paid | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_diff | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_postpaid | default:0 | format_currency}} </td>
             </tr>
         </tbody>
     </table>

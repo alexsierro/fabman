@@ -268,23 +268,42 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         print(year)
 
         if year:
+
+            total_invoiced = Sum('total_price', filter=(
+                    Q(invoice__date_invoice__year=year)))
+
+            total_paid = Sum('total_price', filter=(
+                    Q(invoice__date_paid__year=year) & Q(invoice__date_invoice__year=year)))
+
+            total_postpaid = Sum('total_price', filter=(
+                    Q(invoice__date_paid__year=year) & Q(invoice__date_invoice__year__lt=year)))
+
             metrics = {
                 'qty_used': Sum('qty', filter=Q(date__year=year)),
                 'total_used': Sum('total_price', filter=Q(date__year=year)),
-                'total_invoiced': Sum('total_price', filter=(
-                    Q(invoice__date_invoice__year=year))),
-                'total_paid': Sum('total_price', filter=(
-                    Q(invoice__date_paid__year=year)))
+                'total_invoiced': total_invoiced,
+                'total_paid': total_paid,
+                'total_diff' : total_invoiced - total_paid,
+                'total_postpaid': total_postpaid
+
             }
 
         else:
+
+            total_invoiced = Sum('total_price', filter=(
+                    Q(invoice__isnull=False)))
+
+            total_paid = Sum('total_price', filter=(
+                    Q(invoice__date_paid__isnull=False)))
+
             metrics = {
                 'qty_used': Sum('qty'),
                 'total_used': Sum('total_price'),
                 'total_invoiced': Sum('total_price', filter=(
                     Q(invoice__isnull=False))),
                 'total_paid': Sum('total_price', filter=(
-                    Q(invoice__date_paid__isnull=False)))
+                    Q(invoice__date_paid__isnull=False))),
+                'total_diff' : total_invoiced - total_paid
             }
 
         response.context_data['summary'] = list(
