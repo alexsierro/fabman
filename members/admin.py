@@ -61,8 +61,17 @@ class MemberAdmin(admin.ModelAdmin):
         return format_html('<a class="button" href="{}" style="background-color:{}"target="_blank">Invoices ({})</a>',
                            reverse('show_members', args=[obj.pk]), color, open_invoices)
 
-    list_display = ['members_actions', 'name', 'surname', 'rfid', 'is_staff', 'is_committee']
-    list_display_links = ['name', 'surname']
+    def formatted_name(self, member):
+        if member.is_resigned:
+            return format_html('<div style="background-color:LightCoral">{}</div>',
+                           member.name)
+        else:
+            return member.name
+
+
+
+    list_display = ['members_actions', 'formatted_name', 'surname', 'rfid', 'is_staff', 'is_committee']
+    list_display_links = ['formatted_name', 'surname']
     search_fields = ['name', 'surname', 'rfid', 'visa']
     ordering = ['name', 'surname']
     readonly_fields = ['get_tariff', 'is_in_mail_list']

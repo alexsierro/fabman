@@ -27,6 +27,7 @@ class Member(models.Model):
         ('alias', 'Alias de facturation'),
         ('no_member', 'Non-membre'),
         ('hes', 'HES cours ou labo'),
+        ('ell', 'Energy Living Lab'),
         ('interne', 'Interne'),
     ]
 
