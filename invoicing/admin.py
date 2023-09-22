@@ -22,7 +22,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                 color = 'green'
 
             return format_html('<a class="button" style="background-color:{}" href="{}" target="_blank">Show</a>',
-                               color, reverse('show_invoice', args=[obj.invoice_number]))
+                               color, reverse('show_pdf_invoice', args=[obj.invoice_number]))
         else:
             return ''
 

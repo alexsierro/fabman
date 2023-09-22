@@ -1,8 +1,14 @@
+import tempfile
+from io import BytesIO
+
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.template.loader import get_template
 from django.utils import timezone
+from xhtml2pdf import pisa
 
+from fabman.settings import STATIC_ROOT, MEDIA_ROOT, STATIC_URL, MEDIA_URL
 from invoicing.models import Invoice, Usage, AccountEntry
 from django.db.models import Max, Sum, Q
 from qrbill.bill import QRBill
@@ -54,14 +60,14 @@ def prepare(request, create=False):
                       member=member,
                       invoice_number=invoice_number)
 
-    print(total_amount)
     if create:
         invoice.save()
 
         if deduction > 0:
-            AccountEntry.objects.create(member=member, amount_machine=-deduction_machine, amount_cash=-deduction_cash, invoice=invoice)
+            AccountEntry.objects.create(member=member, amount_machine=-deduction_machine, amount_cash=-deduction_cash,
+                                        invoice=invoice)
 
-        invoice.date_invoice=timezone.now()
+        invoice.date_invoice = timezone.now()
         invoice.save()
         usages.update(invoice=invoice)
         usages = Usage.objects.filter(invoice=invoice)
@@ -114,11 +120,14 @@ def create(request):
         return redirect('show_invoice', invoice_number=result['invoice'].invoice_number)
 
 
-def show(request, invoice_number):
+from weasyprint import HTML
+
+
+def show_invoice(request, invoice_number):
     if not request.user.is_staff:
         raise PermissionDenied
 
-    invoice = Invoice.objects.get(invoice_number = invoice_number)
+    invoice = Invoice.objects.get(invoice_number=invoice_number)
     number = invoice_number
     number_ref = number + esr.calc_check_digit(number)
 
@@ -129,7 +138,6 @@ def show(request, invoice_number):
                                      'unit_price',
                                      'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')
                                                                ).order_by('project__name')
-
 
     # use_project is true if at last one project is used
     projects = usages.values('project').distinct()
@@ -145,31 +153,53 @@ def show(request, invoice_number):
 
     my_bill = QRBill(
         language='fr',
-        ref_number= number_ref,
+        ref_number=number_ref,
         account='CH5530808007723788063',
         creditor={
-         'name': 'FabLab Sion' , 'pcode': '1950', 'city': 'Sion',
+            'name': 'FabLab Sion', 'pcode': '1950', 'city': 'Sion',
         },
         debtor={
-            'name': f'{invoice.member.name} {invoice.member.surname}' , 'pcode': '1950', 'city': invoice.member.locality, 'street': invoice.member.address,
+            'name': f'{invoice.member.name} {invoice.member.surname}', 'pcode': '1950', 'city': invoice.member.locality,
+            'street': invoice.member.address,
         },
-        amount= invoice.amount_due,
+        amount=invoice.amount_due,
+        top_line=True,
+        payment_line=True
     )
-    my_bill.as_svg('media/invoicing.svg')
 
-    balance = AccountEntry.objects.\
-        filter(Q(date__lte=invoice.date_invoice) | Q(invoice=invoice), member=invoice.member,).\
+    with tempfile.TemporaryFile(encoding='utf-8', mode='r+') as temp:
+        my_bill.as_svg(temp)
+        temp.seek(0)
+        qrbill_svg = temp.read()
+
+    balance = AccountEntry.objects. \
+        filter(Q(date__lte=invoice.date_invoice) | Q(invoice=invoice), member=invoice.member, ). \
         aggregate(machine=Sum('amount_machine'), cash=Sum('amount_cash'))
 
     amount_cash_after = balance['cash'] or 0
     amount_machine_after = balance['machine'] or 0
 
-    return render(request, 'show_invoice.html', {'invoice': invoice,
-                                                 'member_info': invoice.member,
-                                                 'usages_anotated': usages_annotated,
-                                                 'amount_other_usages': amount_other_usages,
-                                                 'amount_machine_usages': amount_machine_usages,
-                                                 'amount_cash_after': amount_cash_after,
-                                                 'amount_machine_after': amount_machine_after,
-                                                 'use_projects': use_projects
-                                                 })
+    is_pdf = request.resolver_match.url_name == 'show_pdf_invoice'
+
+    template = get_template('show_invoice.html')
+
+    html = template.render({'invoice': invoice,
+                            'member_info': invoice.member,
+                            'usages_anotated': usages_annotated,
+                            'amount_other_usages': amount_other_usages,
+                            'amount_machine_usages': amount_machine_usages,
+                            'amount_cash_after': amount_cash_after,
+                            'amount_machine_after': amount_machine_after,
+                            'use_projects': use_projects,
+                            'STATIC_PREFIX': ('file://' + STATIC_ROOT if is_pdf else STATIC_URL) + '/',
+                            'MEDIA_PREFIX': ('file://' + MEDIA_ROOT if is_pdf else MEDIA_URL) + '/',
+                            'QRBILL_SVG': qrbill_svg
+                            })
+
+    if is_pdf:
+        pdf_file = HTML(string=html).write_pdf()
+        response = HttpResponse(pdf_file, content_type="application/pdf")
+    else:
+        response = HttpResponse(html)
+
+    return response

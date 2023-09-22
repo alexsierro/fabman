@@ -5,7 +5,6 @@ register = template.Library()
 
 @register.filter
 def running_total(usages: object) -> object:
-    print(usages)
     return sum(usage.get('total_price') for usage in usages)
 
 
@@ -27,5 +26,4 @@ def format_quantity(value: object) -> object:
 
 @register.filter
 def must_use_projects(usages_list):
-    print(usages_list)
     return True
