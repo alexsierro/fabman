@@ -63,7 +63,7 @@ def prepare(request, create=False):
     if create:
         invoice.save()
 
-        if deduction > 0:
+        if deduction != 0:
             AccountEntry.objects.create(member=member, amount_machine=-deduction_machine, amount_cash=-deduction_cash,
                                         invoice=invoice)
 
