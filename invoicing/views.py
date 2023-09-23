@@ -6,7 +6,6 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.template.loader import get_template
 from django.utils import timezone
-from xhtml2pdf import pisa
 
 from fabman.settings import STATIC_ROOT, MEDIA_ROOT, STATIC_URL, MEDIA_URL
 from invoicing.models import Invoice, Usage, AccountEntry
