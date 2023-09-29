@@ -35,7 +35,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 #########
 
 # pull official base image
-FROM python:3.8.3-alpine
+FROM python:3.8.18-alpine3.18
 
 # create directory for the app user
 RUN mkdir -p /home/app
@@ -52,6 +52,10 @@ WORKDIR $APP_HOME
 
 # install dependencies
 RUN apk update && apk add libpq postgresql-client gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
+RUN apk add fontconfig ttf-freefont font-terminus font-inconsolata font-dejavu font-noto font-noto-cjk font-awesome font-noto-extra\
+   && fc-cache -f \
+   && fc-list | sort
+
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.txt .
 RUN pip install --upgrade pip

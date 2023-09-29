@@ -51,7 +51,7 @@ th {
     margin-top : 0;
     padding-bottom : 0;
     padding-top : 0;
-    font-family: Arial
+    font-family: "Inconsolata";
 }
 
 h2{
@@ -120,16 +120,15 @@ grid-column: 1/4;
 }
 .chiffre {
     text-align: right !important;
-    padding-right: 3mm;
+    padding-right: 0mm;
 }
 
-.chiffre {
+.chiffre-center {
     text-align: right !important;
-    padding-right: 3mm;
+    padding-right: 5mm;
     padding-left: 5mm;
+    background-color: red;
 }
-
-
 
 </style>
 
@@ -162,10 +161,10 @@ grid-column: 1/4;
 
             <table class="export-table" style="width: 100%">
                 <tr class="titre_tableau">
-                    <th style="width:80mm">Désignation</th>
-                    <th colspan="2" style="width:20mm">Quantité</th>
-                    <th colspan="2" style="width:20mm">Prix</th>
-                    <th colspan="2" style="width:20mm">Total</th>
+                    <th style="width:55%">Désignation</th>
+                    <th colspan="2" style="width:15%">Quantité</th>
+                    <th colspan="2" style="width:15%">Prix</th>
+                    <th colspan="2" style="width:15%">Total</th>
                 </tr>
 
                 {% regroup usages_anotated by project__name as usages_list %}
