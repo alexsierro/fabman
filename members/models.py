@@ -73,7 +73,9 @@ class Member(models.Model):
 
     @property
     def is_in_mail_list(self):
-        return self.subscription_status not in ['resigned'] and self.member_type not in['no_member']
+        return self.subscription_status not in ['resigned'] \
+            and self.member_type not in['no_member'] \
+            and not self.is_resigned
 
     def __str__(self):
         return f'{self.name} {self.surname}'
