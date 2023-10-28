@@ -41,6 +41,8 @@ class Invoice(models.Model):
     date_paid = models.DateField('Paid date', default=None, null=True, blank=True)
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD, default=None, null=True, blank=True)
     comments = models.TextField(max_length=2000, default=None, null=True, blank=True)
+    was_sent_by_email = models.BooleanField(default=False)
+    was_sent_by_post = models.BooleanField(default=False)
 
     @property
     def amount_due(self):
@@ -153,6 +155,8 @@ class Usage(models.Model):
     edited_by = models.ForeignKey('members.Member', related_name='editor', on_delete=models.PROTECT, default=None,
                                   null=True, blank=True)
     comment = models.CharField(max_length=200, blank=True)
+    year = models.IntegerField(null=True, blank=True, help_text="Only for year specific resources like membership")
+
 
     def get_resource_unit(self):
         return self.resource.unit

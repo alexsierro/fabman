@@ -39,6 +39,11 @@ class Member(models.Model):
         ('resigned', '4 - Démission'),
     ]
 
+    PREFERRED_INVOICE_METHOD = [
+        ('email', 'email'),
+        ('post', 'post')
+    ]
+
 
     user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, null=True, blank=True)
     name = models.CharField('Nom', max_length=200)
@@ -59,6 +64,7 @@ class Member(models.Model):
     is_committee = models.BooleanField('Comité', default=False)
     bank_name = models.CharField(max_length=200, default=None, null=True, blank=True)
     iban = models.CharField(max_length=200, default=None, null=True, blank=True)
+    preferred_invoice_method = models.CharField(max_length=20, choices=PREFERRED_INVOICE_METHOD, default='email')
 
     @property
     def get_tariff(self):
