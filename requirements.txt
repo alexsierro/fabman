@@ -21,3 +21,4 @@ django-storages[boto3]
 boto3==1.21.46
 Pillow==10.0
 weasyprint==59.0
+python-dotenv==1.0.0

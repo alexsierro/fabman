@@ -19,6 +19,8 @@ _locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -32,6 +34,8 @@ if production:
     SECRET_KEY = os.environ.get('SECRET_KEY')
 else:
     SECRET_KEY = 'nn@cmln2bw@@omr+_5k)!g&ylxvn+(+j@4=@1=*euv0fw3wbvi'
+    from dotenv import load_dotenv
+    load_dotenv('../email.env')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -164,3 +168,11 @@ if production:
 else:
     DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
     DBBACKUP_STORAGE_OPTIONS = {'location': 'backup/'}
+
+
+# Get email configuration from environment variables
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = os.environ.get('EMAIL_PORT')
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
