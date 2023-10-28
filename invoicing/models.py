@@ -48,6 +48,14 @@ class Invoice(models.Model):
     def amount_due(self):
         return self.amount - self.amount_deduction_machine - self.amount_deduction_cash
 
+    @property
+    def is_sent(self):
+        return self.was_sent_by_email or self.was_sent_by_post
+
+    @property
+    def is_paid(self):
+        return self.status == 'paid'
+
     def __str__(self):
         if self.member is None:
             return (f'{self.invoice_number}')

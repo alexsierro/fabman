@@ -11,6 +11,25 @@ from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, Re
     Expense, UsageSummary, Image, AccountSummary
 
 
+class InvoiceSentListFiler(admin.SimpleListFilter):
+    title = 'is_sent'
+    parameter_name = 'is_sent'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('Yes', 'Yes'),
+            ('No', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == 'Yes':
+            return queryset.exclude(was_sent_by_email=False, was_sent_by_post=False)
+        elif value == 'No':
+            return queryset.filter(Q(was_sent_by_email=False) & Q(was_sent_by_post=False))
+        return queryset
+
+
 class InvoiceAdmin(admin.ModelAdmin):
     change_list_template = "admin/invoice_change_list.html"
 
@@ -26,11 +45,19 @@ class InvoiceAdmin(admin.ModelAdmin):
         else:
             return ''
 
-    list_display = ['invoice_actions', 'invoice_number', 'member', 'date_invoice', 'date_paid', 'amount_due', 'status', 'comments']
+    list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'member', 'date_invoice', 'date_paid', 'amount_due', 'status', 'comments']
     list_display_links = ['invoice_number', ]
-    readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', ]
+    readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', 'is_sent']
     search_fields = ['member__name', 'member__surname']
-    list_filter = ['status']
+    list_filter = ['status',  InvoiceSentListFiler]
+
+    @admin.display(boolean=True)
+    def is_sent(self, obj):
+        return obj.is_sent
+
+    @admin.display(boolean=True)
+    def is_paid(self, obj):
+        return obj.is_paid
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
