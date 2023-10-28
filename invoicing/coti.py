@@ -2,6 +2,7 @@
 
 import os
 import sys
+import datetime
 import django
 
 sys.path.append('..')
@@ -18,11 +19,15 @@ if __name__ == '__main__':
     cotiEtudiant = Resource.objects.get(slug='cotisation-etudiant')
     cotiPassif = Resource.objects.get(slug='cotisation-passif')
 
-    members = Member.objects.filter(is_resigned=False, date_resigned__isnull=True) #, is_resigned=False, date_resigned__isnull=False)
+    today = datetime.date.today()
+    year = today.year
+    print(f'{year=}')
+
+    # get all members that are not resigned
+    members = Member.objects.filter(is_resigned=False, date_resigned__isnull=True)
 
     for member in members:
 
-        print(member)
         if member.member_type in ['membre', 'etudiant', 'passif', 'alias']:
 
             if member.member_type == 'etudiant':
@@ -32,7 +37,9 @@ if __name__ == '__main__':
             else:
                 coti = cotiMembre
 
-            usage = Usage.objects.create(member=member, resource=coti, qty=1)
+            usage = Usage.objects.create(member=member, resource=coti, qty=1, year=year)
+            print(f'{usage}')
 
-            if not member.is_staff:
-                credit = AccountEntry.objects.create(member=member, amount_machine=50)
+        else:
+
+            print(f' --- Unknown member type: {member.member_type} - {member}')
