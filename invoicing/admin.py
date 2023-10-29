@@ -1,12 +1,13 @@
 import csv
 import datetime
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Count, Sum, Q, F
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
+from .invoice_mail_helper import send_invoice
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
     Expense, UsageSummary, Image, AccountSummary
 
@@ -45,11 +46,28 @@ class InvoiceAdmin(admin.ModelAdmin):
         else:
             return ''
 
+    @admin.action(description='Send selected invoices by email')
+    def send_by_email(self, request, queryset):
+        successfully_sent_count = 0
+        for invoice in queryset:
+            if invoice.is_sent:
+                self.message_user(request, f'Invoice {invoice.invoice_number} not send because it is already marked as send. Remove send flag(s) to resend.', messages.WARNING)
+            else:
+                try:
+                    send_invoice(invoice)
+                    successfully_sent_count += 1
+                except Exception as e:
+                    self.message_user(request, f'Error sending invoice {invoice.invoice_number}: {e}', messages.ERROR)
+
+        if successfully_sent_count > 0:
+            self.message_user(request, f'{successfully_sent_count} invoices sent by email', messages.SUCCESS)
+
     list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'member', 'date_invoice', 'date_paid', 'amount_due', 'status', 'comments']
     list_display_links = ['invoice_number', ]
     readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', 'is_sent']
     search_fields = ['member__name', 'member__surname']
     list_filter = ['status',  InvoiceSentListFiler]
+    actions = ['send_by_email']
 
     @admin.display(boolean=True)
     def is_sent(self, obj):

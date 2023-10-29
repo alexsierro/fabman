@@ -36,6 +36,7 @@ else:
     SECRET_KEY = 'nn@cmln2bw@@omr+_5k)!g&ylxvn+(+j@4=@1=*euv0fw3wbvi'
     from dotenv import load_dotenv
     load_dotenv('../email.env')
+    load_dotenv('email.env')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -176,3 +177,9 @@ EMAIL_PORT = os.environ.get('EMAIL_PORT')
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_FROM = os.environ.get('EMAIL_FROM')
+EMAIL_DEBUG_RECEIVER = os.environ.get('EMAIL_DEBUG_RECEIVER')
+
+
+print(f'{EMAIL_HOST_USER=}')
+print(f'{EMAIL_DEBUG_RECEIVER=}')

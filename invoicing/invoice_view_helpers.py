@@ -49,7 +49,7 @@ def get_invoice_html(invoice_number, is_for_pdf=False):
         },
         amount=invoice.amount_due,
         top_line=True,
-        payment_line=True
+        payment_line=False
     )
 
     with tempfile.TemporaryFile(encoding='utf-8', mode='r+') as temp:

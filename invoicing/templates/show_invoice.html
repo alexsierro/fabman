@@ -10,295 +10,322 @@
 <style>
 
 
-@page {
-    size: A4 portrait;
-    margin: 0cm;
-    margin-top: 1cm;
-    margin-bottom: 1cm;
-}
+    @page {
+        size: A4 portrait;
+        margin: 0cm;
+        margin-top: 1cm;
+        margin-bottom: 1cm;
+    }
 
-html {
+    html {
 
-    margin: 2cm;
-    margin-top: 0cm;
-    margin-bottom: 0cm;
-  color: #14213d;
-  font-family: "Inconsolata";
-  font-size: 11pt;
-  line-height: 1.3;
-}
-body {
-  margin: 0;
-  /*background: #fbca4d;*/
-}
+        margin: 2cm;
+        margin-top: 0cm;
+        margin-bottom: 0cm;
+        color: #14213d;
+        font-family: "Inconsolata";
+        font-size: 11pt;
+        line-height: 1.3;
+    }
 
-h1 {
-  color: #1ee494;
-  font-size: 40pt;
-  margin: 0;
-}
+    body {
+        margin: 0;
+        /*background: #fbca4d;*/
+    }
 
-aside {
-  display: flex;
-  margin: 2em 0 4em;
-}
-aside address {
-  font-style: normal;
-  white-space: pre-line;
-}
-aside address#from {
-  color: #a9a;
-  flex: 1;
-}
-aside address#to {
-    text-align: right;
-    margin-top: 25mm;
-}
+    h1 {
+        color: #1ee494;
+        font-size: 40pt;
+        margin: 0;
+    }
 
-dl {
-  position: absolute;
-  right: 0;
-  text-align: right;
-  top: 0;
-}
-dt, dd {
-  display: inline;
-  margin: 0;
-}
-dt {
-  color: #a9a;
-}
-dt::before {
-  content: '';
-  display: block;
-}
-dt::after {
-  content: ':';
-}
+    aside {
+        display: flex;
+        margin: 2em 0 4em;
+    }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-th {
-  border-bottom: .2mm solid #a9a;
-  color: #ffffff;
-    background-color: rgb(92, 92, 92) !important;
-  font-size: 10pt;
-  font-weight: 400;
-  /*  padding-bottom: .25cm;*/
-  text-transform: uppercase;
-}
-td {
+    aside address {
+        font-style: normal;
+        white-space: pre-line;
+    }
 
-}
-td:last-of-type {
+    aside address#from {
+        color: #a9a;
+        flex: 1;
+    }
 
-}
-th, td {
-  text-align: center;
-}
-th:first-of-type, td:first-of-type {
-  text-align: left;
-}
-th:last-of-type, td:last-of-type {
-  text-align: right;
-}
-table#total {
-  background: #f6f6f6;
-  border-color: #f6f6f6;
-  border-style: solid;
-  border-width: 2cm 3cm;
-  bottom: 0;
-  font-size: 20pt;
-  margin: 0 -3cm;
-  position: absolute;
-  width: 18cm;
-}
+    aside address#to {
+        text-align: right;
+        margin-top: 25mm;
+    }
+
+    dl {
+        position: absolute;
+        right: 0;
+        text-align: right;
+        top: 0;
+    }
+
+    dt, dd {
+        display: inline;
+        margin: 0;
+    }
+
+    dt {
+        color: #a9a;
+    }
+
+    dt::before {
+        content: '';
+        display: block;
+    }
+
+    dt::after {
+        content: ':';
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th {
+        border-bottom: .2mm solid #a9a;
+        color: #ffffff;
+        background-color: rgb(92, 92, 92) !important;
+        font-size: 10pt;
+        font-weight: 400;
+        /*  padding-bottom: .25cm;*/
+        text-transform: uppercase;
+    }
+
+    td {
+
+    }
+
+    td:last-of-type {
+
+    }
+
+    th, td {
+        text-align: center;
+    }
+
+    th:first-of-type, td:first-of-type {
+        text-align: left;
+    }
+
+    th:last-of-type, td:last-of-type {
+        text-align: right;
+    }
+
+    table#total {
+        background: #f6f6f6;
+        border-color: #f6f6f6;
+        border-style: solid;
+        border-width: 2cm 3cm;
+        bottom: 0;
+        font-size: 20pt;
+        margin: 0 -3cm;
+        position: absolute;
+        width: 18cm;
+    }
 
 
-.detail:nth-child(odd) {
-     background-color: #EEE !important;
-}
-.detail:nth-child(even) {
-     background-color: #FFF !important;
-     padding: 5px;
-}
+    .detail:nth-child(odd) {
+        background-color: #EEE !important;
+    }
 
-.tot_projet td{
-     border-top : solid 2px;
+    .detail:nth-child(even) {
+        background-color: #FFF !important;
+        padding: 5px;
+    }
 
-}
+    .tot_projet td {
+        border-top: solid 2px;
 
-.total td{
-    padding-top : 20mm;
-}
-.chiffre {
-    text-align: right !important;
-    padding-right: 0mm;
-}
+    }
 
-.chiffre-center {
-    text-align: right !important;
-    padding-right: 5mm;
-    padding-left: 5mm;
-}
+    .total td {
+        padding-top: 20mm;
+    }
 
-#logo {
-    height: 20mm;
-}
+    .chiffre {
+        text-align: right !important;
+        padding-right: 0mm;
+    }
 
-.facture{
-    margin-top: 5mm;
-}
+    .chiffre-center {
+        text-align: right !important;
+        padding-right: 5mm;
+        padding-left: 5mm;
+    }
 
-.qrCode{
-    position: absolute;
-    left: 0px;
-    margin-top: 5mm;
-}
+    #logo {
+        height: 20mm;
+    }
+
+    .facture {
+        margin-top: 5mm;
+    }
+
+    .qrCode {
+        margin-left: -2cm;
+        margin-top: 5mm;
+        margin-bottom: 5mm;
+    }
+
+    .no-break {
+        break-inside: avoid-page;
+    }
 
 
 </style>
 
 <body>
-        <aside>
-        <address id="from">
-            <img id="logo" src="{{ STATIC_PREFIX }}img/logo.png" alt="Logo FabLab Sion"><br>
-            FabLab Sion
-            c/o Fabulle
-            Energypolis
-            Rue de l’industrie 23
-            1950 Sion
-            compta@fablabsion.ch
-        </address>
+<aside>
+    <address id="from">
+        <img id="logo" src="{{ STATIC_PREFIX }}img/logo.png" alt="Logo FabLab Sion"><br>
+        FabLab Sion
+        c/o Fabulle
+        Energypolis
+        Rue de l’industrie 23
+        1950 Sion
+        compta@fablabsion.ch
+    </address>
 
-            <address id="to">
-             {{ member_info.name }} {{ member_info.surname }}
-                {{ member_info.address|default_if_none:" " }}
-                {{ member_info.npa|default_if_none:" " }} {{ member_info.locality|default_if_none:" " }}
+    <address id="to">
+        {{ member_info.name }} {{ member_info.surname }}
+        {{ member_info.address|default_if_none:" " }}
+        {{ member_info.npa|default_if_none:" " }} {{ member_info.locality|default_if_none:" " }}
 
-            </address>
-        </aside>
+    </address>
+</aside>
 
-    <p style="padding-top:0px">Sion, le {{ invoice.date_invoice|date:"d.m.Y"}}</p>
+<p style="padding-top:0px">Sion, le {{ invoice.date_invoice|date:"d.m.Y" }}</p>
 
-        <div class="commentaire">
-            <h2>{% if invoice.status == "rappel1" %} Rappel : {% endif %} {% if invoice.status == "rappel2" %} 2e rappel : {% endif %} Facture {{ invoice.invoice_number }}</h2>
-            {% if invoice.comments %}
-            <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
-            {%  endif %}
-            Voici la facture pour ton utilisation du FabLab Sion.</br>
-                Nous t'invitons à la régler dans un délai de 30 jours.<br>
-                Pour toute demande merci de contacter le caissier par e-mail compta@fablabsion.ch
+<div class="commentaire">
+    <h2>{% if invoice.status == "rappel1" %} Rappel : {% endif %} {% if invoice.status == "rappel2" %} 2e rappel
+        : {% endif %} Facture {{ invoice.invoice_number }}</h2>
+    {% if invoice.comments %}
+        <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
+    {% endif %}
+    Voici la facture pour ton utilisation du FabLab Sion.</br>
+    Nous t'invitons à la régler dans un délai de 30 jours.<br>
+    Pour toute demande merci de contacter le caissier par e-mail compta@fablabsion.ch
 
-        </div>
+</div>
 
-        <div class="facture">
+<div class="facture">
+    <table class="export-table">
+        <tr>
+            <th style="width:55%">Désignation</th>
+            <th colspan="2" style="width:15%">Quantité</th>
+            <th colspan="2" style="width:15%">Prix</th>
+            <th colspan="2" style="width:15%">Total</th>
+        </tr>
+    </table>
+        {% regroup usages_anotated by project__name as usages_list %}
 
-            <table class="export-table">
+        {% for project__name, project_usages in usages_list %}
+            <table class="no-break">
+            {% if use_projects %}
                 <tr>
-                    <th style="width:55%">Désignation</th>
-                    <th colspan="2" style="width:15%">Quantité</th>
-                    <th colspan="2" style="width:15%">Prix</th>
-                    <th colspan="2" style="width:15%">Total</th>
-                </tr>
-
-                {% regroup usages_anotated by project__name as usages_list %}
-
-                {% for project__name, project_usages in usages_list %}
-
-                {% if use_projects %}
-                <tr>
-                    <td ><h4>Projet : {{ project__name|default_if_none:"Non spécifié" }} </h4></td>
+                    <td><h4>Projet : {{ project__name|default_if_none:"Non spécifié" }} </h4></td>
                     <td></td>
                 </tr>
-                {% endif %}
-                {% for usage in project_usages %}
+            {% endif %}
+            {% for usage in project_usages %}
                 <tr class="detail">
                     <td>
-                        {% if usage.comment%}
-                             {{ usage.comment }}
+                        {% if usage.comment %}
+                            {{ usage.comment }}
                         {% else %}
-                             {{ usage.resource__name }}
+                            {{ usage.resource__name }}
                         {% endif %}
                     </td>
-                    <td > {{ usage.resource__unit__name}}</td>
+                    <td> {{ usage.resource__unit__name }}</td>
                     <td class="chiffre-center">{{ usage.qty|floatformat:"-2" }}</td>
                     <td>CHF</td>
-                    <td class="chiffre-center">{{ usage.unit_price|format_currency}}</td>
+                    <td class="chiffre-center">{{ usage.unit_price|format_currency }}</td>
                     <td>CHF</td>
                     <td class="chiffre">{{ usage.total_price|format_currency }}</td>
                 </tr>
-                {% endfor %}
-                {% if use_projects %}
+            {% endfor %}
+            {% if use_projects %}
                 <tr class="tot_projet">
                     <td colspan="6">Total pour le projet "{{ project__name|default_if_none:'non spécifié' }}" :</td>
                     <td class="chiffre">{{ project_usages|running_total|format_currency }}</td>
                 </tr>
-                {% endif %}
-                {% endfor %}
-
-                {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
-                <tr>
-                    <td colspan="5" style="text-align: right; padding-right : 5mm; border-top: solid 2px">Sous-total</td>
-                    <td style="border-top: solid 2px"> CHF </td>
-                    <td class="chiffre" style="border-top: solid 2px">{{ invoice.amount|format_currency }}</td>
-                </tr>
-                {% endif %}
-
-                {% if invoice.amount_deduction_machine > 0 %}
-                <tr>
-                    <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
-                    <td> CHF </td>
-                    <td class="chiffre">{{ invoice.amount_deduction_machine|format_currency }}</td>
-                </tr>
-                {% endif %}
-                {% if invoice.amount_deduction_cash > 0 %}
-                <tr>
-                    <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
-                    <td> CHF </td>
-                    <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_deduction_cash|format_currency }}</td>
-                </tr>
-                {% endif %}
-
-                <tr>
-                    <td colspan="5" style="text-align: right; padding-right : 5mm; font-weight: lighter  ; border-top: solid 2px"><b>Total à payer</b></td>
-                    <td style=" border-top: solid 2px"> CHF </td>
-                    <td class="chiffre" style="font-weight: bold; border-top: solid 2px">{{ invoice.amount_due|format_currency }}</td>
-                </tr>
-
+            {% endif %}
             </table>
+        {% endfor %}
 
 
-        {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0%}
-
-            <h3>Avoir restant</h3>
-            <table style="width:100%">
-                <tr class="titre_tableau">
-                    <th style="width:86%">Désignation</th>
-                    <th colspan="2" style="width:14%">Total</th>
-                </tr>
-                <tr>
-                    <td>Crédit machine</td>
-                    <td>CHF</td>
-                    <td class="chiffre">{{ amount_machine_after|format_currency }}</td>
-                </tr>
-                <tr>
-                    <td  style="background-color: #EEE !important";>Autre</td>
-                    <td style="background-color: #EEE !important";>CHF</td>
-                    <td  style=" background-color: #EEE !important"; class="chiffre">{{ amount_cash_after|format_currency }}</td>
-                </tr>
-            </table>
-        </br>
-        </div>
+        <table class="no-break">
+        {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
+            <tr>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; border-top: solid 2px">Sous-total</td>
+                <td style="border-top: solid 2px"> CHF</td>
+                <td class="chiffre" style="border-top: solid 2px">{{ invoice.amount|format_currency }}</td>
+            </tr>
         {% endif %}
 
-    </div>
+        {% if invoice.amount_deduction_machine > 0 %}
+            <tr>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
+                <td> CHF</td>
+                <td class="chiffre">{{ invoice.amount_deduction_machine|format_currency }}</td>
+            </tr>
+        {% endif %}
+        {% if invoice.amount_deduction_cash > 0 %}
+            <tr>
+                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
+                <td> CHF</td>
+                <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_deduction_cash|format_currency }}</td>
+            </tr>
+        {% endif %}
+
+        <tr>
+            <td colspan="5"
+                style="text-align: right; padding-right : 5mm; font-weight: lighter  ; border-top: solid 2px"><b>Total à
+                payer</b></td>
+            <td style=" border-top: solid 2px"> CHF</td>
+            <td class="chiffre"
+                style="font-weight: bold; border-top: solid 2px">{{ invoice.amount_due|format_currency }}</td>
+        </tr>
+
+    </table>
+
+
+    {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0 %}
+        <div class="no-break">
+        <h3>Avoir restant</h3>
+        <table style="width:100%">
+            <tr class="titre_tableau">
+                <th style="width:86%">Désignation</th>
+                <th colspan="2" style="width:14%">Total</th>
+            </tr>
+            <tr>
+                <td>Crédit machine</td>
+                <td>CHF</td>
+                <td class="chiffre">{{ amount_machine_after|format_currency }}</td>
+            </tr>
+            <tr>
+                <td style="background-color: #EEE !important" ;>Autre</td>
+                <td style="background-color: #EEE !important" ;>CHF</td>
+                <td style=" background-color: #EEE !important" ;
+                    class="chiffre">{{ amount_cash_after|format_currency }}</td>
+            </tr>
+        </table>
+        </div>
+        <br/>
+        </div>
+    {% endif %}
 </div>
 <div class="qrCode">
-    {{ QRBILL_SVG | safe}}
-   <!-- <img src="{{ MEDIA_PREFIX }}invoicing.svg" alt="QR Facture"> -->
+    {{ QRBILL_SVG | safe }}
+    <!-- <img src="{{ MEDIA_PREFIX }}invoicing.svg" alt="QR Facture"> -->
 </div>
 
 </body>

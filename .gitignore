@@ -9,3 +9,4 @@ invoicing/usage.csv
 /.env.prod
 static/
 backup/
+/email.env
