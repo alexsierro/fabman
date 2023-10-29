@@ -61,6 +61,7 @@ class Member(models.Model):
     is_resigned = models.BooleanField('Démission', default=False)
     date_resigned = models.DateField('Date démission', default=None, null=True, blank=True)
     is_staff = models.BooleanField('Animateur', default=False)
+    is_allowed_to_open_cash_register = models.BooleanField('Ouverture caisse (pour non animateur)', default=False, null=False, blank=False)
     is_committee = models.BooleanField('Comité', default=False)
     bank_name = models.CharField(max_length=200, default=None, null=True, blank=True)
     iban = models.CharField(max_length=200, default=None, null=True, blank=True)

@@ -40,7 +40,7 @@ def user(request, uid):
 def user2(request, uid):
     member = Member.objects.filter(rfid=uid).first()
     if member:
-        response = {'visa': member.visa, 'animateur': member.is_staff, 'tariff': member.get_tariff}
+        response = {'visa': member.visa, 'animateur': member.is_staff or member.is_allowed_to_open_cash_register, 'tariff': member.get_tariff}
         return JsonResponse(response)
 
     project_card = ProjectCard.objects.filter(rfid=uid).first()
