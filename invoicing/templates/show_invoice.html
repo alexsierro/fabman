@@ -294,7 +294,7 @@
             <td class="chiffre"
                 style="font-weight: bold; border-top: solid 2px">{{ invoice.amount_due|format_currency }}</td>
         </tr>
-
+    </table>
 
     {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0 %}
         <div class="no-break">
