@@ -24,7 +24,7 @@ Le caissier
 
 """
 
-    to = EMAIL_DEBUG_RECEIVER if DEBUG else invoice.member.email
+    to = EMAIL_DEBUG_RECEIVER if DEBUG else invoice.member.mail
 
     email = EmailMessage(
         f"Facture {invoice.invoice_number} - FabLab Sion",
