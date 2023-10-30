@@ -30,5 +30,5 @@ if __name__ == '__main__':
             send_invoice(invoice)
 
         except Exception as e:
-            print(f'Error sending invoice {invoice.invoice_number}')
+            print(f'Error sending invoice {invoice}')
             print(e)

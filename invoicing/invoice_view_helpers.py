@@ -18,6 +18,7 @@ def get_invoice_html(invoice_number, is_for_pdf=False):
 
     usages = Usage.objects.filter(invoice=invoice)
     usages_annotated = usages.values('resource__name',
+                                     'year',
                                      'comment',
                                      'resource__unit__name',
                                      'unit_price',

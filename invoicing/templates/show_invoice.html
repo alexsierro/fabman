@@ -224,11 +224,9 @@
             <th colspan="2" style="width:15%">Prix</th>
             <th colspan="2" style="width:15%">Total</th>
         </tr>
-    </table>
         {% regroup usages_anotated by project__name as usages_list %}
 
         {% for project__name, project_usages in usages_list %}
-            <table class="no-break">
             {% if use_projects %}
                 <tr>
                     <td><h4>Projet : {{ project__name|default_if_none:"Non spécifié" }} </h4></td>
@@ -242,6 +240,9 @@
                             {{ usage.comment }}
                         {% else %}
                             {{ usage.resource__name }}
+                            {% if usage.year %}
+                                {{ usage.year }}
+                            {% endif %}
                         {% endif %}
                     </td>
                     <td> {{ usage.resource__unit__name }}</td>
@@ -258,11 +259,10 @@
                     <td class="chiffre">{{ project_usages|running_total|format_currency }}</td>
                 </tr>
             {% endif %}
-            </table>
         {% endfor %}
 
 
-        <table class="no-break">
+
         {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
             <tr>
                 <td colspan="5" style="text-align: right; padding-right : 5mm; border-top: solid 2px">Sous-total</td>
@@ -294,8 +294,6 @@
             <td class="chiffre"
                 style="font-weight: bold; border-top: solid 2px">{{ invoice.amount_due|format_currency }}</td>
         </tr>
-
-    </table>
 
 
     {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0 %}

@@ -40,4 +40,4 @@ Le caissier
     email.send()
 
     invoice.was_sent_by_email = True
-    # invoice.save()
+    invoice.save()

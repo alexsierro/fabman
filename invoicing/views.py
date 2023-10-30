@@ -16,8 +16,7 @@ from stdnum.ch import esr
 from members.models import Member
 
 
-def prepare(request, create=False):
-    member_id = request.POST['member_id']
+def prepare_invoice(member_id, create=False):
 
     invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max'] or 0
     invoice_number = invoice_number_max + 1
@@ -100,7 +99,8 @@ def preview(request):
         return render(request, 'preview_invoice.html', {'choice_member': choice_member})
 
     else:
-        result = prepare(request)
+        member_id = request.POST['member_id']
+        result = prepare_invoice(member_id)
         result['choice_member'] = choice_member
         return render(request, 'preview_invoice.html', result)
 
@@ -116,7 +116,8 @@ def create(request):
         return redirect('preview_invoice')
 
     else:
-        result = prepare(request, True)
+        member_id = request.POST['member_id']
+        result = prepare_invoice(member_id, True)
         return redirect('show_invoice', invoice_number=result['invoice'].invoice_number)
 
 

@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
             if member.member_type == 'etudiant':
                 coti = cotiEtudiant
-            elif member.member_type == 'passi':
+            elif member.member_type == 'passif':
                 coti = cotiPassif
             else:
                 coti = cotiMembre

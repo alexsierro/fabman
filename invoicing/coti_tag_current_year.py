@@ -29,9 +29,10 @@ if __name__ == '__main__':
     # get all untagged usages for this year concerning cotisation
     usages = Usage.objects.filter(year=None, date__year=year, resource__in=[cotiMembre, cotiEtudiant, cotiPassif])
 
-    print(f'{len(usages)=}')
     for usage in usages:
         print(usage)
         print(usage.date)
         usage.year = year
         usage.save()
+
+    print(f'{len(usages)} usages have been tagged with year {year}.')
