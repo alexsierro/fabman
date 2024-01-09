@@ -1,23 +1,19 @@
-import tempfile
-from io import BytesIO
+import csv
+from datetime import datetime
+from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied
+from django.db.models import Max, Sum
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render, redirect
-from django.template.loader import get_template
+from django.shortcuts import render, redirect
 from django.utils import timezone
 
-from fabman.settings import STATIC_ROOT, MEDIA_ROOT, STATIC_URL, MEDIA_URL
 from invoicing.invoice_view_helpers import get_invoice_pdf, get_invoice_html
 from invoicing.models import Invoice, Usage, AccountEntry
-from django.db.models import Max, Sum, Q
-from qrbill.bill import QRBill
-from stdnum.ch import esr
 from members.models import Member
 
 
 def prepare_invoice(member_id, create=False):
-
     invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max'] or 0
     invoice_number = invoice_number_max + 1
 
@@ -135,3 +131,45 @@ def show_invoice(request, invoice_number):
         response = HttpResponse(html)
 
     return response
+
+
+date_format = '%Y-%m-%d %H:%M:%S.%f'
+
+
+def import_ebanking(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    results = list()
+
+    if request.POST:
+        results.append('File read OK')
+        f = request.FILES['sentFile']
+        lines = f.read().decode('iso-8859-1').split('\n')
+        reader = csv.DictReader(lines, delimiter=';')
+
+        for row in reader:
+            date = datetime.strptime(row['Valuta'], date_format)
+            amount = Decimal(row['Betrag'])
+            currency = row['Währung']
+            reference = int(row['Referenznummer'][:-1])
+            payment_type = row['Typ']
+
+            print(date, reference, amount, currency, payment_type)
+
+            if payment_type == 'QRR' and currency == 'CHF':
+
+                invoice = Invoice.objects.get(invoice_number=reference)
+                print(invoice)
+
+                if invoice:
+                    if invoice.amount_due == amount:
+                        invoice.date_paid = date
+                        invoice.payment_method = 'bank'
+                        invoice.status = 'paid'
+                        invoice.save()
+                        results.append(f'Invoice {invoice}, marked paid on {date}.')
+
+        results.append('Import finished')
+
+    return render(request, 'import_ebanking.html', context={'results': results})
