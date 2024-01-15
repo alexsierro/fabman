@@ -47,7 +47,7 @@ jobs:
           context: .
           file: ./Dockerfile.prod
           tags:  ghcr.io/alexsierro/fabman/web:latest
-          outputs: type=oci,dest=/tmp/image.tar
+          outputs: type=oci,dest=/tmp/myimage.tar
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
