@@ -37,8 +37,8 @@ jobs:
     needs: test
 
     steps:
-      - name: Greetings
-        run: echo 'hello build'
+      - name: Build docker image for web
+        run: docker build --file Dockerfile.prod .
 
   deploy:
     runs-on: ubuntu-latest
