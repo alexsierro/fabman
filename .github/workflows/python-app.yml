@@ -48,6 +48,12 @@ jobs:
           file: ./Dockerfile.prod
           tags:  ghcr.io/alexsierro/fabman/web:latest
           outputs: type=oci,dest=/tmp/image.tar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: myimage
+          path: /tmp/myimage.tar
+
 
   deploy:
     runs-on: ubuntu-latest
