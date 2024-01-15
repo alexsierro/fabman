@@ -68,7 +68,7 @@ jobs:
           path: /tmp
       - name: Load image
         run: |
-          docker import --input /tmp/myimage.tar
+          docker import /tmp/myimage.tar
           docker image ls -a
       - name: Push image
         run: |
