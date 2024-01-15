@@ -5,12 +5,10 @@ name: Python application
 
 on:
   push:
-    branches: [ develop ]
-  pull_request:
-    branches: [ develop ]
+    branches: [ develop, main]
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -33,3 +31,20 @@ jobs:
       run: |
         pip install pytest
         python manage.py test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Greetings
+        run: echo 'hello build'
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Greetings
+        run: echo 'hello deploy'
