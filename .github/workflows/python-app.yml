@@ -37,6 +37,7 @@ jobs:
     needs: test
 
     steps:
+      - uses: actions/checkout@v2
       - name: Build docker image for web
         run: docker build --file Dockerfile.prod .
 
