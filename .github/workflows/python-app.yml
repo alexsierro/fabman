@@ -47,12 +47,12 @@ jobs:
           context: .
           file: ./Dockerfile.prod
           tags:  ghcr.io/alexsierro/fabman/web:latest
-          outputs: type=oci,dest=~/mytmp/myimage.tar
+          outputs: type=oci,dest=~/myimage.tar
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: myimage
-          path: ~/mytmp/myimage.tar
+          path: ~/myimage.tar
 
 
   deploy:
@@ -65,10 +65,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: myimage
-          path: ~/mytmp
+          path: ~/
       - name: Load image
         run: |
-          docker load --input ~/mytmp/myimage.tar
+          docker load --input ~/myimage.tar
           docker image ls -a
       - name: Push image
         run: |
