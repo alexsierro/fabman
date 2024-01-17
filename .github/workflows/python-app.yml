@@ -49,5 +49,5 @@ jobs:
 
         - name: 'Build Web Image'
           run: |
-              docker build . --tag ghcr.io/alexsierro/fabman/web:latest -f Dockerfile.prod
-              docker push ghcr.io/alexsierro/fabman/web:latest
+              docker build . --tag ghcr.io/alexsierro/fabman:latest -f Dockerfile.prod
+              docker push ghcr.io/alexsierro/fabman:latest
