@@ -47,7 +47,7 @@ jobs:
             username: ${{github.actor}}
             password: ${{secrets.GITHUB_TOKEN}}
 
-        - name: 'Build Web Image'
+        - name: 'Build and push app image'
           run: |
               docker build . --tag ghcr.io/alexsierro/fabman:latest -f Dockerfile.prod
               docker push ghcr.io/alexsierro/fabman:latest
