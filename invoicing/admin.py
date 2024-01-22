@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
+from . import invoices_export_accounting
 from .invoice_mail_helper import send_invoice
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
     Expense, UsageSummary, Image, AccountSummary
@@ -46,6 +47,11 @@ class InvoiceAdmin(admin.ModelAdmin):
         else:
             return ''
 
+    @admin.action(description='Export csv for accounting')
+    def export_as_csv(self, request, queryset) -> HttpResponse:
+        #return invoices_export_accounting.export_as_csv(self, request, queryset)
+        return "hello"
+
     @admin.action(description='Send selected invoices by email')
     def send_by_email(self, request, queryset):
         successfully_sent_count = 0
@@ -67,7 +73,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', 'is_sent']
     search_fields = ['member__name', 'member__surname']
     list_filter = ['status',  InvoiceSentListFiler]
-    actions = ['send_by_email']
+    actions = ['send_by_email', 'export_as_csv']
 
     @admin.display(boolean=True)
     def is_sent(self, obj):
