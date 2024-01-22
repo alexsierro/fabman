@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
+from . import invoices_export_accounting
 from .invoice_mail_helper import send_invoice
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
     Expense, UsageSummary, Image, AccountSummary
@@ -55,7 +56,9 @@ class InvoiceAdmin(admin.ModelAdmin):
         successfully_sent_count = 0
         for invoice in queryset:
             if invoice.is_sent:
-                self.message_user(request, f'Invoice {invoice.invoice_number} not send because it is already marked as send. Remove send flag(s) to resend.', messages.WARNING)
+                self.message_user(request,
+                                  f'Invoice {invoice.invoice_number} not send because it is already marked as send. Remove send flag(s) to resend.',
+                                  messages.WARNING)
             else:
                 try:
                     send_invoice(invoice)
@@ -66,11 +69,13 @@ class InvoiceAdmin(admin.ModelAdmin):
         if successfully_sent_count > 0:
             self.message_user(request, f'{successfully_sent_count} invoices sent by email', messages.SUCCESS)
 
-    list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'member', 'date_invoice', 'date_paid', 'amount_due', 'status', 'comments']
+    list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'member', 'date_invoice', 'date_paid',
+                    'amount_due', 'status', 'comments']
     list_display_links = ['invoice_number', ]
-    readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash', 'is_sent']
+    readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash',
+                       'is_sent']
     search_fields = ['member__name', 'member__surname']
-    list_filter = ['status',  InvoiceSentListFiler]
+    list_filter = ['status', InvoiceSentListFiler]
     actions = ['send_by_email', 'export_as_csv']
 
     @admin.display(boolean=True)
@@ -162,7 +167,7 @@ class UsageAdmin(admin.ModelAdmin):
                 date_invoice = usage.invoice.date_invoice
                 date_paid = usage.invoice.date_paid
 
-            row = writer.writerow(
+            writer.writerow(
                 [usage.id, usage.member, usage.resource.name, usage.qty, usage.unit_price, usage.total_price,
                  usage.date, date_invoice, date_paid])
 
@@ -319,7 +324,7 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         if year:
 
             total_invoiced = Sum('total_price', filter=(
-                    Q(invoice__date_invoice__year=year)))
+                Q(invoice__date_invoice__year=year)))
 
             total_paid = Sum('total_price', filter=(
                     Q(invoice__date_paid__year=year) & Q(invoice__date_invoice__year=year)))
@@ -332,7 +337,7 @@ class AccountSummaryAdmin(admin.ModelAdmin):
                 'total_used': Sum('total_price', filter=Q(date__year=year)),
                 'total_invoiced': total_invoiced,
                 'total_paid': total_paid,
-                'total_diff' : total_invoiced - total_paid,
+                'total_diff': total_invoiced - total_paid,
                 'total_postpaid': total_postpaid
 
             }
@@ -340,10 +345,10 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         else:
 
             total_invoiced = Sum('total_price', filter=(
-                    Q(invoice__isnull=False)))
+                Q(invoice__isnull=False)))
 
             total_paid = Sum('total_price', filter=(
-                    Q(invoice__date_paid__isnull=False)))
+                Q(invoice__date_paid__isnull=False)))
 
             metrics = {
                 'qty_used': Sum('qty'),
@@ -352,7 +357,7 @@ class AccountSummaryAdmin(admin.ModelAdmin):
                     Q(invoice__isnull=False))),
                 'total_paid': Sum('total_price', filter=(
                     Q(invoice__date_paid__isnull=False))),
-                'total_diff' : total_invoiced - total_paid
+                'total_diff': total_invoiced - total_paid
             }
 
         response.context_data['summary'] = list(
@@ -409,7 +414,8 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
         print(payment_deduction['deduction_cash'])
 
-        payement_methods.append({'payment_method': 'deduction machine', 'amount_due': payment_deduction['deduction_machine']})
+        payement_methods.append(
+            {'payment_method': 'deduction machine', 'amount_due': payment_deduction['deduction_machine']})
         payement_methods.append({'payment_method': 'deduction cash', 'amount_due': payment_deduction['deduction_cash']})
 
         response.context_data['payement_methods'] = payement_methods
@@ -421,8 +427,6 @@ class AccountSummaryAdmin(admin.ModelAdmin):
                 payment_total += amount_due
         print(payment_total)
         response.context_data['payment_total'] = payment_total
-
-
 
         return response
 
