@@ -8,6 +8,7 @@ services:
       - static_volume:/home/app/web/static
       - media_volume:/home/app/web/media
       - ./:/home/app/web/
+      - .aws/:/home/app/.aws
     expose:
       - 8000
     env_file:

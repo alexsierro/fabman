@@ -161,10 +161,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 if production:
     DBBACKUP_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     DBBACKUP_STORAGE_OPTIONS = {
-        'access_key': os.environ.get('S3_ACCESS_KEY'),
-        'secret_key': os.environ.get('S3_SECRET_KEY'),
+        'session_profile': 'backup',
         'bucket_name': os.environ.get('S3_BUCKET_NAME'),
-        'default_acl': 'private',
+        'location': 'db'
     }
 else:
     DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
