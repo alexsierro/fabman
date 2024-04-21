@@ -35,17 +35,17 @@
                 <td class="la"> {{ row.total_invoiced | format_currency }} </td>
                 <td class="la"> {{ row.total_paid | format_currency }} </td>
                 <td class="la"> {{ row.total_diff | format_currency }} </td>
-                <td class="la"> {{ row.total_postpaid | format_currency }} </td>
+                <td class="la"> {{ row.total_postpaid | default:0 | format_currency }} </td>
             </tr>
             {% endfor %}
             <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
                 <td> Total </td>
                 <td class="la"></td>
-                <td class="la"> {{ summary_total.total_used | format_currency}} </td>
-                <td class="la"> {{ summary_total.total_invoiced | format_currency }} </td>
-                <td class="la"> {{ summary_total.total_paid | format_currency}} </td>
-                <td class="la"> {{ summary_total.total_diff | format_currency}} </td>
-                <td class="la"> {{ summary_total.total_postpaid | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_used | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_invoiced | default:0 | format_currency }} </td>
+                <td class="la"> {{ summary_total.total_paid | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_diff | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_postpaid | default:0 | format_currency}} </td>
             </tr>
         </tbody>
     </table>
@@ -68,12 +68,12 @@
         {% for row in payement_methods %}
         <tr class="{% cycle 'row1' 'row2' %}">
             <td> {{ row.payment_method }}</td>
-            <td class="la"> {{ row.amount_due | format_currency}} </td>
+            <td class="la"> {{ row.amount_due | default:0 | format_currency}} </td>
         </tr>
         {% endfor %}
         <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
             <td> Total </td>
-            <td class="la">{{ payment_total | format_currency}}</td>
+            <td class="la">{{ payment_total | default:0 | format_currency}}</td>
 
         </tr>
     </tbody>
