@@ -51,9 +51,6 @@ class InvoiceAdmin(admin.ModelAdmin):
         else:
             return ''
 
-    @admin.action(description='Export csv for accounting')
-    def export_as_csv(self, request, queryset) -> HttpResponse:
-        return invoices_export_accounting.export_as_csv(self, request, queryset)
     @admin.action(description='Export txt for accounting')
     def export_as_txt(self, request, queryset) -> HttpResponse:
         return invoices_export_accounting.export_as_txt(self, request, queryset)
