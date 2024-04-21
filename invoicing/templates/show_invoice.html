@@ -211,7 +211,7 @@
         <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
     {% endif %}
     Voici la facture pour ton utilisation du FabLab Sion.</br>
-    Nous t'invitons à la régler dans un délai de 30 jours.<br>
+    Nous t'invitons à la régler dans un délai de {% if invoice.status == "rappel1" or invoice.status == "rappel2" %}10{% else %}30{% endif %} jours.<br>
     Pour toute demande merci de contacter le caissier par e-mail compta@fablabsion.ch
 
 </div>
