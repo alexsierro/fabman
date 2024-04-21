@@ -369,7 +369,8 @@ class AccountSummaryAdmin(admin.ModelAdmin):
                     Q(invoice__isnull=False))), Decimal(0)),
                 'total_paid': Coalesce(Sum('total_price', filter=(
                     Q(invoice__date_paid__isnull=False))), Decimal(0)),
-                'total_diff': total_invoiced - total_paid
+                'total_diff': total_invoiced - total_paid,
+                'total_postpaid': Sum(Decimal(0))
             }
 
         response.context_data['summary'] = list(
