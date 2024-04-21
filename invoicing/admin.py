@@ -69,7 +69,8 @@ class InvoiceAdmin(admin.ModelAdmin):
         if successfully_sent_count > 0:
             self.message_user(request, f'{successfully_sent_count} invoices sent by email', messages.SUCCESS)
 
-    list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'member', 'date_invoice', 'date_paid',
+
+    list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'is_member_active', 'member', 'date_invoice', 'date_paid',
                     'amount_due', 'status', 'comments']
     list_display_links = ['invoice_number', ]
     readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash',
@@ -85,6 +86,13 @@ class InvoiceAdmin(admin.ModelAdmin):
     @admin.display(boolean=True)
     def is_paid(self, obj):
         return obj.is_paid
+
+    @admin.display(boolean=True)
+    def is_member_active(self, obj):
+        if obj.member is not None:
+            return not obj.member.is_resigned
+        return False
+
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
