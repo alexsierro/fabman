@@ -1,9 +1,13 @@
 import csv
 import datetime
+from decimal import Decimal
 
 from django.contrib import admin, messages
 from django.db.models import Sum, Q, F
-from django.http import HttpResponse
+from django.db.models.functions import Coalesce
+from django.forms import DecimalField
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -331,18 +335,18 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
         if year:
 
-            total_invoiced = Sum('total_price', filter=(
-                Q(invoice__date_invoice__year=year)))
+            total_invoiced = Coalesce(Sum('total_price', filter=(
+                Q(invoice__date_invoice__year=year))), Decimal(0))
 
-            total_paid = Sum('total_price', filter=(
-                    Q(invoice__date_paid__year=year) & Q(invoice__date_invoice__year=year)))
+            total_paid = Coalesce(Sum('total_price', filter=(
+                    Q(invoice__date_paid__year=year) & Q(invoice__date_invoice__year=year))), Decimal(0))
 
-            total_postpaid = Sum('total_price', filter=(
-                    Q(invoice__date_paid__year=year) & Q(invoice__date_invoice__year__lt=year)))
+            total_postpaid = Coalesce(Sum('total_price', filter=(
+                    Q(invoice__date_paid__year=year) & Q(invoice__date_invoice__year__lt=year))), Decimal(0))
 
             metrics = {
-                'qty_used': Sum('qty', filter=Q(date__year=year)),
-                'total_used': Sum('total_price', filter=Q(date__year=year)),
+                'qty_used': Coalesce(Sum('qty', filter=Q(date__year=year)), float(0)),
+                'total_used': Coalesce(Sum('total_price', filter=Q(date__year=year)), Decimal(0)),
                 'total_invoiced': total_invoiced,
                 'total_paid': total_paid,
                 'total_diff': total_invoiced - total_paid,
@@ -354,17 +358,19 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
             total_invoiced = Sum('total_price', filter=(
                 Q(invoice__isnull=False)))
+            total_invoiced = Coalesce(Sum('total_price', filter=(
+                Q(invoice__isnull=False))), Decimal(0))
 
-            total_paid = Sum('total_price', filter=(
-                Q(invoice__date_paid__isnull=False)))
+            total_paid = Coalesce(Sum('total_price', filter=(
+                Q(invoice__date_paid__isnull=False))), Decimal(0))
 
             metrics = {
-                'qty_used': Sum('qty'),
-                'total_used': Sum('total_price'),
-                'total_invoiced': Sum('total_price', filter=(
-                    Q(invoice__isnull=False))),
-                'total_paid': Sum('total_price', filter=(
-                    Q(invoice__date_paid__isnull=False))),
+                'qty_used': Coalesce(Sum('qty'), float()),
+                'total_used': Coalesce(Sum('total_price'), Decimal(0)),
+                'total_invoiced': Coalesce(Sum('total_price', filter=(
+                    Q(invoice__isnull=False))), Decimal(0)),
+                'total_paid': Coalesce(Sum('total_price', filter=(
+                    Q(invoice__date_paid__isnull=False))), Decimal(0)),
                 'total_diff': total_invoiced - total_paid
             }
 
@@ -375,6 +381,8 @@ class AccountSummaryAdmin(admin.ModelAdmin):
             .order_by('-total_used')
         )
 
+        print(response.context_data['summary'])
+
         response.context_data['summary_total'] = dict(
             qs.aggregate(**metrics)
         )
@@ -382,13 +390,13 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         # --- Calculate Payment summary
         if year:
             metrics = {
-                'amount_due': Sum(F('amount') - F('amount_deduction_machine') - F('amount_deduction_cash'),
-                                  filter=Q(date_paid__year=year))
+                'amount_due': Coalesce(Sum(F('amount') - F('amount_deduction_machine') - F('amount_deduction_cash'),
+                                  filter=Q(date_paid__year=year)), Decimal(0))
             }
 
         else:
             metrics = {
-                'amount_due': Sum('amount', filter=Q(date_paid__isnull=False))
+                'amount_due': Coalesce(Sum('amount', filter=Q(date_paid__isnull=False)), Decimal(0))
             }
 
         qs = Invoice.objects.all()
@@ -402,14 +410,14 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
         if year:
             metrics = {
-                'deduction_cash': Sum('amount_deduction_cash', filter=Q(date_paid__year=year)),
-                'deduction_machine': Sum('amount_deduction_machine', filter=Q(date_paid__year=year))
+                'deduction_cash': Coalesce(Sum('amount_deduction_cash', filter=Q(date_paid__year=year)), Decimal(0)),
+                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__year=year)), Decimal(0))
             }
 
         else:
             metrics = {
-                'deduction_cash': Sum('amount_deduction_cash', filter=Q(date_paid__isnull=False)),
-                'deduction_machine': Sum('amount_deduction_machine', filter=Q(date_paid__isnull=False)),
+                'deduction_cash': Coalesce(Sum('amount_deduction_cash', filter=Q(date_paid__isnull=False)), Decimal(0)),
+                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__isnull=False)), Decimal(0))
             }
 
         qs = Invoice.objects.all()
