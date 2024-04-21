@@ -3,10 +3,10 @@ import csv
 from django.http import HttpResponse
 
 
-def export_as_csv(self, request, queryset):
-    response = HttpResponse(content_type='text/csv')
+def export_as_txt(self, request, queryset):
+    response = HttpResponse(content_type='text')
 
-    response['Content-Disposition'] = 'attachment; filename={}.csv'.format('invoices')
+    response['Content-Disposition'] = 'attachment; filename={}.txt'.format('invoices')
     writer = csv.writer(response, delimiter='\t')
 
     writer.writerow(
