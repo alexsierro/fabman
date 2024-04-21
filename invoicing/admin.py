@@ -51,6 +51,26 @@ class InvoiceAdmin(admin.ModelAdmin):
         else:
             return ''
 
+    @admin.action(description='Escalate reminder level')
+    def escalate_reminder_level(self, request, queryset):
+        for invoice in queryset:
+            if invoice.status == 'created':
+                invoice.status = 'rappel1'
+                invoice.was_sent_by_email = False
+                invoice.was_sent_by_post = False
+                invoice.save()
+            elif invoice.status == 'rappel1':
+                invoice.status = 'rappel2'
+                invoice.was_sent_by_email = False
+                invoice.was_sent_by_post = False
+                invoice.save()
+            else:
+                self.message_user(request, f'Invoice {invoice.invoice_number} is already at the highest reminder level.',
+                                  messages.WARNING)
+
+
+
+
     @admin.action(description='Export txt for accounting')
     def export_as_txt(self, request, queryset) -> HttpResponse:
         return invoices_export_accounting.export_as_txt(self, request, queryset)
@@ -82,7 +102,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                        'is_sent']
     search_fields = ['member__name', 'member__surname']
     list_filter = ['status', InvoiceSentListFiler, 'payment_method']
-    actions = ['send_by_email', 'export_as_txt']
+    actions = ['send_by_email', 'export_as_txt', 'escalate_reminder_level']
 
     @admin.display(boolean=True)
     def is_sent(self, obj):
