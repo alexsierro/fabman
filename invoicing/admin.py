@@ -356,8 +356,6 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
         else:
 
-            total_invoiced = Sum('total_price', filter=(
-                Q(invoice__isnull=False)))
             total_invoiced = Coalesce(Sum('total_price', filter=(
                 Q(invoice__isnull=False))), Decimal(0))
 
