@@ -75,13 +75,13 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 
     list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'is_member_active', 'member', 'date_invoice', 'date_paid',
-                    'amount_due', 'status', 'comments']
+                    'amount_due', 'status', 'payment_method', 'comments']
     list_display_links = ['invoice_number', ]
     readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash',
                        'is_sent']
     search_fields = ['member__name', 'member__surname']
-    list_filter = ['status', InvoiceSentListFiler]
-    actions = ['send_by_email', 'export_as_csv']
+    list_filter = ['status', InvoiceSentListFiler, 'payment_method']
+    actions = ['send_by_email', 'export_as_txt']
 
     @admin.display(boolean=True)
     def is_sent(self, obj):
