@@ -19,6 +19,6 @@ gunicorn==22.0.0
 django-dbbackup==3.3.0
 django-storages[boto3]
 boto3==1.21.46
-Pillow==10.0
+Pillow==10.3.0
 weasyprint==60.1
 python-dotenv==1.0.0
