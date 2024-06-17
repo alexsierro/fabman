@@ -65,19 +65,16 @@ class InvoiceAdmin(admin.ModelAdmin):
                 invoice.was_sent_by_post = False
                 invoice.save()
             else:
-                self.message_user(request, f'Invoice {invoice.invoice_number} is already at the highest reminder level.',
+                self.message_user(request,
+                                  f'Invoice {invoice.invoice_number} is already at the highest reminder level.',
                                   messages.WARNING)
-
-
-
 
     @admin.action(description='Export txt for accounting')
     def export_as_txt(self, request, queryset) -> HttpResponse:
         return invoices_export_accounting.export_as_txt(self, request, queryset)
 
-
-    @admin.action(description='Send selected invoices by email')
-    def send_by_email(self, request, queryset):
+    @admin.action(description='(old) Send selected invoices by email')
+    def send_by_email_old(self, request, queryset):
         successfully_sent_count = 0
         for invoice in queryset:
             if invoice.is_sent:
@@ -94,8 +91,60 @@ class InvoiceAdmin(admin.ModelAdmin):
         if successfully_sent_count > 0:
             self.message_user(request, f'{successfully_sent_count} invoices sent by email', messages.SUCCESS)
 
+    @admin.action(description='Send selected invoices by email')
+    def send_by_email(self, request, queryset):
 
-    list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'is_member_active', 'member', 'date_invoice', 'date_paid',
+        opts = self.model._meta
+
+        print('CALL')
+
+        # All requests here will actually be of type POST
+        # so we will need to check for our special key 'apply'
+        # rather than the actual request type
+        print(request.POST)
+        if 'apply' in request.POST:
+
+            def on_is_true(value):
+                return value == 'on'
+
+            override_sent_email = on_is_true(request.POST.get('override_sent_email', False))
+            override_sent_post = on_is_true(request.POST.get('override_sent_post', False))
+            override_preferred_invoice_method = on_is_true(request.POST.get('override_preferred', False))
+
+            print('APPLY')
+            successfully_sent_count = 0
+            for invoice in queryset:
+
+                if invoice.was_sent_by_email and not override_sent_email or \
+                        invoice.was_sent_by_post and not override_sent_post:
+
+                    self.message_user(request,
+                                      f'Invoice {invoice.invoice_number} not send because it is already marked as send. Remove send flag(s) to resend.',
+                                      messages.WARNING)
+
+                elif invoice.member.preferred_invoice_method == 'post' and not override_preferred_invoice_method:
+                    self.message_user(request,
+                                      f'Invoice {invoice.invoice_number} not send because the member prefers to receive invoices by post. Change the preferred invoice method or override it to send the invoice as email.',
+                                      messages.WARNING)
+
+                else:
+                    try:
+                        send_invoice(invoice)
+                        successfully_sent_count += 1
+                    except Exception as e:
+                        self.message_user(request, f'Error sending invoice {invoice.invoice_number}: {e}',
+                                          messages.ERROR)
+
+            if successfully_sent_count > 0:
+                self.message_user(request, f'{successfully_sent_count} invoices sent by email', messages.SUCCESS)
+            return HttpResponseRedirect(request.get_full_path())
+
+        return render(request,
+                      'admin/invoice_send_email_confirmation.html',
+                      context={**self.admin_site.each_context(request), 'invoices': queryset, 'opts': opts})
+
+    list_display = ['invoice_actions', 'invoice_number', 'is_sent', 'is_paid', 'is_member_active', 'member',
+                    'date_invoice', 'date_paid',
                     'amount_due', 'status', 'payment_method', 'comments']
     list_display_links = ['invoice_number', ]
     readonly_fields = ['invoice_number', 'amount', 'amount_due', 'amount_deduction_machine', 'amount_deduction_cash',
@@ -117,7 +166,6 @@ class InvoiceAdmin(admin.ModelAdmin):
         if obj.member is not None:
             return not obj.member.is_resigned
         return False
-
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
@@ -411,7 +459,7 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         if year:
             metrics = {
                 'amount_due': Coalesce(Sum(F('amount') - F('amount_deduction_machine') - F('amount_deduction_cash'),
-                                  filter=Q(date_paid__year=year)), Decimal(0))
+                                           filter=Q(date_paid__year=year)), Decimal(0))
             }
 
         else:
@@ -431,13 +479,15 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         if year:
             metrics = {
                 'deduction_cash': Coalesce(Sum('amount_deduction_cash', filter=Q(date_paid__year=year)), Decimal(0)),
-                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__year=year)), Decimal(0))
+                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__year=year)),
+                                              Decimal(0))
             }
 
         else:
             metrics = {
                 'deduction_cash': Coalesce(Sum('amount_deduction_cash', filter=Q(date_paid__isnull=False)), Decimal(0)),
-                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__isnull=False)), Decimal(0))
+                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__isnull=False)),
+                                              Decimal(0))
             }
 
         qs = Invoice.objects.all()
