@@ -58,7 +58,6 @@ class Member(models.Model):
     member_type = models.CharField(max_length=20, choices=MEMBER_TYPE, default='membre', null=False, blank=False)
     subscription_status = models.CharField("Etat de l'inscription", max_length=20, choices=SUBSCRIPTION_STATUS, default='subscribing', null=False, blank=False)
     date_added = models.DateField('Date ajout', default=date.today, null=True, blank=True)
-    is_resigned = models.BooleanField('Démission', default=False)
     date_resigned = models.DateField('Date démission', default=None, null=True, blank=True)
     is_staff = models.BooleanField('Animateur', default=False)
     is_allowed_to_open_cash_register = models.BooleanField('Ouverture caisse (pour non animateur)', default=False, null=False, blank=False)
@@ -83,6 +82,10 @@ class Member(models.Model):
         return self.subscription_status not in ['resigned'] \
             and self.member_type not in['no_member'] \
             and not self.is_resigned
+
+    @property
+    def is_resigned(self):
+        return self.date_resigned is not None
 
     def __str__(self):
         return f'{self.name} {self.surname}'
