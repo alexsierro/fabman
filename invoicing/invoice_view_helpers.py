@@ -23,7 +23,7 @@ def get_invoice_html(invoice_number, is_for_pdf=False):
                                      'resource__unit__name',
                                      'unit_price',
                                      'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')
-                                                               ).order_by('project__name')
+                                                               ).order_by('project__name', 'resource__account__number')
 
     # use_project is true if at last one project is used
     projects = usages.values('project').distinct()

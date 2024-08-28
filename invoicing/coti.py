@@ -24,7 +24,7 @@ if __name__ == '__main__':
     print(f'{year=}')
 
     # get all members that are not resigned
-    members = Member.objects.filter(is_resigned=False, date_resigned__isnull=True)
+    members = Member.objects.filter(date_resigned__isnull=True)
 
     for member in members:
 
@@ -37,8 +37,13 @@ if __name__ == '__main__':
             else:
                 coti = cotiMembre
 
-            usage = Usage.objects.create(member=member, resource=coti, qty=1, year=year)
-            print(f'{usage}')
+            # Check if a usage already exists for this year
+            existing_usages = Usage.objects.filter(member=member, resource=coti, date__year=year)
+            if existing_usages:
+                print(f' --- Coti already exists for {member}')
+            else:
+                usage = Usage.objects.create(member=member, resource=coti, qty=1, year=year)
+                print(f'{usage}')
 
         else:
 

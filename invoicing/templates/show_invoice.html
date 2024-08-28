@@ -245,7 +245,7 @@
                             {% endif %}
                         {% endif %}
                     </td>
-                    <td> {{ usage.resource__unit__name }}</td>
+                    <td> {% if usage.resource__unit__name %}{{ usage.resource__unit__name }}{%  else %}{% endif %}</td>
                     <td class="chiffre-center">{{ usage.qty|floatformat:"-2" }}</td>
                     <td>CHF</td>
                     <td class="chiffre-center">{{ usage.unit_price|format_currency }}</td>

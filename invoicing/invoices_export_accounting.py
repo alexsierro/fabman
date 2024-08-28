@@ -11,8 +11,8 @@ def export_as_txt(self, request, queryset):
 
     writer.writerow(
         ['Date', 'Doc', 'Description', 'AccountDebit', 'AccountCredit', 'Amount'])
-    for invoice in queryset:
-        if invoice.is_paid:
+    for invoice in queryset.order_by('date_paid'):
+        if invoice.is_paid and invoice.payment_method == 'cash':
             date_paid = invoice.date_paid
             doc = invoice.invoice_number
             description = f'Facture manager pour {invoice.member}'
