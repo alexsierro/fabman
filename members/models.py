@@ -22,6 +22,8 @@ class Member(models.Model):
     MEMBER_TYPE = [
         ('membre', 'Membre'),
         ('etudiant', 'Etudiant'),
+        ('avs', 'AVS'),
+        ('ai', 'AI'),
         ('passif', 'Passif'),
         ('angel', 'Angel'),
         ('alias', 'Alias de facturation'),
@@ -69,7 +71,7 @@ class Member(models.Model):
     @property
     def get_tariff(self):
         if self.subscription_status not in ['resigned']:
-            if self.member_type in ['membre', 'etudiant', 'angel', 'alias'] :
+            if self.member_type in ['membre', 'etudiant', 'avs', 'ai', 'angel', 'alias'] :
                 return PRICE_MEMBER
 
             elif self.member_type in ['hes', 'interne']:
