@@ -140,6 +140,8 @@ def import_ebanking(request):
     if not request.user.is_staff:
         raise PermissionDenied
 
+    has_error = False
+
     results = list()
 
     if request.POST:
@@ -159,7 +161,13 @@ def import_ebanking(request):
 
             if payment_type == 'QRR' and currency == 'CHF':
 
-                invoice = Invoice.objects.get(invoice_number=reference)
+                try:
+                    invoice = Invoice.objects.get(invoice_number=reference)
+                except Invoice.DoesNotExist:
+                    invoice = None
+                    results.append(f'### Invoice #{reference}: {date}, {amount} not found.')
+                    has_error = True
+
                 print(invoice)
 
                 if invoice:
@@ -170,6 +178,6 @@ def import_ebanking(request):
                         invoice.save()
                         results.append(f'Invoice {invoice}, marked paid on {date}.')
 
-        results.append('Import finished')
+        results.append('Import finished successfully.') if not has_error else results.append('Import finished with errors.')
 
     return render(request, 'import_ebanking.html', context={'results': results})
