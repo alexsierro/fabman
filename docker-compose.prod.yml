@@ -14,6 +14,7 @@ services:
     env_file:
       - ./.env.prod
       - ./email.env
+      - ./keycloak.prod.env
     depends_on:
       - db
   db:
