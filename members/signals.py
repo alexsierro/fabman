@@ -1,3 +1,5 @@
+import os
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -8,6 +10,9 @@ from members.models import Member
 
 @receiver(post_save, sender=Member)
 def member_post_save(sender, instance, created, **kwargs):
+    if os.getenv('GITHUB_ACTIONS') == 'true':
+        return
+
     if not instance.is_staff:
         return
 
