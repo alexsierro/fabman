@@ -37,6 +37,7 @@ else:
     from dotenv import load_dotenv
     load_dotenv('../email.env')
     load_dotenv('email.env')
+    load_dotenv('keycloak.dev.env')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
