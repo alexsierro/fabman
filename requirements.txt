@@ -20,6 +20,6 @@ django-dbbackup==4.2.1
 django-storages[boto3]
 boto3==1.21.46
 Pillow==10.3.0
-weasyprint==61.2
+weasyprint==62.3
 python-dotenv==1.0.0
 python-keycloak==4.6.2
