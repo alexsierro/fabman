@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from weasyprint.css.validation.properties import transform
 
 from invoicing.models import Usage, Resource, Invoice, AccountEntry
 from members.models import Member
@@ -37,7 +38,7 @@ class InvoicePreviewTests(TestCase):
 
         response = self.client.get(reverse('preview_invoice'))
         self.assertEqual(response.status_code, 200)
-        self.assertQuerysetEqual(response.context['choice_member'], ['<Member: Name1 Surname>'])
+        self.assertQuerysetEqual(response.context['choice_member'], [member1])
 
     def test_choice_invoiced_usage(self):
         """

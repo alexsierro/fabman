@@ -6,7 +6,7 @@ from invoicing.models import Resource, ResourceCategory, ResourceWidget, Resourc
 from legacy.models import CheckKey
 from members.models import Member, Project, ProjectCard
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 
 class LegacyTests(TestCase):
@@ -37,7 +37,7 @@ class LegacyTests(TestCase):
     def test_user_existing(self):
         url = reverse('legacy:user', args=('1234',))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'visa')
+        self.assertEqual(force_str(response.content), 'visa')
 
     def test_user_no_existing(self):
         url = reverse('legacy:user', args=('9999',))
@@ -47,12 +47,12 @@ class LegacyTests(TestCase):
     def test_user2_animator(self):
         url = reverse('legacy:user2', args=('5678',))
         response = self.client.get(url)
-        self.assertJSONEqual(force_text(response.content), {"visa": "visaStaff", "animateur": True, "tariff": "price_member"})
+        self.assertJSONEqual(force_str(response.content), {"visa": "visaStaff", "animateur": True, "tariff": "price_member"})
 
     def test_user2_not_animator(self):
         url = reverse('legacy:user2', args=('1234',))
         response = self.client.get(url)
-        self.assertJSONEqual(force_text(response.content), {"visa": "visa", "animateur": False, "tariff": "price_member"})
+        self.assertJSONEqual(force_str(response.content), {"visa": "visa", "animateur": False, "tariff": "price_member"})
 
     def test_user2_not_existing(self):
         url = reverse('legacy:user2', args=('9999',))
@@ -62,22 +62,22 @@ class LegacyTests(TestCase):
     def test_check_member(self):
         url = reverse('legacy:check', args=('keykey', 'member@fablab'))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'ok')
+        self.assertEqual(force_str(response.content), 'ok')
 
     def test_check_member_special_chars(self):
         url = reverse('legacy:check', args=('keykey', 'member @fablab'))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'not a member')
+        self.assertEqual(force_str(response.content), 'not a member')
 
     def test_check_member_no_ascii(self):
         url = reverse('legacy:check', args=('keykey', 'mémber@fàblab'))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'not a member')
+        self.assertEqual(force_str(response.content), 'not a member')
 
     def test_check_not_a_member(self):
         url = reverse('legacy:check', args=('keykey', 'no-member@fablab'))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'not a member')
+        self.assertEqual(force_str(response.content), 'not a member')
 
     def test_check_invalid_key(self):
         url = reverse('legacy:check', args=('oops', 'member@fablab'))
@@ -97,13 +97,13 @@ class LegacyTests(TestCase):
     def test_project_card_user(self):
         url = reverse('legacy:user', args=('project-card-rfid',))
         response = self.client.get(url)
-        self.assertEqual(force_text(response.content), 'p3@visaStaff')
+        self.assertEqual(force_str(response.content), 'p3@visaStaff')
 
     def test_project_card_user2(self):
         url = reverse('legacy:user2', args=('project-card-rfid',))
         response = self.client.get(url)
         # subprojects never have "animateur" flag set
-        self.assertJSONEqual(force_text(response.content), {"visa": "p3@visaStaff", "animateur": False, "tariff": "price_member"})
+        self.assertJSONEqual(force_str(response.content), {"visa": "p3@visaStaff", "animateur": False, "tariff": "price_member"})
 
     def test_project_card_usage(self):
         url = reverse('legacy:usage', args=('resource', 'p3@visaStaff', '0.1'))
@@ -114,7 +114,7 @@ class LegacyTests(TestCase):
         url = reverse('legacy:items2')
         response = self.client.get(url)
         print(response.content)
-        self.assertJSONEqual(force_text(response.content),
+        self.assertJSONEqual(force_str(response.content),
                              [{"type": "category",
                                "name": "root",
                                "items": [
