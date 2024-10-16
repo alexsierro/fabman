@@ -78,6 +78,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'fabman.urls'
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://manager.fablabsion.ch',
+]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
