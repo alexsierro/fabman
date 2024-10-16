@@ -127,7 +127,10 @@ def fill_category(request, category, list):
 
     sub_categories = ResourceCategory.objects.filter(parent=category)
     for subcategory in sub_categories:
-        fill_category(request, subcategory, category_items)
+        # do not include empty subcategories
+        if (Resource.objects.filter(category=subcategory).exclude(widget=None).exists()
+                or ResourceCategory.objects.filter(parent=subcategory).exists()):
+            fill_category(request, subcategory, category_items)
 
     if category:  # avoid resources without category to be mapped with root category
         resources = Resource.objects.filter(category=category).exclude(widget=None)
