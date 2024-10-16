@@ -119,11 +119,6 @@ class LegacyTests(TestCase):
                                "name": "root",
                                "items": [
                                    {"type": "category",
-                                    "name": "cat10",
-                                    "items": [
-
-                                    ]},
-                                   {"type": "category",
                                     "name": "cat20",
                                     "items": [
                                         {"type": "category",
