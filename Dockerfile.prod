@@ -35,7 +35,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 #########
 
 # pull official base image
-FROM python:3.8.18-alpine3.18
+FROM python:3.9.20-alpine3.20
 LABEL org.opencontainers.image.source https://github.com/alexsierro/fabman
 
 
