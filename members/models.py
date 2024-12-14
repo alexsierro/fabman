@@ -67,6 +67,8 @@ class Member(models.Model):
     bank_name = models.CharField(max_length=200, default=None, null=True, blank=True)
     iban = models.CharField(max_length=200, default=None, null=True, blank=True)
     preferred_invoice_method = models.CharField(max_length=20, choices=PREFERRED_INVOICE_METHOD, default='email')
+    swiss_engineering_number = models.CharField('Numéro de membre Swiss Engineering', max_length=200, default=None, null=True, blank=True)
+    comment = models.TextField('Commentaire', max_length=2000, default=None, null=True, blank=True)
 
     @property
     def get_tariff(self):
