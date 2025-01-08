@@ -10,6 +10,7 @@ six==1.15.0
 sqlparse==0.5.0
 toml==0.10.2
 #typed-ast==1.4.2
+httpx==0.28.1
 Unidecode==1.1.2
 wrapt==1.12.1
 qrbill==0.6.0
@@ -22,4 +23,4 @@ boto3==1.21.46
 Pillow==10.3.0
 weasyprint==62.3
 python-dotenv==1.0.0
-python-keycloak==4.6.2
+python-keycloak==5.1.1
