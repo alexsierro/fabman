@@ -13,9 +13,6 @@ def member_post_save(sender, instance, created, **kwargs):
     if os.getenv('GITHUB_ACTIONS') == 'true':
         return
 
-    if not instance.is_staff:
-        return
-
     groups = []
     if instance.member_type in ['membre', 'etudiant', 'avs', 'ai', 'angel']:
         groups.append('membres')
