@@ -15,6 +15,6 @@ if __name__ == '__main__':
 
     print('Syncing Keycloak with members...')
 
-    users = Member.objects.filter(is_staff=True)
+    users = Member.objects.all()
     for u in users:
         member_post_save(sender=None, instance=u, created=False)
