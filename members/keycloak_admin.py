@@ -53,7 +53,8 @@ def create_or_update_user(username, first_name, last_name, email, groups, enable
 
     # Get the user ID of the user you want to update
     user_id = None
-    users = keycloak_admin.get_users(query={"username": username})
+    users = keycloak_admin.get_users(query={"username": username, "exact": True})
+    print(users)
     if not users:
         print(f"User '{username}' not found, creating a new user.")
         user_data['username'] = username
