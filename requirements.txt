@@ -16,7 +16,7 @@ wrapt==1.12.1
 qrbill==0.6.0
 python-stdnum==1.16
 psycopg2-binary==2.9.5
-gunicorn==22.0.0
+gunicorn==23.0.0
 django-dbbackup==4.2.1
 django-storages[boto3]
 boto3==1.21.46
