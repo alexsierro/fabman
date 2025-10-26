@@ -101,7 +101,6 @@ def preview(request):
         return render(request, 'preview_invoice.html', {'choice_member': choice_member})
 
     else:
-        member_id = request.POST['member_id']
         result = prepare_invoice(member_id)
         result['choice_member'] = choice_member
         return render(request, 'preview_invoice.html', result)
