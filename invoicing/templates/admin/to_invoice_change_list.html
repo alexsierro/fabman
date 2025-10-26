@@ -1,0 +1,37 @@
+{% extends 'admin/change_list.html' %}
+{% load app_filters %}
+
+{% block content_title %}
+    <h1>Total usages to invoice, per member</h1>
+{% endblock %}
+
+{% block result_list %}
+
+<div class="results">
+    <table>
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Non invoiced amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in invoiceable_members %}
+                <tr>
+                    <td>{{ member.name }} {{ member.surname }}</td>
+                    <td style="text-align: right;">{{ member.total_amount | format_currency }}</td>
+                    <td>
+                        <a href="{% url 'preview_invoice' %}?member_id={{ member.id }}" class="button default">
+                            Preview
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block pagination %}{% endblock %}

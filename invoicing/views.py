@@ -90,8 +90,14 @@ def preview(request):
     # Select all members with usages not assigned to an invoice
     choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
         .order_by('name', 'surname')
+    
+    member_id = None
+    if request.method == 'POST':
+        member_id = request.POST.get('member_id', None)
+    elif request.method == 'GET':
+        member_id = request.GET.get('member_id', None)
 
-    if not request.POST:
+    if not member_id:
         return render(request, 'preview_invoice.html', {'choice_member': choice_member})
 
     else:

@@ -14,7 +14,8 @@ from django.utils.html import format_html
 from . import invoices_export_accounting
 from .invoice_mail_helper import send_invoice
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense, UsageSummary, Image, AccountSummary
+    Expense, UsageSummary, Image, AccountSummary, ToInvoice
+from members.models import Member
 
 
 class InvoiceSentListFiler(admin.SimpleListFilter):
@@ -518,3 +519,40 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(AccountSummary, AccountSummaryAdmin)
+
+
+class ToInvoiceAdmin(admin.ModelAdmin):
+    change_list_template = "admin/to_invoice_change_list.html"
+    actions = None
+    show_full_result_count = False
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(
+            request,
+            extra_context=extra_context
+        )
+
+
+        invoiceable_members = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
+            .order_by('name', 'surname')
+        
+        invoiceable_members = invoiceable_members.annotate(
+            total_amount=Coalesce(
+            Sum(
+                'usage__total_price',
+                filter=Q(usage__invoice=None) & (
+                Q(usage__resource__payable_by_animation_hours=False) |
+                Q(is_staff=False)
+                )
+            ),
+            Decimal(0)
+            )
+        )
+
+        invoiceable_members = invoiceable_members.order_by('-total_amount')
+
+        response.context_data['invoiceable_members'] = invoiceable_members
+
+        return response
+    
+admin.site.register(ToInvoice, ToInvoiceAdmin)
