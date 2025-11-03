@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
   web:
+    restart: unless-stopped
     image: ghcr.io/alexsierro/fabman:latest
     command: gunicorn fabman.wsgi:application --bind 0.0.0.0:8000
     volumes:
@@ -18,12 +19,14 @@ services:
     depends_on:
       - db
   db:
+    restart: unless-stopped
     image: postgres:12.0-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - ./.env.prod.db
   nginx:
+    restart: unless-stopped
     build: ./nginx
     volumes:
       - static_volume:/home/app/web/static
