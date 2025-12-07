@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
 
     cotiMembre = Resource.objects.get(slug='cotisation-membre')
-    cotiEtudiant = Resource.objects.get(slug='cotisation-etudiant')
+    cotiEtudiant = Resource.objects.get(slug='cotisation-reduit')
     cotiPassif = Resource.objects.get(slug='cotisation-passif')
 
     today = datetime.date.today()
