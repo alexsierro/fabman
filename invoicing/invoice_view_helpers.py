@@ -45,7 +45,7 @@ def get_invoice_html(invoice_number, is_for_pdf=False):
             'name': 'FabLab Sion', 'pcode': '1950', 'city': 'Sion',
         },
         debtor={
-            'name': f'{invoice.member.name} {invoice.member.surname}', 'pcode': '1950', 'city': invoice.member.locality,
+            'name': f'{invoice.member.name} {invoice.member.surname}', 'pcode': invoice.member.npa, 'city': invoice.member.locality,
             'street': invoice.member.address,
         },
         amount=invoice.amount_due,
