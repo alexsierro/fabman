@@ -12,8 +12,8 @@ from django.utils.encoding import force_str
 class LegacyTests(TestCase):
 
     def setUp(self):
-        member = Member.objects.create(name='Name', surname='Surname', visa='visa', rfid='1234', mail='member@fablab')
-        member_staff = Member.objects.create(visa='visaStaff', rfid='5678', is_staff=True)
+        member = Member.objects.create(name='Name', surname='Surname', visa='vis', rfid='1234', mail='member@fablab')
+        member_staff = Member.objects.create(visa='sta', rfid='5678', is_staff=True)
 
         CheckKey.objects.create(key='keykey')
 
@@ -37,7 +37,7 @@ class LegacyTests(TestCase):
     def test_user_existing(self):
         url = reverse('legacy:user', args=('1234',))
         response = self.client.get(url)
-        self.assertEqual(force_str(response.content), 'visa')
+        self.assertEqual(force_str(response.content), 'vis')
 
     def test_user_no_existing(self):
         url = reverse('legacy:user', args=('9999',))
@@ -47,12 +47,12 @@ class LegacyTests(TestCase):
     def test_user2_animator(self):
         url = reverse('legacy:user2', args=('5678',))
         response = self.client.get(url)
-        self.assertJSONEqual(force_str(response.content), {"visa": "visaStaff", "animateur": True, "tariff": "price_member"})
+        self.assertJSONEqual(force_str(response.content), {"visa": "sta", "animateur": True, "tariff": "price_member"})
 
     def test_user2_not_animator(self):
         url = reverse('legacy:user2', args=('1234',))
         response = self.client.get(url)
-        self.assertJSONEqual(force_str(response.content), {"visa": "visa", "animateur": False, "tariff": "price_member"})
+        self.assertJSONEqual(force_str(response.content), {"visa": "vis", "animateur": False, "tariff": "price_member"})
 
     def test_user2_not_existing(self):
         url = reverse('legacy:user2', args=('9999',))
@@ -85,28 +85,28 @@ class LegacyTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_projects(self):
-        url = reverse('legacy:projects', args=('visa',))
+        url = reverse('legacy:projects', args=('vis',))
         response = self.client.get(url)
         self.assertJSONEqual(response.content, ['p1', 'p2'])
 
     def test_decimal_usage(self):
-        url = reverse('legacy:usage', args=('resource', 'visa', '0.1'))
+        url = reverse('legacy:usage', args=('resource', 'vis', '0.1'))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_project_card_user(self):
         url = reverse('legacy:user', args=('project-card-rfid',))
         response = self.client.get(url)
-        self.assertEqual(force_str(response.content), 'p3@visaStaff')
+        self.assertEqual(force_str(response.content), 'p3@sta')
 
     def test_project_card_user2(self):
         url = reverse('legacy:user2', args=('project-card-rfid',))
         response = self.client.get(url)
         # subprojects never have "animateur" flag set
-        self.assertJSONEqual(force_str(response.content), {"visa": "p3@visaStaff", "animateur": False, "tariff": "price_member"})
+        self.assertJSONEqual(force_str(response.content), {"visa": "p3@sta", "animateur": False, "tariff": "price_member"})
 
     def test_project_card_usage(self):
-        url = reverse('legacy:usage', args=('resource', 'p3@visaStaff', '0.1'))
+        url = reverse('legacy:usage', args=('resource', 'p3@sta', '0.1'))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
