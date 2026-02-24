@@ -42,6 +42,7 @@ else:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = not production
+KEYCLOAK_ENABLED = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 

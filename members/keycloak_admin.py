@@ -2,9 +2,12 @@ import os
 
 from keycloak import KeycloakAdmin
 
+from fabman import settings
 
 
 def update_user_groups(keycloak_admin, user_id, user_groups):
+    if not settings.KEYCLOAK_ENABLED:
+        return
 
     groups = keycloak_admin.get_groups()
     for group in groups:
@@ -40,6 +43,8 @@ keycloak_admin = KeycloakAdmin(
 
 
 def create_or_update_user(username, first_name, last_name, email, groups, enabled=True):
+    if not settings.KEYCLOAK_ENABLED:
+        return
 
     # Create a new user
     user_data = {
