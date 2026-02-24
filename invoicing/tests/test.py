@@ -120,3 +120,34 @@ class InvoicePreviewTests(TestCase):
 
         response = self.client.get(reverse('show_invoice', kwargs={'invoice_number':0}))
         self.assertEqual(response.status_code, 403)
+
+    def test_payment_delay(self):
+        """
+        Must be 30 days for invoices and 10 days for reminders
+        """
+
+        self.client.force_login(self.staff_user)
+        member1 = Member.objects.create(name='Name1', surname='Surname', member_type='membre',
+                                        subscription_status='active', locality='City')
+
+        invoice = Invoice.objects.create(member=member1, amount=50, invoice_number=1)
+
+        response = self.client.get(reverse('show_invoice', kwargs={'invoice_number': 1}))
+        self.assertEqual(response.context['payment_delay'], 30)
+
+        invoice.status = 'rappel1'
+        invoice.save()
+        response = self.client.get(reverse('show_invoice', kwargs={'invoice_number': 1}))
+        self.assertEqual(response.context['payment_delay'], 10)
+
+        invoice.status = 'rappel2'
+        invoice.save()
+        response = self.client.get(reverse('show_invoice', kwargs={'invoice_number': 1}))
+        self.assertEqual(response.context['payment_delay'], 10)
+
+        invoice.status = 'rappel3'
+        invoice.save()
+        response = self.client.get(reverse('show_invoice', kwargs={'invoice_number': 1}))
+        self.assertEqual(response.context['payment_delay'], 10)
+
+

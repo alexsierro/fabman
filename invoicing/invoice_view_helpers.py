@@ -7,6 +7,7 @@ from stdnum.ch import esr
 from weasyprint import HTML
 
 from fabman.settings import MEDIA_ROOT, STATIC_ROOT, STATIC_URL, MEDIA_URL
+from invoicing.invoice_helper import get_payment_delay
 from invoicing.models import Invoice, Usage, AccountEntry
 
 
@@ -64,10 +65,12 @@ def get_invoice_html(invoice_number, is_for_pdf=False):
 
     amount_cash_after = balance['cash'] or 0
     amount_machine_after = balance['machine'] or 0
+    payment_delay = get_payment_delay(invoice)
 
     template = get_template('show_invoice.html')
 
     html = template.render({'invoice': invoice,
+                            'payment_delay': payment_delay,
                             'member_info': invoice.member,
                             'usages_anotated': usages_annotated,
                             'amount_other_usages': amount_other_usages,

@@ -206,12 +206,12 @@
 
 <div class="commentaire">
     <h2>{% if invoice.status == "rappel1" %} Rappel : {% endif %} {% if invoice.status == "rappel2" %} 2e rappel
-        : {% endif %} Facture {{ invoice.invoice_number }}</h2>
+        : {% endif %} {% if invoice.status == "rappel3" %} 3e rappel : {% endif %} Facture {{ invoice.invoice_number }}</h2>
     {% if invoice.comments %}
         <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
     {% endif %}
     Voici la facture pour ton utilisation du FabLab Sion.</br>
-    Nous t'invitons à la régler dans un délai de {% if invoice.status == "rappel1" or invoice.status == "rappel2" %}10{% else %}30{% endif %} jours.<br>
+    Nous t'invitons à la régler dans un délai de {{ payment_delay }} jours.<br>
     Pour toute demande merci de contacter le caissier par e-mail compta@fablabsion.ch
 
 </div>

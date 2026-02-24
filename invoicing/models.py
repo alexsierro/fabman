@@ -19,6 +19,7 @@ class Invoice(models.Model):
         ('paid', 'Payé'),
         ('rappel1', '1er rappel'),
         ('rappel2', ' 2ème rappel'),
+        ('rappel3', ' 3ème rappel'),
         ('cancelled', 'cancelled'),
     ]
 

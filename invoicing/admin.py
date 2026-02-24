@@ -65,6 +65,11 @@ class InvoiceAdmin(admin.ModelAdmin):
                 invoice.was_sent_by_email = False
                 invoice.was_sent_by_post = False
                 invoice.save()
+            elif invoice.status == 'rappel2':
+                invoice.status = 'rappel3'
+                invoice.was_sent_by_email = False
+                invoice.was_sent_by_post = False
+                invoice.save()
             else:
                 self.message_user(request,
                                   f'Invoice {invoice.invoice_number} is already at the highest reminder level.',

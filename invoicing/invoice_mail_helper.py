@@ -1,20 +1,13 @@
 from django.core.mail import EmailMessage
 
 from fabman.settings import EMAIL_FROM, DEBUG, EMAIL_DEBUG_RECEIVER
+from invoicing.invoice_helper import get_payment_delay
 from invoicing.invoice_view_helpers import get_invoice_pdf
 
 
 def send_invoice(invoice):
 
-    # set payment delay according to invoice status
-    if invoice.status == 'created':
-        payment_delay = 30
-    elif invoice.status == 'rappel1':
-        payment_delay = 10
-    elif invoice.status == 'rappel2':
-        payment_delay = 10
-    else:
-        payment_delay = 0
+    payment_delay = get_payment_delay(invoice)
 
     body = \
 f"""Cher membre,
@@ -42,6 +35,8 @@ Le caissier
         pre_subject = 'Rappel - '
     elif invoice.status == 'rappel2':
         pre_subject = 'Rappel 2 - '
+    elif invoice.status == 'rappel3':
+        pre_subject = 'Rappel 3 - '
     else:
         pre_subject = ''
 
