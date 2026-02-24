@@ -28,5 +28,4 @@ def member_post_save(sender, instance, created, **kwargs):
     if member.is_committee:
         groups.append('comité')
 
-    if len(groups) > 0:
-        keycloak_admin.create_or_update_user(member.visa, member.surname, member.name, member.mail, groups, enabled=True)
+    keycloak_admin.create_or_update_user(member.visa, member.surname, member.name, member.mail, groups, enabled=True)
