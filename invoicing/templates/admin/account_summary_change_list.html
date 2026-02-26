@@ -21,8 +21,9 @@
                 <th> <div class="text"> <a href="#">Name </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF used </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF invoiced </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">CHF uninvoiced </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF paid </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">CHF diff </a> </div> </th>
+                <th> <div class="text, la"> <a href="#">CHF unpaid </a> </div> </th>
                 <th> <div class="text, la"> <a href="#">CHF postpaid </a> </div> </th>
             </tr>
         </thead>
@@ -33,8 +34,9 @@
                 <td width="20%"> {{ row.resource__account__name }} </td>
                 <td class="la"> {{ row.total_used | format_currency }} </td>
                 <td class="la"> {{ row.total_invoiced | format_currency }} </td>
+                <td class="la"> {{ row.total_uninvoiced | format_currency }} </td>
                 <td class="la"> {{ row.total_paid | format_currency }} </td>
-                <td class="la"> {{ row.total_diff | format_currency }} </td>
+                <td class="la"> {{ row.total_unpaid | format_currency }} </td>
                 <td class="la"> {{ row.total_postpaid | default:0 | format_currency }} </td>
             </tr>
             {% endfor %}
@@ -43,8 +45,9 @@
                 <td class="la"></td>
                 <td class="la"> {{ summary_total.total_used | default:0 | format_currency}} </td>
                 <td class="la"> {{ summary_total.total_invoiced | default:0 | format_currency }} </td>
+                <td class="la"> {{ summary_total.total_uninvoiced | default:0 | format_currency }} </td>
                 <td class="la"> {{ summary_total.total_paid | default:0 | format_currency}} </td>
-                <td class="la"> {{ summary_total.total_diff | default:0 | format_currency}} </td>
+                <td class="la"> {{ summary_total.total_unpaid | default:0 | format_currency}} </td>
                 <td class="la"> {{ summary_total.total_postpaid | default:0 | format_currency}} </td>
             </tr>
         </tbody>

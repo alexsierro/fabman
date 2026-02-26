@@ -410,6 +410,8 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
         if year:
 
+            total_used = Coalesce(Sum('total_price', filter=Q(date__year=year)), Decimal(0))
+
             total_invoiced = Coalesce(Sum('total_price', filter=(
                 Q(invoice__date_invoice__year=year))), Decimal(0))
 
@@ -421,15 +423,18 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
             metrics = {
                 'qty_used': Coalesce(Sum('qty', filter=Q(date__year=year)), float(0)),
-                'total_used': Coalesce(Sum('total_price', filter=Q(date__year=year)), Decimal(0)),
+                'total_used': total_used,
                 'total_invoiced': total_invoiced,
+                'total_uninvoiced': total_used - total_invoiced,
                 'total_paid': total_paid,
-                'total_diff': total_invoiced - total_paid,
+                'total_unpaid': total_invoiced - total_paid,
                 'total_postpaid': total_postpaid
 
             }
 
         else:
+
+            total_used = Coalesce(Sum('total_price'), Decimal(0))
 
             total_invoiced = Coalesce(Sum('total_price', filter=(
                 Q(invoice__isnull=False))), Decimal(0))
@@ -439,12 +444,10 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
             metrics = {
                 'qty_used': Coalesce(Sum('qty'), float()),
-                'total_used': Coalesce(Sum('total_price'), Decimal(0)),
-                'total_invoiced': Coalesce(Sum('total_price', filter=(
-                    Q(invoice__isnull=False))), Decimal(0)),
-                'total_paid': Coalesce(Sum('total_price', filter=(
-                    Q(invoice__date_paid__isnull=False))), Decimal(0)),
-                'total_diff': total_invoiced - total_paid,
+                'total_used': total_used,
+                'total_invoiced': total_invoiced,
+                'total_uninvoiced': total_used - total_invoiced,
+                'total_unpaid': total_paid,
                 'total_postpaid': Sum(Decimal(0))
             }
 
@@ -502,10 +505,6 @@ class AccountSummaryAdmin(admin.ModelAdmin):
             .aggregate(**metrics)
         )
 
-        print(payment_deduction)
-
-        print(payment_deduction['deduction_cash'])
-
         payement_methods.append(
             {'payment_method': 'deduction machine', 'amount_due': payment_deduction['deduction_machine']})
         payement_methods.append({'payment_method': 'deduction cash', 'amount_due': payment_deduction['deduction_cash']})
@@ -517,7 +516,7 @@ class AccountSummaryAdmin(admin.ModelAdmin):
             amount_due = method['amount_due']
             if amount_due:
                 payment_total += amount_due
-        print(payment_total)
+
         response.context_data['payment_total'] = payment_total
 
         return response
