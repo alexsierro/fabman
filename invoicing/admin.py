@@ -447,7 +447,8 @@ class AccountSummaryAdmin(admin.ModelAdmin):
                 'total_used': total_used,
                 'total_invoiced': total_invoiced,
                 'total_uninvoiced': total_used - total_invoiced,
-                'total_unpaid': total_paid,
+                'total_paid': total_paid,
+                'total_unpaid': total_invoiced - total_paid,
                 'total_postpaid': Sum(Decimal(0))
             }
 
