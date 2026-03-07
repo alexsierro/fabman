@@ -12,6 +12,25 @@ class ProjectCard(models.Model):
     def __str__(self):
         return f'{self.project} {self.rfid}'
 
+
+MAIL_LIST_EXCLUDED_STATUSES = ['resigned']
+MAIL_LIST_EXCLUDED_TYPES = ['no_member']
+
+
+class MemberQuerySet(models.QuerySet):
+    def in_mail_list(self):
+        return self.exclude(
+            subscription_status__in=MAIL_LIST_EXCLUDED_STATUSES,
+        ).exclude(
+            member_type__in=MAIL_LIST_EXCLUDED_TYPES,
+        ).filter(
+            date_resigned__isnull=True,
+            mail__isnull=False,
+        ).exclude(
+            mail='',
+        )
+
+
 class Member(models.Model):
     INSCRIPTION_STATE = [
         ('not member', 'not member'),
@@ -70,6 +89,8 @@ class Member(models.Model):
     swiss_engineering_number = models.CharField('Numéro de membre Swiss Engineering', max_length=200, default=None, null=True, blank=True)
     comment = models.TextField('Commentaire', max_length=2000, default=None, null=True, blank=True)
 
+    objects = MemberQuerySet.as_manager()
+
     @property
     def get_tariff(self):
         if self.subscription_status not in ['resigned']:
@@ -83,9 +104,10 @@ class Member(models.Model):
 
     @property
     def is_in_mail_list(self):
-        return self.subscription_status not in ['resigned'] \
-            and self.member_type not in['no_member'] \
-            and not self.is_resigned
+        return self.subscription_status not in MAIL_LIST_EXCLUDED_STATUSES \
+            and self.member_type not in MAIL_LIST_EXCLUDED_TYPES \
+            and not self.is_resigned \
+            and bool(self.mail)
 
     @property
     def is_resigned(self):

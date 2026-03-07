@@ -40,6 +40,9 @@ class InvoiceSentListFiler(admin.SimpleListFilter):
 class InvoiceAdmin(admin.ModelAdmin):
     change_list_template = "admin/invoice_change_list.html"
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('member')
+
     def invoice_actions(self, obj):
         if obj.member is not None:
             color = 'orange'
@@ -212,6 +215,9 @@ class ResourceAdmin(admin.ModelAdmin):
 
     ordering = ['category', 'name']
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('account', 'widget', 'category', 'unit')
+
 
 admin.site.register(Resource, ResourceAdmin)
 
@@ -236,6 +242,19 @@ class IsInvoicedFilter(admin.SimpleListFilter):
 
 
 class UsageAdmin(admin.ModelAdmin):
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.select_related(
+            'member',
+            'project',
+            'project__member',
+            'resource',
+            'resource__unit',
+            'invoice',
+            'invoice__member',
+        )
+        return queryset
 
     def export_as_csv(self, request, queryset):
 
@@ -284,6 +303,9 @@ admin.site.register(Usage, UsageAdmin)
 
 class AccountEntryAdmin(admin.ModelAdmin):
     list_display = ['date', 'member', 'amount_machine', 'amount_cash', 'comment', 'invoice']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('member', 'invoice', 'invoice__member')
 
 
 class ExpenseAdmin(admin.ModelAdmin):

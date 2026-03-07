@@ -1,9 +1,9 @@
 from django.contrib import admin
+from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Member, Project, ProjectCard
-from invoicing.models import Invoice
 from django.http import HttpResponse
 import csv
 
@@ -12,12 +12,18 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ['name', 'member']
     search_fields = ['name', 'member__name', 'member__surname']
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('member')
+
 
 admin.site.register(Project, ProjectAdmin)
 
 
 class ProjectCardAdmin(admin.ModelAdmin):
     list_display = ['project', 'rfid']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('project', 'project__member')
 
 
 admin.site.register(ProjectCard, ProjectCardAdmin)
@@ -26,10 +32,21 @@ admin.site.register(ProjectCard, ProjectCardAdmin)
 class MemberAdmin(admin.ModelAdmin):
     actions = ['export_as_mail_list', 'export_as_mail_csv']
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            open_invoices_count=Count(
+                'invoice',
+                filter=~Q(invoice__status__in=('paid', 'cancelled'))
+            )
+        )
+
+    @staticmethod
+    def _get_mail_list(queryset):
+        return queryset.in_mail_list().values_list('mail', flat=True)
+
     def export_as_mail_list(self, request, queryset):
         response = HttpResponse()
-
-        mails = [member.mail for member in queryset if member.mail and member.is_in_mail_list]
+        mails = self._get_mail_list(queryset)
         response.write(';'.join(mails))
         return response
 
@@ -42,9 +59,7 @@ class MemberAdmin(admin.ModelAdmin):
         )
 
         writer = csv.writer(response)
-
-        mails = [member.mail for member in queryset if member.mail and member.is_in_mail_list]
-        for mail in mails:
+        for mail in self._get_mail_list(queryset):
             writer.writerow([mail])
 
         return response
@@ -52,7 +67,7 @@ class MemberAdmin(admin.ModelAdmin):
     export_as_mail_csv.short_description = "Export Email as CSV"
 
     def members_actions(self, obj):
-        open_invoices = Invoice.objects.filter(member=obj).exclude(status__in=('paid', 'cancelled')).count()
+        open_invoices = obj.open_invoices_count
         color = 'darkgreen'
         if open_invoices > 0:
             color = 'darkorange'
@@ -67,7 +82,6 @@ class MemberAdmin(admin.ModelAdmin):
                            member.name)
         else:
             return member.name
-
 
 
     list_display = ['members_actions', 'formatted_name', 'surname', 'rfid', 'is_staff', 'is_committee']
