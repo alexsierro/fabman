@@ -25,9 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 production = os.environ.get('PRODUCTION', False) == 'true'
-
-print(production)
-
+print(f'production: {production}')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 if production:
@@ -42,7 +40,7 @@ else:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = not production
-KEYCLOAK_ENABLED = True
+KEYCLOAK_ENABLED = not DEBUG
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
@@ -65,8 +63,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dbbackup',  # django-dbbackup
-    'django.contrib.humanize'
+    'django.contrib.humanize',
+    'django_extensions',
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -77,6 +79,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if DEBUG:
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 
 ROOT_URLCONF = 'fabman.urls'
 
@@ -209,3 +214,6 @@ EMAIL_DEBUG_RECEIVER = os.environ.get('EMAIL_DEBUG_RECEIVER')
 
 print(f'{EMAIL_HOST_USER=}')
 print(f'{EMAIL_DEBUG_RECEIVER=}')
+
+if DEBUG:
+    INTERNAL_IPS = ['127.0.0.1']
