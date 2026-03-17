@@ -46,7 +46,8 @@ KEYCLOAK_ENABLED = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-ALLOWED_HOSTS = ['*']
+virtual_host = os.environ.get('VIRTUAL_HOST')
+ALLOWED_HOSTS = [virtual_host] if virtual_host else ['localhost', '127.0.0.1']
 
 
 # Application definition
