@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max, Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
@@ -97,13 +97,17 @@ def preview(request):
     elif request.method == 'GET':
         member_id = request.GET.get('member_id', None)
 
-    if not member_id:
-        return render(request, 'preview_invoice.html', {'choice_member': choice_member})
+    if member_id:
+        if not choice_member.filter(pk=member_id).exists():
+            return HttpResponseBadRequest('Invalid member_id or not usages for this member')
 
-    else:
         result = prepare_invoice(member_id)
         result['choice_member'] = choice_member
         return render(request, 'preview_invoice.html', result)
+
+    else:
+        return render(request, 'preview_invoice.html', {'choice_member': choice_member})
+
 
 
 def create(request):
