@@ -322,8 +322,7 @@
     {% endif %}
 </div>
 <div class="qrCode">
-    {{ QRBILL_SVG | safe }}
-    <!-- <img src="{{ MEDIA_PREFIX }}invoicing.svg" alt="QR Facture"> -->
+    <img src="data:image/svg+xml;base64,{{ QRBILL_SVG_B64 }}">
 </div>
 
 </body>

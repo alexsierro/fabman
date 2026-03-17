@@ -1,3 +1,4 @@
+import base64
 import tempfile
 
 from django.db.models import Sum, Q
@@ -58,6 +59,7 @@ def get_invoice_html(invoice_number, is_for_pdf=False):
         my_bill.as_svg(temp)
         temp.seek(0)
         qrbill_svg = temp.read()
+        qrbill_svg_b64 = base64.b64encode(qrbill_svg.encode('utf-8')).decode('utf-8')
 
     balance = AccountEntry.objects. \
         filter(Q(date__lte=invoice.date_invoice) | Q(invoice=invoice), member=invoice.member, ). \
@@ -80,7 +82,7 @@ def get_invoice_html(invoice_number, is_for_pdf=False):
                             'use_projects': use_projects,
                             'STATIC_PREFIX': ('file://' + STATIC_ROOT if is_for_pdf else STATIC_URL) + '/',
                             'MEDIA_PREFIX': ('file://' + MEDIA_ROOT if is_for_pdf else MEDIA_URL) + '/',
-                            'QRBILL_SVG': qrbill_svg
+                            'QRBILL_SVG_B64': qrbill_svg_b64
                             })
 
     return html
