@@ -19,3 +19,6 @@ backup/
 
 keycloak.dev.env
 keycloak.prod.env
+
+.aws/credentials
+.aws/config
