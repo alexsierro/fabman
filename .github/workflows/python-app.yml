@@ -10,6 +10,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DEBUG: true
 
     steps:
     - uses: actions/checkout@v2
