@@ -7,7 +7,7 @@ members/membres.csv
 invoicing/usage.csv
 static/
 backup/
-/email.env
+email.env
 
 .env.prod
 .env.prod.db
