@@ -16,6 +16,7 @@ services:
       - ./.env.prod
       - ./email.env
       - ./keycloak.prod.env
+      - ./.env.prod.host
     depends_on:
       - db
   db:

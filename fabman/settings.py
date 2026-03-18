@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 import _locale
 _locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
@@ -19,12 +20,12 @@ _locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-
+load_dotenv('is_debug.env')
+DEBUG = os.environ.get('DEBUG', False) =='true'
+production = not DEBUG
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
-production = os.environ.get('PRODUCTION', False) == 'true'
 print(f'production: {production}')
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -32,7 +33,6 @@ if production:
     SECRET_KEY = os.environ.get('SECRET_KEY')
 else:
     SECRET_KEY = 'nn@cmln2bw@@omr+_5k)!g&ylxvn+(+j@4=@1=*euv0fw3wbvi'
-    from dotenv import load_dotenv
     load_dotenv('../email.env')
     load_dotenv('email.env')
     load_dotenv('keycloak.dev.env')

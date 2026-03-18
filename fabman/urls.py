@@ -15,12 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
 from django.conf import settings
 from django.conf.urls.static import static
-
 from fabman import views
-from legacy import views as legacy_views
 
 urlpatterns = [
     path('members/', include('members.urls')),
@@ -31,11 +28,14 @@ urlpatterns = [
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \
   + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+if settings.DEBUG:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+    urlpatterns += debug_toolbar_urls()
+
 if not settings.DEBUG:
     urlpatterns.append(path('', views.index))
 
 
-from django.contrib import admin
 admin.site.site_header = "Fablab Sion - FabMan"
 admin.site.site_title = "FabMan"
 admin.site.index_title = ''
