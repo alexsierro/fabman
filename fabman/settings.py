@@ -170,16 +170,34 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": MEDIA_ROOT,
+        }
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 if production:
-    DBBACKUP_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    DBBACKUP_STORAGE_OPTIONS = {
-        'session_profile': 'backup',
-        'bucket_name': os.environ.get('S3_BUCKET_NAME'),
-        'location': 'db'
+    STORAGES["dbbackup"] = {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "session_profile": "backup",
+            "bucket_name": os.environ.get('S3_BUCKET_NAME'),
+            "location": "db",
+        }
     }
 else:
-    DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    DBBACKUP_STORAGE_OPTIONS = {'location': 'backup/'}
+    STORAGES["dbbackup"] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": "backup/",
+        }
+    }
 
 
 if production:
