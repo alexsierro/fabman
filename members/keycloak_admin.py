@@ -30,15 +30,16 @@ admin_username = os.environ.get('KEYCLOAK_ADMIN_USERNAME')
 admin_password = os.environ.get('KEYCLOAK_ADMIN_PASSWORD')
 
 # Initialize KeycloakAdmin instance
-keycloak_admin = KeycloakAdmin(
-    server_url=keycloak_url,
-    username=admin_username,
-    password=admin_password,
-    realm_name=realm_name,
-    user_realm_name=realm_name,
-    client_id='admin-cli',
-    verify=True  # Set to False if using a self-signed certificate
-)
+if keycloak_url:
+    keycloak_admin = KeycloakAdmin(
+        server_url=keycloak_url,
+        username=admin_username,
+        password=admin_password,
+        realm_name=realm_name,
+        user_realm_name=realm_name,
+        client_id='admin-cli',
+        verify=True  # Set to False if using a self-signed certificate
+    )
 
 
 
