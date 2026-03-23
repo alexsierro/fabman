@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from dateutil.utils import today
+from datetime import date
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -29,7 +29,7 @@ class UsageSummaryTests(TestCase):
         u2 = Usage.objects.create(member=m, resource=r2, qty=8)
         u3 = Usage.objects.create(member=m, resource=r2, qty=4)
 
-        i1 = Invoice.objects.create(member=m, invoice_number=1, date_paid=today())
+        i1 = Invoice.objects.create(member=m, invoice_number=1, date_paid=date.today())
 
         u1.invoice = i1
         u1.save()
