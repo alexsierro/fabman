@@ -1,7 +1,6 @@
 db.sqlite3
 **/__pycache__/
-venv/
-venv37/
+venv*/
 .idea
 members/membres.csv
 invoicing/usage.csv
