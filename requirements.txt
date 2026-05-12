@@ -1,4 +1,4 @@
-Django==6.0.4
+Django==6.0.5
 django-extensions==4.1
 django-debug-toolbar==6.2.0
 pytz==2026.1.post1
