@@ -12,7 +12,7 @@ gunicorn==25.1.0
 django-dbbackup==5.2.0
 django-storages[boto3]
 boto3==1.42.74
-Pillow==12.1.1
+Pillow==12.2.0
 weasyprint==68.1
 python-dotenv==1.2.2
 python-keycloak==7.1.1
