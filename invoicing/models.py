@@ -29,7 +29,9 @@ class Invoice(models.Model):
         ('bank', 'Banque'),
         ('frais', 'Note de frais'),
         ('perte', 'Non récupérable'),
-        ('interne', 'Payée par le FabLab')
+        ('interne', 'Payée par le FabLab'),
+        ('bon_fablab', 'Bon FabLab Sion'),
+        ('cheque_sion', 'Chèque sport ou culture Ville de Sion'),
     ]
 
     invoice_number = models.IntegerField(unique=True)
@@ -40,7 +42,7 @@ class Invoice(models.Model):
     date_invoice = models.DateTimeField('Invoice date', default=datetime.datetime.now)
     status = models.CharField(max_length=10, choices=STATUS, default="created")
     date_paid = models.DateField('Paid date', default=None, null=True, blank=True)
-    payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD, default=None, null=True, blank=True)
+    payment_method = models.CharField(max_length=11, choices=PAYMENT_METHOD, default=None, null=True, blank=True)
     comments = models.TextField(max_length=2000, default=None, null=True, blank=True)
     was_sent_by_email = models.BooleanField(default=False)
     was_sent_by_post = models.BooleanField(default=False)
