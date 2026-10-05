@@ -8,6 +8,9 @@ static/
 backup/
 email.env
 
+media/*
+!media/.gitkeep
+
 .env.prod
 .env.prod.db
 .env.prod.host
@@ -21,3 +24,5 @@ keycloak.prod.env
 
 .aws/credentials
 .aws/config
+
+scripts/pull_prod_data.env
