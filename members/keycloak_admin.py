@@ -57,10 +57,20 @@ def create_or_update_user(username, first_name, last_name, email, groups, enable
 
 
 
+    username = (username or '').strip()
+    if not username:
+        print('Empty username, skipping Keycloak sync.')
+        return
+
     # Get the user ID of the user you want to update
     user_id = None
     users = keycloak_admin.get_users(query={"username": username, "exact": True})
-    print(users)
+    # never trust the query alone: an ignored filter returns every user of the realm
+    users = [u for u in users if u.get('username', '').lower() == username.lower()]
+    if len(users) > 1:
+        print(f"Multiple Keycloak users match '{username}', skipping.")
+        return
+
     if not users:
         print(f"User '{username}' not found, creating a new user.")
         user_data['username'] = username
@@ -86,6 +96,9 @@ def create_or_update_user(username, first_name, last_name, email, groups, enable
             print(f"Failed to update user: {e}")
 
     # ------------ assign groups to user
+
+    if not user_id:
+        return
 
     user_groups = groups
     update_user_groups(keycloak_admin, user_id, user_groups)

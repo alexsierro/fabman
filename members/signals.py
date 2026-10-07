@@ -18,6 +18,10 @@ def member_post_save(sender, instance, created, **kwargs):
     if not settings.KEYCLOAK_ENABLED:
         return
 
+    if not (member.visa or '').strip():
+        print(f"Member '{member}' has no visa, skipping Keycloak sync.")
+        return
+
     groups = []
     if member.member_type in ['membre', 'etudiant', 'avs', 'ai', 'angel']:
         groups.append('membres')
