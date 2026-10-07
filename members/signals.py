@@ -22,10 +22,6 @@ def member_post_save(sender, instance, created, **kwargs):
         print(f"Member '{member}' has no visa, skipping Keycloak sync.")
         return
 
-    if Member.objects.filter(visa__iexact=member.visa.strip()).exclude(pk=member.pk).exists():
-        print(f"Visa '{member.visa}' is shared (case-insensitive) with another member, skipping Keycloak sync.")
-        return
-
     groups = []
     if member.member_type in ['membre', 'etudiant', 'avs', 'ai', 'angel']:
         groups.append('membres')

@@ -94,10 +94,22 @@ class Member(models.Model):
 
     class Meta:
         constraints = [
-            # Keycloak usernames are case-insensitive: 'coa' and 'Coa' would share one account
-            models.UniqueConstraint(Lower('visa'), name='member_visa_unique_ci',
-                                    violation_error_message='Ce visa existe déjà (majuscules/minuscules ignorées).'),
+            # Keycloak usernames are lowercase: with 'coa' and 'Coa', two members would share one account
+            models.CheckConstraint(condition=models.Q(visa=Lower('visa')), name='member_visa_lowercase',
+                                   violation_error_message='Le visa doit être en minuscules.'),
         ]
+
+    def normalize_visa(self):
+        if self.visa is not None:
+            self.visa = self.visa.strip().lower() or None
+
+    def clean(self):
+        # runs before constraint validation in forms/admin
+        self.normalize_visa()
+
+    def save(self, *args, **kwargs):
+        self.normalize_visa()
+        super().save(*args, **kwargs)
 
     @property
     def get_tariff(self):
