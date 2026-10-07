@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.db import models
+from django.db.models.functions import Lower
 from django.contrib.auth.models import User
 from invoicing.tariff import *
 
@@ -90,6 +91,13 @@ class Member(models.Model):
     comment = models.TextField('Commentaire', max_length=2000, default=None, null=True, blank=True)
 
     objects = MemberQuerySet.as_manager()
+
+    class Meta:
+        constraints = [
+            # Keycloak usernames are case-insensitive: 'coa' and 'Coa' would share one account
+            models.UniqueConstraint(Lower('visa'), name='member_visa_unique_ci',
+                                    violation_error_message='Ce visa existe déjà (majuscules/minuscules ignorées).'),
+        ]
 
     @property
     def get_tariff(self):

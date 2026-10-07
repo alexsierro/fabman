@@ -84,7 +84,7 @@ class MemberAdmin(admin.ModelAdmin):
             return member.name
 
 
-    list_display = ['members_actions', 'formatted_name', 'surname', 'rfid', 'is_staff', 'is_committee']
+    list_display = ['members_actions', 'formatted_name', 'surname', 'visa', 'rfid', 'is_staff', 'is_committee']
     list_display_links = ['formatted_name', 'surname']
     search_fields = ['name', 'surname', 'rfid', 'visa']
     ordering = ['name', 'surname']
