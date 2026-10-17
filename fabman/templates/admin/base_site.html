@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}{{ block.super }}
+{% if APP_VERSION == 'local' %}
+<style>
+  /* Orange theme so a local instance is never mistaken for production */
+  :root, html[data-theme="light"], html[data-theme="dark"] {
+    --primary: #ffb74d;
+    --secondary: #e65100;
+    --accent: #fff3e0;
+    --header-bg: var(--secondary);
+    --breadcrumbs-bg: #a63c00;
+    --link-fg: #d84315;
+    --link-hover-color: #a63c00;
+    --button-bg: var(--secondary);
+    --button-hover-bg: #f57c00;
+    --default-button-bg: #a63c00;
+    --default-button-hover-bg: #e65100;
+  }
+</style>
+{% endif %}
+{% endblock %}

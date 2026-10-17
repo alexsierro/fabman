@@ -50,8 +50,11 @@ class InvoiceAdmin(admin.ModelAdmin):
             if obj.status == 'paid':
                 color = 'green'
 
-            return format_html('<a class="button" style="background-color:{}" href="{}" target="_blank">Show</a> '
-                               '<a class="button" href="{}" target="_blank">Details</a>',
+            return format_html('<div style="display:flex;gap:4px;white-space:nowrap">'
+                               '<a class="button" style="background-color:{};text-decoration:none" href="{}" target="_blank">Show</a>'
+                               '<a class="button" style="text-decoration:none;padding-left:6px;padding-right:6px" href="{}" '
+                               'target="_blank" title="Detailed invoice">&hellip;</a>'
+                               '</div>',
                                color, reverse('show_pdf_invoice', args=[obj.invoice_number]),
                                reverse('show_detailed_pdf_invoice', args=[obj.invoice_number]))
         else:
