@@ -27,3 +27,4 @@ keycloak.prod.env
 
 scripts/pull_prod_data.env
 is_debug.env
+VERSION

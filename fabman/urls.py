@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.utils.html import format_html
 from fabman import views
 
 urlpatterns = [
@@ -36,6 +37,8 @@ if not settings.DEBUG:
     urlpatterns.append(path('', views.index))
 
 
-admin.site.site_header = "Fablab Sion - FabMan"
+admin.site.site_header = format_html(
+    'Fablab Sion - FabMan <small style="font-size: 0.6em; opacity: 0.7;">{}</small>',
+    settings.APP_VERSION)
 admin.site.site_title = "FabMan"
 admin.site.index_title = ''

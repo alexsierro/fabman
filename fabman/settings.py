@@ -20,6 +20,17 @@ _locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _read_version():
+    # Written by scripts/deploy.sh; absent when running locally
+    try:
+        return (BASE_DIR / 'VERSION').read_text().strip()
+    except OSError:
+        return 'local'
+
+
+APP_VERSION = _read_version()
+
+
 load_dotenv('is_debug.env')
 DEBUG = os.environ.get('DEBUG', False) =='true'
 production = not DEBUG

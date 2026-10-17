@@ -12,6 +12,10 @@ main() {
 
     echo "==> Pulling code"
     git pull --ff-only origin main
+    # Version: commit date of HEAD, numbered by its rank among that day's commits
+    day=$(git log -1 --format=%cd --date=format:%Y-%m-%d)
+    count=$(git log --format=%cd --date=format:%Y-%m-%d | grep -c "^$day$")
+    echo "$day.$count" > VERSION
 
     echo "==> Pulling image"
     docker compose -f docker-compose.prod.yml pull web
