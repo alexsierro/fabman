@@ -7,5 +7,7 @@ urlpatterns = [
     path('create', views.create, name='create_invoice'),
     path('show_html/<invoice_number>', views.show_invoice, name='show_invoice'),
     path('show_pdf/<invoice_number>', views.show_invoice, name='show_pdf_invoice'),
+    path('show_detailed_html/<invoice_number>', views.show_invoice, name='show_detailed_invoice'),
+    path('show_detailed_pdf/<invoice_number>', views.show_invoice, name='show_detailed_pdf_invoice'),
     path('import-ebanking', views.import_ebanking, name='import_ebanking'),
 ]

@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Facture {{ invoice.invoice_number }}</title>
+    <title>{% block title %}Facture {{ invoice.invoice_number }}{% endblock %}</title>
     <!--<link rel="stylesheet" href="httpss://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">-->
     <link rel="stylesheet" href="{{ STATIC_PREFIX }}css/sbootstrap.min.css">
 </head>
@@ -15,6 +15,13 @@
         margin: 0cm;
         margin-top: 1cm;
         margin-bottom: 1cm;
+
+        @bottom-center {
+            content: "Page " counter(page) " / " counter(pages);
+            color: #a9a;
+            font-family: "Inconsolata";
+            font-size: 9pt;
+        }
     }
 
     html {
@@ -175,6 +182,51 @@
         margin-bottom: 5mm;
     }
 
+    th.col-date, td.col-date {
+        text-align: left;
+        white-space: nowrap;
+        padding-right: 4mm;
+    }
+
+    th.col-designation, td.col-designation {
+        text-align: left;
+    }
+
+    .stamp {
+        margin: 15mm auto 0;
+        width: 70mm;
+        padding: 5mm;
+        border: 1mm solid #1ee494;
+        color: #1ee494;
+        font-size: 22pt;
+        font-weight: bold;
+        text-align: center;
+        text-transform: uppercase;
+        transform: rotate(-6deg);
+    }
+
+    .stamp small {
+        font-size: 12pt;
+    }
+
+    table.info {
+        width: auto;
+        margin-bottom: 5mm;
+    }
+
+    table.info th, table.info td {
+        text-align: left;
+        padding: 1mm 5mm 1mm 0;
+    }
+
+    table.info th {
+        color: #a9a;
+        background-color: transparent !important;
+        border: none;
+        font-size: 11pt;
+        text-transform: none;
+    }
+
     .no-break {
         break-inside: avoid-page;
     }
@@ -202,6 +254,7 @@
     </address>
 </aside>
 
+{% block header %}
 <p style="padding-top:0px">Sion, le {{ invoice.date_invoice|date:"d.m.Y" }}</p>
 
 <div class="commentaire">
@@ -211,31 +264,44 @@
         <p><u><b>Note : </b> {{ invoice.comments }} </u></p>
     {% endif %}
     Voici la facture pour ton utilisation du FabLab Sion.</br>
-    Nous t'invitons à la régler dans un délai de {{ payment_delay }} jours.<br>
+    {% if invoice.status == "paid" %}
+        Cette facture a été payée{% if invoice.date_paid %} le {{ invoice.date_paid|date:"d.m.Y" }}{% endif %}, merci !<br>
+    {% elif invoice.status == "cancelled" %}
+        Cette facture a été annulée.<br>
+    {% elif invoice.amount_due <= 0 %}
+        Rien à payer, le montant est couvert par ton avoir.<br>
+    {% else %}
+        Nous t'invitons à la régler dans un délai de {{ payment_delay }} jours.<br>
+    {% endif %}
     Pour toute demande merci de contacter le caissier par e-mail compta@fablabsion.ch
 
 </div>
+{% endblock %}
 
 <div class="facture">
     <table class="export-table">
+        <thead>
         <tr>
-            <th style="width:55%">Désignation</th>
+            {% if detailed %}<th class="col-date" style="width:15%">Date</th>{% endif %}
+            <th class="col-designation" style="width:{% if detailed %}40{% else %}55{% endif %}%">Désignation</th>
             <th colspan="2" style="width:15%">Quantité</th>
             <th colspan="2" style="width:15%">Prix</th>
             <th colspan="2" style="width:15%">Total</th>
         </tr>
+        </thead>
+        <tbody>
         {% regroup usages_anotated by project__name as usages_list %}
 
         {% for project__name, project_usages in usages_list %}
             {% if use_projects %}
                 <tr>
-                    <td><h4>Projet : {{ project__name|default_if_none:"Non spécifié" }} </h4></td>
-                    <td></td>
+                    <td colspan="{% if detailed %}8{% else %}7{% endif %}" style="text-align: left"><h4>Projet : {{ project__name|default_if_none:"Non spécifié" }} </h4></td>
                 </tr>
             {% endif %}
             {% for usage in project_usages %}
                 <tr class="detail">
-                    <td>
+                    {% if detailed %}<td class="col-date">{{ usage.date|date:"d.m.Y" }}</td>{% endif %}
+                    <td class="col-designation">
                         {% if usage.comment %}
                             {{ usage.comment }}
                         {% else %}
@@ -246,7 +312,7 @@
                         {% endif %}
                     </td>
                     <td> {% if usage.resource__unit__name %}{{ usage.resource__unit__name }}{%  else %}{% endif %}</td>
-                    <td class="chiffre-center">{{ usage.qty|floatformat:"-2" }}</td>
+                    <td class="chiffre-center">{% if detailed %}{{ usage.qty|floatformat:"2" }}{% else %}{{ usage.qty|floatformat:"-2" }}{% endif %}</td>
                     <td>CHF</td>
                     <td class="chiffre-center">{{ usage.unit_price|format_currency }}</td>
                     <td>CHF</td>
@@ -255,7 +321,8 @@
             {% endfor %}
             {% if use_projects %}
                 <tr class="tot_projet">
-                    <td colspan="6">Total pour le projet "{{ project__name|default_if_none:'non spécifié' }}" :</td>
+                    <td colspan="{% if detailed %}6{% else %}5{% endif %}">Total pour le projet "{{ project__name|default_if_none:'non spécifié' }}" :</td>
+                    <td>CHF</td>
                     <td class="chiffre">{{ project_usages|running_total|format_currency }}</td>
                 </tr>
             {% endif %}
@@ -265,7 +332,7 @@
 
         {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 %}
             <tr>
-                <td colspan="5" style="text-align: right; padding-right : 5mm; border-top: solid 2px">Sous-total</td>
+                <td colspan="{% if detailed %}6{% else %}5{% endif %}" style="text-align: right; padding-right : 5mm; border-top: solid 2px">Sous-total</td>
                 <td style="border-top: solid 2px"> CHF</td>
                 <td class="chiffre" style="border-top: solid 2px">{{ invoice.amount|format_currency }}</td>
             </tr>
@@ -273,29 +340,30 @@
 
         {% if invoice.amount_deduction_machine > 0 %}
             <tr>
-                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
+                <td colspan="{% if detailed %}6{% else %}5{% endif %}" style="text-align: right; padding-right : 5mm; ">Déduction crédit machine</td>
                 <td> CHF</td>
                 <td class="chiffre">{{ invoice.amount_deduction_machine|format_currency }}</td>
             </tr>
         {% endif %}
         {% if invoice.amount_deduction_cash > 0 %}
             <tr>
-                <td colspan="5" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
+                <td colspan="{% if detailed %}6{% else %}5{% endif %}" style="text-align: right; padding-right : 5mm; ">Déduction autre</td>
                 <td> CHF</td>
-                <td class="chiffre" style="font-weight: bold;">{{ invoice.amount_deduction_cash|format_currency }}</td>
+                <td class="chiffre">{{ invoice.amount_deduction_cash|format_currency }}</td>
             </tr>
         {% endif %}
 
         <tr>
-            <td colspan="5"
-                style="text-align: right; padding-right : 5mm; font-weight: lighter  ; border-top: solid 2px"><b>Total à
-                payer</b></td>
-            <td style=" border-top: solid 2px"> CHF</td>
+            <td colspan="{% if detailed %}6{% else %}5{% endif %}"
+                style="text-align: right; padding-right : 5mm; font-weight: lighter  ; border-top: solid 2px"><b>{% if detailed %}Total{% else %}Total à payer{% endif %}</b></td>
+            <td style="font-weight: bold; border-top: solid 2px"> CHF</td>
             <td class="chiffre"
                 style="font-weight: bold; border-top: solid 2px">{{ invoice.amount_due|format_currency }}</td>
         </tr>
+        </tbody>
     </table>
 
+    {% block remaining_credit %}
     {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0 %}
         <div class="no-break">
         <h3>Avoir restant</h3>
@@ -318,12 +386,21 @@
         </table>
         </div>
         <br/>
-        </div>
     {% endif %}
+    {% endblock %}
 </div>
-<div class="qrCode">
-    <img src="data:image/svg+xml;base64,{{ QRBILL_SVG_B64 }}">
-</div>
+{% block footer %}
+{% if invoice.status == "paid" %}
+    <div class="stamp no-break">Déjà payé{% if invoice.date_paid %}<br><small>le {{ invoice.date_paid|date:"d.m.Y" }}</small>{% endif %}</div>
+{% elif invoice.status == "cancelled" %}
+    <div class="stamp no-break">Facture annulée</div>
+{% elif invoice.amount_due <= 0 %}
+{% else %}
+    <div class="qrCode">
+        <img src="data:image/svg+xml;base64,{{ QRBILL_SVG_B64 }}">
+    </div>
+{% endif %}
+{% endblock %}
 
 </body>
 </html>

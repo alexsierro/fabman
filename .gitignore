@@ -26,3 +26,4 @@ keycloak.prod.env
 .aws/config
 
 scripts/pull_prod_data.env
+is_debug.env

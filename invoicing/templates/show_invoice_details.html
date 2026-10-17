@@ -1,0 +1,54 @@
+{% extends "show_invoice.html" %}
+{% load app_filters %}
+
+{% block title %}Détails de la facture {{ invoice.invoice_number }}{% endblock %}
+
+{% block header %}
+<p style="padding-top:0px">Sion, le {{ today|date:"d.m.Y" }}</p>
+
+<div class="commentaire">
+    <h2>Détails de la facture {{ invoice.invoice_number }}</h2>
+
+    <table class="info">
+        <tr>
+            <th>Date de facture</th>
+            <td>{{ invoice.date_invoice|date:"d.m.Y" }}</td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>{{ invoice.get_status_display }}</td>
+        </tr>
+        <tr>
+            <th>Envoyée</th>
+            <td>
+                {% if invoice.was_sent_by_email and invoice.was_sent_by_post %}Par e-mail et par courrier
+                {% elif invoice.was_sent_by_email %}Par e-mail
+                {% elif invoice.was_sent_by_post %}Par courrier
+                {% else %}Non{% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date de paiement</th>
+            <td>{{ invoice.date_paid|date:"d.m.Y"|default:"-" }}</td>
+        </tr>
+        <tr>
+            <th>Moyen de paiement</th>
+            <td>{{ invoice.get_payment_method_display|default:"-" }}</td>
+        </tr>
+        <tr>
+            <th>Montant de la facture</th>
+            <td>CHF {{ invoice.amount_due|format_currency }}</td>
+        </tr>
+        {% if invoice.comments %}
+            <tr>
+                <th>Note</th>
+                <td>{{ invoice.comments }}</td>
+            </tr>
+        {% endif %}
+    </table>
+</div>
+{% endblock %}
+
+{% block remaining_credit %}{% endblock %}
+
+{% block footer %}{% endblock %}

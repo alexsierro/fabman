@@ -130,13 +130,15 @@ def show_invoice(request, invoice_number):
     if not request.user.is_staff:
         raise PermissionDenied
 
-    is_pdf = request.resolver_match.url_name == 'show_pdf_invoice'
+    url_name = request.resolver_match.url_name
+    is_pdf = url_name in ('show_pdf_invoice', 'show_detailed_pdf_invoice')
+    detailed = url_name in ('show_detailed_invoice', 'show_detailed_pdf_invoice')
 
     if is_pdf:
-        pdf_file = get_invoice_pdf(invoice_number)
+        pdf_file = get_invoice_pdf(invoice_number, detailed=detailed)
         response = HttpResponse(pdf_file, content_type="application/pdf")
     else:
-        html = get_invoice_html(invoice_number)
+        html = get_invoice_html(invoice_number, detailed=detailed)
         response = HttpResponse(html)
 
     return response
