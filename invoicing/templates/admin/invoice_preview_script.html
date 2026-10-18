@@ -1,0 +1,40 @@
+<script>
+    (function () {
+        const preview = document.createElement('div');
+        preview.id = 'invoice-preview';
+        const iframe = document.createElement('iframe');
+        iframe.title = 'Invoice preview';
+        const placeholder = document.createElement('div');
+        placeholder.className = 'placeholder';
+        placeholder.textContent = 'Loading...';
+        preview.append(iframe, placeholder);
+        iframe.addEventListener('load', () => preview.classList.add('loaded'));
+        document.body.appendChild(preview);
+        let timer = null;
+
+        function show(link) {
+            if (iframe.getAttribute('src') !== link.dataset.preview) {
+                preview.classList.remove('loaded');
+                iframe.setAttribute('src', link.dataset.preview);
+            }
+            const rect = link.getBoundingClientRect();
+            const width = preview.offsetWidth || 357, height = 505;
+            let left = rect.right + 10;
+            if (left + width > window.innerWidth) {
+                left = Math.max(0, rect.left - width - 10);
+            }
+            const top = Math.min(Math.max(0, rect.top - height / 2), window.innerHeight - height);
+            preview.style.left = left + 'px';
+            preview.style.top = Math.max(0, top) + 'px';
+            preview.style.display = 'block';
+        }
+
+        document.querySelectorAll('a[data-preview]').forEach(link => {
+            link.addEventListener('mouseenter', () => timer = setTimeout(() => show(link), 300));
+            link.addEventListener('mouseleave', () => {
+                clearTimeout(timer);
+                preview.style.display = 'none';
+            });
+        });
+    })();
+</script>

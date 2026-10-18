@@ -1,5 +1,15 @@
 {% extends 'admin/change_list.html' %}
 
+{% block extrastyle %}
+    {{ block.super }}
+    {% include "admin/invoice_preview_style.html" %}
+{% endblock %}
+
+{% block footer %}
+    {{ block.super }}
+    {% include "admin/invoice_preview_script.html" %}
+{% endblock %}
+
 {% block object-tools %}
     <div>
 <a class="button" href="/invoicing/preview" target="_blank">Create new invoice</a>

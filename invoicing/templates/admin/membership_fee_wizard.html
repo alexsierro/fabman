@@ -3,6 +3,7 @@
 
 {% block extrastyle %}
     {{ block.super }}
+    {% include "admin/invoice_preview_style.html" %}
     <style>
         .fee-step { margin-bottom: 30px; }
         .fee-step table { width: 100%; }
@@ -15,21 +16,6 @@
         .invoice-dot.status-rappel1, .invoice-dot.status-rappel2, .invoice-dot.status-rappel3 { color: #d1312f; }
         .invoice-dot.status-cancelled { color: #999; }
         .fee-step .amount { text-align: right; white-space: nowrap; }
-        #invoice-preview {
-            display: none; position: fixed; z-index: 1000; overflow: hidden;
-            width: 357px; height: 505px; /* A4 at 45% */
-            background: #fff; border: 1px solid #999; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-        #invoice-preview iframe {
-            width: 794px; height: 1123px; border: 0;
-            transform: scale(0.45); transform-origin: 0 0; pointer-events: none;
-        }
-        #invoice-preview .placeholder {
-            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-            color: #888; background: #fff;
-        }
-        #invoice-preview.loaded .placeholder { display: none; }
-        #invoice-preview:not(.loaded) iframe { visibility: hidden; }
         .fee-step a.pdf-link {
             display: inline-block; width: 16px; height: 20px; vertical-align: middle;
             background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 20'%3E%3Cpath d='M1 .5h9.5L15.5 5.5V19a.5.5 0 0 1-.5.5H1a.5.5 0 0 1-.5-.5V1A.5.5 0 0 1 1 .5z' fill='%23fff' stroke='%23b30b00'/%3E%3Cpath d='M10.5 .5v5h5' fill='%23f4c7c3' stroke='%23b30b00'/%3E%3Crect x='0' y='10' width='13' height='7' rx='1' fill='%23d93025'/%3E%3Ctext x='6.5' y='15.6' font-family='Arial,sans-serif' font-size='5.4' font-weight='bold' fill='%23fff' text-anchor='middle'%3EPDF%3C/text%3E%3C/svg%3E") no-repeat center / contain;
@@ -261,46 +247,7 @@
         updateSelectAll();
     });
 
-    // preview of the html invoice when hovering a pdf link
-    (function () {
-        const preview = document.createElement('div');
-        preview.id = 'invoice-preview';
-        const iframe = document.createElement('iframe');
-        const placeholder = document.createElement('div');
-        placeholder.className = 'placeholder';
-        placeholder.textContent = 'Loading…';
-        preview.append(iframe, placeholder);
-        // hide the previous invoice until the new one is loaded
-        iframe.addEventListener('load', () => preview.classList.add('loaded'));
-        document.body.appendChild(preview);
-        let timer = null;
-
-        function show(link) {
-            if (iframe.getAttribute('src') !== link.dataset.preview) {
-                preview.classList.remove('loaded');
-                iframe.setAttribute('src', link.dataset.preview);
-            }
-            const rect = link.getBoundingClientRect();
-            const width = preview.offsetWidth || 357, height = 505;
-            // on the right of the icon if there is room, else on the left, and kept inside the viewport
-            let left = rect.right + 10;
-            if (left + width > window.innerWidth) {
-                left = Math.max(0, rect.left - width - 10);
-            }
-            const top = Math.min(Math.max(0, rect.top - height / 2), window.innerHeight - height);
-            preview.style.left = left + 'px';
-            preview.style.top = Math.max(0, top) + 'px';
-            preview.style.display = 'block';
-        }
-
-        document.querySelectorAll('a.pdf-link[data-preview]').forEach(link => {
-            link.addEventListener('mouseenter', () => timer = setTimeout(() => show(link), 300));
-            link.addEventListener('mouseleave', () => {
-                clearTimeout(timer);
-                preview.style.display = 'none';
-            });
-        });
-    })();
 </script>
+{% include "admin/invoice_preview_script.html" %}
 
 {% endblock %}

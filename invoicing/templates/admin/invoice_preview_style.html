@@ -1,0 +1,18 @@
+<style>
+    #invoice-preview {
+        display: none; position: fixed; z-index: 1000; overflow: hidden;
+        width: 357px; height: 505px;
+        background: #fff; border: 1px solid #999; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+    }
+    #invoice-preview iframe {
+        width: 794px; height: 1123px; border: 0;
+        transform: scale(0.45); transform-origin: 0 0; pointer-events: none;
+    }
+    #invoice-preview .placeholder {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        color: #888; background: #fff;
+    }
+    #invoice-preview.loaded .placeholder { display: none; }
+    #invoice-preview:not(.loaded) iframe { visibility: hidden; }
+</style>

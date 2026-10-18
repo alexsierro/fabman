@@ -64,12 +64,15 @@ class InvoiceAdmin(admin.ModelAdmin):
         if obj.member is not None:
             color = self.STATUS_COLORS.get(obj.status, 'orange')
             return format_html('<div style="display:flex;gap:4px;white-space:nowrap">'
-                               '<a class="button" style="background-color:{};text-decoration:none" href="{}" target="_blank">Show</a>'
+                               '<a class="button" style="background-color:{};text-decoration:none" href="{}" '
+                               'data-preview="{}" target="_blank">Show</a>'
                                '<a class="button" style="text-decoration:none;padding-left:6px;padding-right:6px" href="{}" '
-                               'target="_blank" title="Detailed invoice">&hellip;</a>'
+                               'data-preview="{}" target="_blank" title="Detailed invoice">&hellip;</a>'
                                '</div>',
                                color, reverse('show_pdf_invoice', args=[obj.invoice_number]),
-                               reverse('show_detailed_pdf_invoice', args=[obj.invoice_number]))
+                               reverse('show_invoice', args=[obj.invoice_number]),
+                               reverse('show_detailed_pdf_invoice', args=[obj.invoice_number]),
+                               reverse('show_detailed_invoice', args=[obj.invoice_number]))
         else:
             return ''
 
