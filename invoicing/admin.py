@@ -89,23 +89,6 @@ class InvoiceAdmin(admin.ModelAdmin):
     def export_as_txt(self, request, queryset) -> HttpResponse:
         return invoices_export_accounting.export_as_txt(self, request, queryset)
 
-    @admin.action(description='(old) Send selected invoices by email')
-    def send_by_email_old(self, request, queryset):
-        successfully_sent_count = 0
-        for invoice in queryset:
-            if invoice.is_sent:
-                self.message_user(request,
-                                  f'Invoice {invoice.invoice_number} not send because it is already marked as send. Remove send flag(s) to resend.',
-                                  messages.WARNING)
-            else:
-                try:
-                    send_invoice(invoice)
-                    successfully_sent_count += 1
-                except Exception as e:
-                    self.message_user(request, f'Error sending invoice {invoice.invoice_number}: {e}', messages.ERROR)
-
-        if successfully_sent_count > 0:
-            self.message_user(request, f'{successfully_sent_count} invoices sent by email', messages.SUCCESS)
 
     @admin.action(description='Send selected invoices by email')
     def send_by_email(self, request, queryset):
