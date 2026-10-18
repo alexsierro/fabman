@@ -7,6 +7,7 @@ from django.db.models import Max, Sum
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.utils import timezone
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from invoicing.invoice_view_helpers import get_invoice_pdf, get_invoice_html
 from invoicing.models import Invoice, Usage, AccountEntry
@@ -126,6 +127,8 @@ def create(request):
         return redirect('show_invoice', invoice_number=result['invoice'].invoice_number)
 
 
+# can be shown in an iframe for the preview in the membership fees wizard
+@xframe_options_sameorigin
 def show_invoice(request, invoice_number):
     if not request.user.is_staff:
         raise PermissionDenied

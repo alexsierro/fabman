@@ -206,6 +206,13 @@ class ToInvoice(Invoice):
         verbose_name_plural = "To Invoice"
 
 
+class MembershipFee(Usage):
+    class Meta:
+        proxy = True
+        verbose_name = "Membership fees"
+        verbose_name_plural = "Membership fees"
+
+
 @receiver(pre_save, sender=Usage)
 def usage_pre_save(sender, instance, **kwargs):
     usage = instance

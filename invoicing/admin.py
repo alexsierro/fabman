@@ -3,18 +3,20 @@ import datetime
 from decimal import Decimal
 
 from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Sum, Q, F
 from django.db.models.functions import Coalesce
 from django.forms import DecimalField
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
-from . import invoices_export_accounting
+from . import invoices_export_accounting, membership_fees
 from .invoice_mail_helper import send_invoice
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense, UsageSummary, Image, AccountSummary, ToInvoice
+    Expense, UsageSummary, Image, AccountSummary, ToInvoice, MembershipFee
 from members.models import Member
 
 
@@ -588,3 +590,98 @@ class ToInvoiceAdmin(admin.ModelAdmin):
         return response
     
 admin.site.register(ToInvoice, ToInvoiceAdmin)
+
+
+class MembershipFeeAdmin(admin.ModelAdmin):
+    """Wizard to create, invoice and send the membership fees of a year."""
+
+    def has_add_permission(self, request):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        if not self.has_change_permission(request):
+            raise PermissionDenied
+
+        current_year = datetime.date.today().year
+        try:
+            year = int(request.POST.get('year') or request.GET.get('year') or current_year)
+        except ValueError:
+            year = current_year
+
+        if request.method == 'POST':
+            step = request.POST.get('step')
+            if step == 'fees':
+                self._create_fees(request, year)
+            elif step == 'invoices':
+                self._create_invoices(request, year)
+            elif step == 'email':
+                self._send_by_email(request, year)
+            elif step == 'post':
+                count = membership_fees.unsent_fee_invoices(year).filter(member__preferred_invoice_method='post',
+                                                                         pk__in=request.POST.getlist('invoice')) \
+                    .update(was_sent_by_post=True)
+                self.message_user(request, f'{count} invoices marked as sent by post', messages.SUCCESS)
+            return HttpResponseRedirect(f'{request.path}?year={year}')
+
+        rows = membership_fees.build_fee_rows(year)
+        rows.sort(key=lambda row: (bool(row.existing), row.proposed_resource is None))
+        unsent = membership_fees.unsent_fee_invoices(year)
+
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'title': f'Membership fees {year}',
+            'year': year,
+            'years': [current_year - 1, current_year],
+            'rows': rows,
+            'fee_resources': membership_fees.fee_resources(),
+            'last_invoices_count': membership_fees.LAST_INVOICES_COUNT,
+            'to_create_count': sum(1 for row in rows if not row.existing and row.proposed_resource),
+            'missing_swiss_engineering': any(row.swiss_engineering_applies and not row.existing for row in rows)
+                                         and not Resource.objects.filter(
+                slug=membership_fees.SWISS_ENGINEERING_SLUG).exists(),
+            'members_to_invoice': membership_fees.members_to_invoice(year).annotate(
+                total_amount=Coalesce(Sum('usage__total_price', filter=Q(usage__invoice=None)), Decimal(0))),
+            'fee_invoices_count': membership_fees.fee_invoices(year).count(),
+            'unsent_email': unsent.filter(member__preferred_invoice_method='email'),
+            'unsent_post': unsent.filter(member__preferred_invoice_method='post'),
+        }
+        return TemplateResponse(request, 'admin/membership_fee_wizard.html', context)
+
+    def _create_fees(self, request, year):
+        resources = {str(resource.id): resource for resource in membership_fees.fee_resources()}
+        resource_by_member_id = {}
+        for member_id in request.POST.getlist('member'):
+            resource = resources.get(request.POST.get(f'resource_{member_id}'))
+            if resource:
+                resource_by_member_id[int(member_id)] = resource
+
+        try:
+            created = membership_fees.create_fees(year, resource_by_member_id)
+        except Resource.DoesNotExist:
+            self.message_user(request, f'Resource "{membership_fees.SWISS_ENGINEERING_SLUG}" must be created '
+                                       f'before creating the fees of Swiss Engineering members. '
+                                       f'No fee has been created.', messages.ERROR)
+            return
+
+        self.message_user(request, f'{len(created)} usages created for {year}', messages.SUCCESS)
+
+    def _create_invoices(self, request, year):
+        selected_ids = request.POST.getlist('member')
+        invoices = [membership_fees.create_yearly_invoice(member)
+                    for member in membership_fees.members_to_invoice(year).filter(pk__in=selected_ids)]
+        self.message_user(request, f'{len(invoices)} invoices created', messages.SUCCESS)
+
+    def _send_by_email(self, request, year):
+        sent_count = 0
+        for invoice in membership_fees.unsent_fee_invoices(year).filter(member__preferred_invoice_method='email',
+                                                                        pk__in=request.POST.getlist('invoice')):
+            try:
+                send_invoice(invoice)
+                sent_count += 1
+            except Exception as e:
+                self.message_user(request, f'Error sending invoice {invoice.invoice_number}: {e}', messages.ERROR)
+        self.message_user(request, f'{sent_count} invoices sent by email', messages.SUCCESS)
+
+
+admin.site.register(MembershipFee, MembershipFeeAdmin)

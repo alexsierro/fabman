@@ -1,4 +1,4 @@
-# Add "cotisation" usage for all members
+# Tag "cotisation" usages of the current year with their year
 
 import os
 import sys
@@ -10,29 +10,12 @@ sys.path.append('..')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fabman.settings")
 django.setup()
 
-from invoicing.models import Usage, Resource, AccountEntry
-from members.models import Member
+from invoicing.membership_fees import tag_untagged_fees
 
 if __name__ == '__main__':
 
-
-
-
-    cotiMembre = Resource.objects.get(slug='cotisation-membre')
-    cotiEtudiant = Resource.objects.get(slug='cotisation-reduit')
-    cotiPassif = Resource.objects.get(slug='cotisation-passif')
-
-    today = datetime.date.today()
-    year = today.year
+    year = datetime.date.today().year
     print(f'{year=}')
 
-    # get all untagged usages for this year concerning cotisation
-    usages = Usage.objects.filter(year=None, date__year=year, resource__in=[cotiMembre, cotiEtudiant, cotiPassif])
-
-    for usage in usages:
-        print(usage)
-        print(usage.date)
-        usage.year = year
-        usage.save()
-
-    print(f'{len(usages)} usages have been tagged with year {year}.')
+    count = tag_untagged_fees(year)
+    print(f'{count} usages have been tagged with year {year}.')

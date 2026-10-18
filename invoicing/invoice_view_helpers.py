@@ -98,8 +98,9 @@ def get_invoice_html(invoice_number, is_for_pdf=False, detailed=False):
                             'use_projects': use_projects,
                             'detailed': detailed,
                             'today': timezone.localdate(),
-                            'STATIC_PREFIX': (get_static_file_prefix() if is_for_pdf else STATIC_URL) + '/',
-                            'MEDIA_PREFIX': (Path(MEDIA_ROOT).resolve().as_uri() if is_for_pdf else MEDIA_URL) + '/',
+                            # file uris have no trailing slash, unlike STATIC_URL and MEDIA_URL
+                            'STATIC_PREFIX': get_static_file_prefix() + '/' if is_for_pdf else STATIC_URL,
+                            'MEDIA_PREFIX': Path(MEDIA_ROOT).resolve().as_uri() + '/' if is_for_pdf else MEDIA_URL,
                             'QRBILL_SVG_B64': qrbill_svg_b64
                             })
 

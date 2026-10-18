@@ -1,0 +1,306 @@
+{% extends "admin/base_site.html" %}
+{% load admin_urls app_filters %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .fee-step { margin-bottom: 30px; }
+        .fee-step table { width: 100%; }
+        .fee-step .muted { opacity: 0.6; }
+        .fee-step form > p { margin: 10px 0; }
+        .fee-step td { vertical-align: middle; }
+        .fee-step a.invoice-dot { font-size: 1.4em; line-height: 1; text-decoration: none; }
+        .invoice-dot.status-paid { color: #2e9d47; }
+        .invoice-dot.status-created { color: #e69a00; }
+        .invoice-dot.status-rappel1, .invoice-dot.status-rappel2, .invoice-dot.status-rappel3 { color: #d1312f; }
+        .invoice-dot.status-cancelled { color: #999; }
+        .fee-step .amount { text-align: right; white-space: nowrap; }
+        #invoice-preview {
+            display: none; position: fixed; z-index: 1000; overflow: hidden;
+            width: 357px; height: 505px; /* A4 at 45% */
+            background: #fff; border: 1px solid #999; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        #invoice-preview iframe {
+            width: 794px; height: 1123px; border: 0;
+            transform: scale(0.45); transform-origin: 0 0; pointer-events: none;
+        }
+        #invoice-preview .placeholder {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            color: #888; background: #fff;
+        }
+        #invoice-preview.loaded .placeholder { display: none; }
+        #invoice-preview:not(.loaded) iframe { visibility: hidden; }
+        .fee-step a.pdf-link {
+            display: inline-block; width: 16px; height: 20px; vertical-align: middle;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 20'%3E%3Cpath d='M1 .5h9.5L15.5 5.5V19a.5.5 0 0 1-.5.5H1a.5.5 0 0 1-.5-.5V1A.5.5 0 0 1 1 .5z' fill='%23fff' stroke='%23b30b00'/%3E%3Cpath d='M10.5 .5v5h5' fill='%23f4c7c3' stroke='%23b30b00'/%3E%3Crect x='0' y='10' width='13' height='7' rx='1' fill='%23d93025'/%3E%3Ctext x='6.5' y='15.6' font-family='Arial,sans-serif' font-size='5.4' font-weight='bold' fill='%23fff' text-anchor='middle'%3EPDF%3C/text%3E%3C/svg%3E") no-repeat center / contain;
+        }
+    </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+
+<form method="get">
+    <label>Year:
+        <select name="year" onchange="this.form.submit()">
+            {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+    </label>
+</form>
+
+<div class="module fee-step">
+    <h2>1. Membership fees {{ year }}</h2>
+    {% if missing_swiss_engineering %}
+        <ul class="messagelist"><li class="error">
+            Resource "contribution-swissengineering" does not exist, it must be created before creating the fees
+            of Swiss Engineering members.
+        </li></ul>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="year" value="{{ year }}">
+        <input type="hidden" name="step" value="fees">
+        <table>
+            <thead>
+            <tr>
+                <th><input type="checkbox" class="select-all" title="Select all / none"></th>
+                <th>Member</th>
+                <th>Type</th>
+                <th>Swiss Engineering</th>
+                <th title="Last {{ last_invoices_count }} invoices, most recent on the right">Last {{ last_invoices_count }} invoices</th>
+                <th class="amount">Not invoiced</th>
+                <th>Fee</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr {% if row.existing %}class="muted"{% endif %}>
+                    <td>
+                        {% if not row.existing %}
+                            <input type="checkbox" name="member" value="{{ row.member.id }}"
+                                   {% if row.proposed_resource %}checked{% endif %}>
+                        {% endif %}
+                    </td>
+                    <td><a href="{% url 'admin:members_member_change' row.member.id %}" target="_blank">{{ row.member }}</a></td>
+                    <td>{{ row.member.get_member_type_display }}</td>
+                    <td>{% if row.swiss_engineering %}{{ row.member.swiss_engineering_number }}{% endif %}</td>
+                    <td>
+                        {% for invoice in row.last_invoices %}
+                            <a class="invoice-dot status-{{ invoice.status }}" href="{% url 'show_pdf_invoice' invoice.invoice_number %}" target="_blank"
+                               title="#{{ invoice.invoice_number }} - {{ invoice.date_invoice|date:'d.m.Y' }} - CHF {{ invoice.amount_due }} - {{ invoice.get_status_display }}">&#9679;</a>
+                        {% endfor %}
+                    </td>
+                    <td class="amount">{% if row.uninvoiced_total %}{{ row.uninvoiced_total|format_currency }}{% endif %}</td>
+                    <td>
+                        {% if row.existing %}
+                            {% for usage in row.existing %}
+                                {{ usage.resource }} ({{ usage.total_price }}){% if usage.year and usage.year != year %} for {{ usage.year }}{% endif %}
+                                {% if usage.invoice %}- <a href="{% url 'admin:invoicing_invoice_change' usage.invoice.id %}" target="_blank">invoice #{{ usage.invoice.invoice_number }}</a>
+                                    <a class="pdf-link" href="{% url 'show_pdf_invoice' usage.invoice.invoice_number %}" target="_blank" aria-label="PDF"
+                               data-preview="{% url 'show_invoice' usage.invoice.invoice_number %}"></a>{% else %}- not invoiced{% endif %}<br>
+                            {% endfor %}
+                        {% else %}
+                            <select name="resource_{{ row.member.id }}">
+                                <option value="">—</option>
+                                {% for resource in fee_resources %}
+                                    <option value="{{ resource.id }}" {% if resource == row.proposed_resource %}selected{% endif %}>{{ resource }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if row.swiss_engineering_applies %}+ Swiss Engineering contribution (-50%){% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p>
+            {{ to_create_count }} fees proposed. Members who already have a fee for {{ year }}
+            (even entered at the end of the previous year), or who paid during {{ year }} the fee of a next year,
+            are skipped.
+        </p>
+        <input type="submit" class="default" value="Create selected fees">
+    </form>
+</div>
+
+<div class="module fee-step">
+    <h2>2. Invoices</h2>
+    <form method="post" onsubmit="return confirm('Create ' + this.querySelectorAll('input[name=member]:checked').length + ' invoices?')">
+        {% csrf_token %}
+        <input type="hidden" name="year" value="{{ year }}">
+        <input type="hidden" name="step" value="invoices">
+        {% if members_to_invoice %}
+            <p>Members with a non invoiced {{ year }} fee. The invoice includes all their non invoiced usages.</p>
+            <table>
+                <thead>
+                <tr>
+                    <th><input type="checkbox" class="select-all" title="Select all / none"></th>
+                    <th>Member</th>
+                    <th class="amount">Non invoiced amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for member in members_to_invoice %}
+                    <tr>
+                        <td><input type="checkbox" name="member" value="{{ member.id }}" checked></td>
+                        <td><a href="{% url 'preview_invoice' %}?member_id={{ member.id }}" target="_blank">{{ member }}</a></td>
+                        <td class="amount">{{ member.total_amount|format_currency }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p><input type="submit" class="default" value="Create selected invoices"></p>
+        {% else %}
+            <p>No {{ year }} fee to invoice ({{ fee_invoices_count }} existing fee invoices).</p>
+        {% endif %}
+    </form>
+</div>
+
+<div class="module fee-step">
+    <h2>3. Sending</h2>
+    <form method="post" onsubmit="return confirm('Send ' + this.querySelectorAll('input[name=invoice]:checked').length + ' invoices by email?')">
+        {% csrf_token %}
+        <input type="hidden" name="year" value="{{ year }}">
+        <input type="hidden" name="step" value="email">
+        <p>{{ unsent_email|length }} unsent invoices for members preferring email.</p>
+        {% if unsent_email %}
+            <table>
+                <thead>
+                <tr>
+                    <th><input type="checkbox" class="select-all" title="Select all / none"></th>
+                    <th>Invoice</th>
+                    <th>Email</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for invoice in unsent_email %}
+                    <tr>
+                        <td><input type="checkbox" name="invoice" value="{{ invoice.id }}" checked></td>
+                        <td>
+                            <a href="{% url 'admin:invoicing_invoice_change' invoice.id %}" target="_blank">{{ invoice }}</a>
+                            <a class="pdf-link" href="{% url 'show_pdf_invoice' invoice.invoice_number %}" target="_blank" aria-label="PDF"
+                               data-preview="{% url 'show_invoice' invoice.invoice_number %}"></a>
+                        </td>
+                        <td>{{ invoice.member.mail|default:"" }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p><input type="submit" class="default" value="Send selected by email"></p>
+        {% endif %}
+    </form>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="year" value="{{ year }}">
+        <input type="hidden" name="step" value="post">
+        <p>{{ unsent_post|length }} unsent invoices for members preferring post.</p>
+        {% if unsent_post %}
+            <table>
+                <thead>
+                <tr>
+                    <th><input type="checkbox" class="select-all" title="Select all / none"></th>
+                    <th>Invoice</th>
+                    <th>Address</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for invoice in unsent_post %}
+                    <tr>
+                        <td><input type="checkbox" name="invoice" value="{{ invoice.id }}" checked></td>
+                        <td>
+                            <a href="{% url 'admin:invoicing_invoice_change' invoice.id %}" target="_blank">{{ invoice }}</a>
+                            <a class="pdf-link" href="{% url 'show_pdf_invoice' invoice.invoice_number %}" target="_blank" aria-label="PDF"
+                               data-preview="{% url 'show_invoice' invoice.invoice_number %}"></a>
+                        </td>
+                        <td>{{ invoice.member.address|default:"" }} {{ invoice.member.npa|default:"" }} {{ invoice.member.locality|default:"" }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p><input type="submit" value="Mark selected as sent by post"></p>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+    // "select all / none" checkbox in the header and shift + click range selection, for each table
+    document.querySelectorAll('input.select-all').forEach(selectAll => {
+        const checkboxes = Array.from(selectAll.closest('table').querySelectorAll('tbody input[type=checkbox]'));
+        let lastClicked = null;
+
+        function updateSelectAll() {
+            const checkedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+            selectAll.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+        }
+
+        selectAll.addEventListener('change', () => {
+            checkboxes.forEach(checkbox => checkbox.checked = selectAll.checked);
+            updateSelectAll();
+        });
+
+        // shift + click selects (or deselects) the range since the last clicked checkbox
+        checkboxes.forEach(checkbox => checkbox.addEventListener('click', event => {
+            if (event.shiftKey && lastClicked !== null) {
+                const start = checkboxes.indexOf(lastClicked);
+                const end = checkboxes.indexOf(checkbox);
+                checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1)
+                    .forEach(other => other.checked = checkbox.checked);
+            }
+            lastClicked = checkbox;
+            updateSelectAll();
+        }));
+
+        updateSelectAll();
+    });
+
+    // preview of the html invoice when hovering a pdf link
+    (function () {
+        const preview = document.createElement('div');
+        preview.id = 'invoice-preview';
+        const iframe = document.createElement('iframe');
+        const placeholder = document.createElement('div');
+        placeholder.className = 'placeholder';
+        placeholder.textContent = 'Loading…';
+        preview.append(iframe, placeholder);
+        // hide the previous invoice until the new one is loaded
+        iframe.addEventListener('load', () => preview.classList.add('loaded'));
+        document.body.appendChild(preview);
+        let timer = null;
+
+        function show(link) {
+            if (iframe.getAttribute('src') !== link.dataset.preview) {
+                preview.classList.remove('loaded');
+                iframe.setAttribute('src', link.dataset.preview);
+            }
+            const rect = link.getBoundingClientRect();
+            const width = preview.offsetWidth || 357, height = 505;
+            // on the right of the icon if there is room, else on the left, and kept inside the viewport
+            let left = rect.right + 10;
+            if (left + width > window.innerWidth) {
+                left = Math.max(0, rect.left - width - 10);
+            }
+            const top = Math.min(Math.max(0, rect.top - height / 2), window.innerHeight - height);
+            preview.style.left = left + 'px';
+            preview.style.top = Math.max(0, top) + 'px';
+            preview.style.display = 'block';
+        }
+
+        document.querySelectorAll('a.pdf-link[data-preview]').forEach(link => {
+            link.addEventListener('mouseenter', () => timer = setTimeout(() => show(link), 300));
+            link.addEventListener('mouseleave', () => {
+                clearTimeout(timer);
+                preview.style.display = 'none';
+            });
+        });
+    })();
+</script>
+
+{% endblock %}
