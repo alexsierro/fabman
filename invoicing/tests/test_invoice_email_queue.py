@@ -31,6 +31,8 @@ class InvoiceEmailQueueTests(TestCase):
         self.assertTemplateUsed(response, 'admin/membership_fee_email_script.html')
         self.assertTemplateUsed(response, 'admin/email_queue_style.html')
         self.assertContains(response, 'data-invoice-field="_selected_action"')
+        self.assertContains(response, "fetch(form.getAttribute('action') || window.location.href")
+        self.assertNotContains(response, 'fetch(form.action')
         self.assertContains(response, 'class="email-status"', count=2)
         for option in ('override_sent_email', 'override_sent_post', 'override_preferred'):
             self.assertContains(response, f'name="{option}"')

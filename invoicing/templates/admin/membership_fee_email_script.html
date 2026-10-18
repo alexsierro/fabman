@@ -60,9 +60,12 @@
             }
             body.set(invoiceField, checkbox.value);
             try {
-                const response = await fetch(form.action, {
+                const response = await fetch(form.getAttribute('action') || window.location.href, {
                     method: 'POST', body, credentials: 'same-origin', headers: {'Accept': 'application/json'}
                 });
+                if (!response.headers.get('Content-Type')?.includes('application/json')) {
+                    throw new Error(`Server returned a non-JSON response (HTTP ${response.status}). Check your session and server logs.`);
+                }
                 const result = await response.json();
                 if (!response.ok || !result.sent?.includes(Number(checkbox.value))) {
                     throw new Error(result.errors?.join(' ') ||
