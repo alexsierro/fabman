@@ -17,6 +17,21 @@ services:
       - ./email.env
       - ./keycloak.prod.env
       - ./.env.prod.host
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import http.client, os;
+          connection = http.client.HTTPConnection('127.0.0.1', 8000, timeout=5);
+          connection.request('GET', '/admin/login/', headers={'Host': os.environ.get('VIRTUAL_HOST', 'localhost')});
+          response = connection.getresponse();
+          raise SystemExit(0 if 200 <= response.status < 400 else 1)
+      interval: 5s
+      timeout: 10s
+      retries: 24
+      start_period: 30s
     depends_on:
       - db
   db:
@@ -35,7 +50,8 @@ services:
     expose:
       - 1337
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     env_file:
       - ./.env.prod.host
 volumes:
