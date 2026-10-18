@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Sum, Q, F
 from django.db.models.functions import Coalesce
 from django.forms import DecimalField
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.urls import reverse
@@ -110,13 +110,15 @@ class InvoiceAdmin(admin.ModelAdmin):
 
         opts = self.model._meta
 
-        print('CALL')
-
-        # All requests here will actually be of type POST
-        # so we will need to check for our special key 'apply'
-        # rather than the actual request type
-        print(request.POST)
         if 'apply' in request.POST:
+            json_response = request.headers.get('Accept') == 'application/json'
+            errors = []
+            sent_ids = []
+
+            def report(message, level):
+                errors.append(message)
+                if not json_response:
+                    self.message_user(request, message, level)
 
             def on_is_true(value):
                 return value == 'on'
@@ -125,24 +127,23 @@ class InvoiceAdmin(admin.ModelAdmin):
             override_sent_post = on_is_true(request.POST.get('override_sent_post', False))
             override_preferred_invoice_method = on_is_true(request.POST.get('override_preferred', False))
 
-            print('APPLY')
             successfully_sent_count = 0
             for invoice in queryset:
 
                 if invoice.member is None:
-                    self.message_user(request,
+                    report(
                                       f'Invoice {invoice.invoice_number} not send because it has no member.',
                                       messages.WARNING)
 
                 elif invoice.was_sent_by_email and not override_sent_email or \
                         invoice.was_sent_by_post and not override_sent_post:
 
-                    self.message_user(request,
+                    report(
                                       f'Invoice {invoice.invoice_number} not send because it is already marked as send. Remove send flag(s) to resend.',
                                       messages.WARNING)
 
                 elif invoice.member.preferred_invoice_method == 'post' and not override_preferred_invoice_method:
-                    self.message_user(request,
+                    report(
                                       f'Invoice {invoice.invoice_number} not send because the member prefers to receive invoices by post. Change the preferred invoice method or override it to send the invoice as email.',
                                       messages.WARNING)
 
@@ -150,10 +151,13 @@ class InvoiceAdmin(admin.ModelAdmin):
                     try:
                         send_invoice(invoice)
                         successfully_sent_count += 1
+                        sent_ids.append(invoice.pk)
                     except Exception as e:
-                        self.message_user(request, f'Error sending invoice {invoice.invoice_number}: {e}',
+                        report(f'Error sending invoice {invoice.invoice_number}: {e}',
                                           messages.ERROR)
 
+            if json_response:
+                return JsonResponse({'sent': sent_ids, 'errors': errors}, status=400 if errors else 200)
             if successfully_sent_count > 0:
                 self.message_user(request, f'{successfully_sent_count} invoices sent by email', messages.SUCCESS)
             return HttpResponseRedirect(request.get_full_path())
@@ -603,7 +607,9 @@ class MembershipFeeAdmin(admin.ModelAdmin):
                 if self._create_invoices(request, year):
                     section = 'sending'
             elif step == 'email':
-                self._send_by_email(request, year)
+                response = self._send_by_email(request, year)
+                if response is not None:
+                    return response
             elif step == 'post':
                 count = membership_fees.unsent_fee_invoices(year).filter(member__preferred_invoice_method='post',
                                                                          pk__in=request.POST.getlist('invoice')) \
@@ -665,15 +671,22 @@ class MembershipFeeAdmin(admin.ModelAdmin):
         return bool(invoices)
 
     def _send_by_email(self, request, year):
-        sent_count = 0
-        for invoice in membership_fees.unsent_fee_invoices(year).filter(member__preferred_invoice_method='email',
-                                                                        pk__in=request.POST.getlist('invoice')):
+        json_response = request.headers.get('Accept') == 'application/json'
+        sent_ids = []
+        errors = []
+        for invoice in membership_fees.unsent_fee_invoices(year).filter(
+                member__preferred_invoice_method='email', pk__in=request.POST.getlist('invoice')):
             try:
                 send_invoice(invoice)
-                sent_count += 1
+                sent_ids.append(invoice.pk)
             except Exception as e:
-                self.message_user(request, f'Error sending invoice {invoice.invoice_number}: {e}', messages.ERROR)
-        self.message_user(request, f'{sent_count} invoices sent by email', messages.SUCCESS)
+                error = f'Error sending invoice {invoice.invoice_number}: {e}'
+                errors.append(error)
+                if not json_response:
+                    self.message_user(request, error, messages.ERROR)
+        if json_response:
+            return JsonResponse({'sent': sent_ids, 'errors': errors}, status=502 if errors else 200)
+        self.message_user(request, f'{len(sent_ids)} invoices sent by email', messages.SUCCESS)
 
 
 admin.site.register(MembershipFee, MembershipFeeAdmin)

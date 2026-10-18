@@ -1,0 +1,18 @@
+<style>
+    .email-progress { margin: 12px 0; }
+    .email-progress progress { width: min(100%, 450px); }
+    tr.email-sending { background: var(--selected-row); }
+    .email-sending .email-status::before {
+        content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px;
+        border: 2px solid var(--body-fg); border-right-color: transparent; border-radius: 50%;
+        animation: email-spin 1s linear infinite;
+    }
+    tr.email-sent { background: #e8f5e9; color: #174b24; }
+    .email-sent .email-status { color: #174b24; font-weight: bold; white-space: nowrap; }
+    .email-sent .email-status::before { content: "\2713"; margin-right: 6px; }
+    html[data-theme="dark"] tr.email-sent { background: #183d25; color: #bce8c8; }
+    html[data-theme="dark"] .email-sent .email-status { color: #bce8c8; }
+    .email-error .email-status { color: var(--error-fg); font-weight: bold; }
+    @keyframes email-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .email-sending .email-status::before { animation: none; } }
+</style>

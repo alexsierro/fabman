@@ -21,7 +21,7 @@ class MembershipFeeNavigationTests(TestCase):
         self.assertContains(response, '<summary>', count=3)
         self.assertContains(response, '1. Membership fees 2026 (1 proposed)')
         self.assertContains(response, '2. Invoices (0 to create)')
-        self.assertContains(response, '3. Sending (0 email, 0 post)')
+        self.assertContains(response, '3. Sending (<span id="email-remaining">0</span> email, 0 post)')
 
     def test_successful_creation_advances_to_next_step(self):
         response = self.client.post(self.url, {
@@ -38,7 +38,7 @@ class MembershipFeeNavigationTests(TestCase):
         self.assertRedirects(response, f'{self.url}?year=2026&section=sending#sending')
         page = self.client.get(response.url)
         self.assertContains(page, '2. Invoices (0 to create)')
-        self.assertContains(page, '3. Sending (1 email, 0 post)')
+        self.assertContains(page, '3. Sending (<span id="email-remaining">1</span> email, 0 post)')
 
     def test_no_selection_stays_on_current_step(self):
         for step in ('fees', 'invoices'):

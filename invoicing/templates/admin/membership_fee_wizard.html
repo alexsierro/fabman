@@ -4,6 +4,7 @@
 {% block extrastyle %}
     {{ block.super }}
     {% include "admin/invoice_preview_style.html" %}
+    {% include "admin/email_queue_style.html" %}
     <style>
         .fee-step { margin-bottom: 30px; }
         .fee-step > summary {
@@ -161,12 +162,12 @@
 </details>
 
 <details class="module fee-step" id="sending" {% if not active_section or active_section == 'sending' %}open{% endif %}>
-    <summary><h2>3. Sending ({{ unsent_email|length }} email, {{ unsent_post|length }} post)</h2></summary>
-    <form method="post" onsubmit="return confirm('Send ' + this.querySelectorAll('input[name=invoice]:checked').length + ' invoices by email?')">
+    <summary><h2>3. Sending (<span id="email-remaining">{{ unsent_email|length }}</span> email, {{ unsent_post|length }} post)</h2></summary>
+    <form method="post" id="membership-email-form" data-email-queue data-invoice-field="invoice">
         {% csrf_token %}
         <input type="hidden" name="year" value="{{ year }}">
         <input type="hidden" name="step" value="email">
-        <p>{{ unsent_email|length }} unsent invoices for members preferring email.</p>
+        <p><span id="email-unsent-count">{{ unsent_email|length }}</span> unsent invoices for members preferring email. Emails are sent one at a time; keep this page open.</p>
         {% if unsent_email %}
             <table>
                 <thead>
@@ -174,6 +175,7 @@
                     <th><input type="checkbox" class="select-all" title="Select all / none"></th>
                     <th>Invoice</th>
                     <th>Email</th>
+                    <th>Status</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -187,11 +189,20 @@
                                data-preview="{% url 'show_invoice' invoice.invoice_number %}"></a>
                         </td>
                         <td>{{ invoice.member.mail|default:"" }}</td>
+                        <td class="email-status" role="status">Not sent</td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
-            <p><input type="submit" class="default" value="Send selected by email"></p>
+            <div class="email-progress" hidden>
+                <progress id="email-progress" value="0" max="1" aria-label="Email sending progress"></progress>
+                <p id="email-progress-message" role="status" aria-live="polite"></p>
+            </div>
+            <p>
+                <input type="submit" class="default" value="Send selected by email">
+                <button type="button" id="email-stop" hidden>Stop after current email</button>
+            </p>
+            <noscript><p class="errornote">JavaScript is required to send emails one at a time.</p></noscript>
         {% endif %}
     </form>
 
@@ -242,13 +253,14 @@
         let lastClicked = null;
 
         function updateSelectAll() {
-            const checkedCount = checkboxes.filter(checkbox => checkbox.checked).length;
-            selectAll.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
-            selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+            const enabled = checkboxes.filter(checkbox => !checkbox.disabled);
+            const checkedCount = enabled.filter(checkbox => checkbox.checked).length;
+            selectAll.checked = enabled.length > 0 && checkedCount === enabled.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < enabled.length;
         }
 
         selectAll.addEventListener('change', () => {
-            checkboxes.forEach(checkbox => checkbox.checked = selectAll.checked);
+            checkboxes.filter(checkbox => !checkbox.disabled).forEach(checkbox => checkbox.checked = selectAll.checked);
             updateSelectAll();
         });
 
@@ -258,6 +270,7 @@
                 const start = checkboxes.indexOf(lastClicked);
                 const end = checkboxes.indexOf(checkbox);
                 checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1)
+                    .filter(other => !other.disabled)
                     .forEach(other => other.checked = checkbox.checked);
             }
             lastClicked = checkbox;
@@ -269,5 +282,6 @@
 
 </script>
 {% include "admin/invoice_preview_script.html" %}
+{% include "admin/membership_fee_email_script.html" %}
 
 {% endblock %}

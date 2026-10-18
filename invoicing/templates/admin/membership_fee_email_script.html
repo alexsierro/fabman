@@ -1,0 +1,108 @@
+<script>
+(() => {
+    const form = document.querySelector('[data-email-queue]');
+    const submit = form.querySelector('input[type=submit]');
+    if (!submit) return;
+    const stop = document.getElementById('email-stop');
+    const progress = document.getElementById('email-progress');
+    const message = document.getElementById('email-progress-message');
+    let running = false;
+    let stopping = false;
+    let uncertain = false;
+
+    stop.addEventListener('click', () => {
+        stopping = true;
+        stop.disabled = true;
+        message.textContent = 'Stopping after the current email finishes...';
+    });
+    window.addEventListener('beforeunload', event => {
+        if (running) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (running || uncertain) return;
+        const invoiceField = form.dataset.invoiceField;
+        const selected = Array.from(form.querySelectorAll(`input[name="${invoiceField}"]:checked:not(:disabled)`));
+        form.querySelector('.email-progress').hidden = false;
+        if (!selected.length) {
+            message.textContent = 'Select at least one unsent invoice.';
+            return;
+        }
+        if (!window.confirm(`Send ${selected.length} invoices by email ?`)) return;
+        running = true;
+        stopping = false;
+        progress.max = selected.length;
+        progress.value = 0;
+        submit.disabled = true;
+        stop.hidden = false;
+        stop.disabled = false;
+        const requestData = new FormData(form);
+        requestData.set('apply', 'Send invoices');
+        const controls = Array.from(form.querySelectorAll('input[type=checkbox]'));
+        const enabled = controls.filter(control => !control.disabled);
+        controls.forEach(control => control.disabled = true);
+        let completed = 0;
+        let failed = false;
+        for (const checkbox of selected) {
+            if (stopping) break;
+            const row = checkbox.closest('tr');
+            const status = row.querySelector('.email-status');
+            row.classList.remove('email-error');
+            row.classList.add('email-sending');
+            status.textContent = 'Sending...';
+            message.textContent = `Sending ${completed + 1} of ${selected.length}...`;
+            const body = new FormData();
+            for (const [key, value] of requestData) {
+                if (key !== invoiceField) body.append(key, value);
+            }
+            body.set(invoiceField, checkbox.value);
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST', body, credentials: 'same-origin', headers: {'Accept': 'application/json'}
+                });
+                const result = await response.json();
+                if (!response.ok || !result.sent?.includes(Number(checkbox.value))) {
+                    throw new Error(result.errors?.join(' ') ||
+                        'Invoice was not sent. It may already be sent or no longer eligible; reload to check.');
+                }
+                status.textContent = `Sent at ${new Date().toLocaleTimeString()}`;
+                row.classList.add('email-sent');
+                row.classList.remove('email-sending');
+                checkbox.checked = false;
+                checkbox.dataset.sent = 'true';
+                completed += 1;
+                progress.value = completed;
+                message.textContent = `${completed} of ${selected.length} sent.`;
+                for (const id of ['email-remaining', 'email-unsent-count']) {
+                    const count = document.getElementById(id);
+                    if (count) count.textContent = Number(count.textContent) - 1;
+                }
+            } catch (error) {
+                row.classList.add('email-error');
+                status.textContent = error.message;
+                message.textContent = `${completed} of ${selected.length} completed. Queue stopped: ${error.message} ` +
+                    'Delivery may be uncertain. Reload and verify the invoice before retrying; no automatic retry was made.';
+                failed = true;
+                uncertain = true;
+                break;
+            } finally {
+                row.classList.remove('email-sending');
+            }
+        }
+        running = false;
+        enabled.forEach(control => control.disabled = control.dataset.sent === 'true');
+        const remaining = controls.filter(control => control.name === invoiceField && !control.disabled);
+        const selectAll = form.querySelector('.select-all');
+        if (selectAll) {
+            selectAll.checked = remaining.length > 0 && remaining.every(control => control.checked);
+            selectAll.indeterminate = remaining.some(control => control.checked) && !selectAll.checked;
+        }
+        submit.disabled = uncertain;
+        stop.hidden = true;
+        if (!failed) message.textContent = `${completed} of ${selected.length} completed.${stopping ? ' Stopped; remaining invoices were not sent.' : ' Done.'}`;
+    });
+})();
+</script>
