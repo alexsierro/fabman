@@ -42,16 +42,27 @@ class InvoiceSentListFiler(admin.SimpleListFilter):
 class InvoiceAdmin(admin.ModelAdmin):
     change_list_template = "admin/invoice_change_list.html"
 
+    STATUS_COLORS = {
+        'created': 'orange',
+        'rappel1': 'darkorange',
+        'rappel2': 'orangered',
+        'rappel3': 'firebrick',
+        'paid': 'green',
+        'cancelled': 'grey',
+    }
+
+    NEXT_REMINDER_STATUS = {
+        'created': 'rappel1',
+        'rappel1': 'rappel2',
+        'rappel2': 'rappel3',
+    }
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('member')
 
     def invoice_actions(self, obj):
         if obj.member is not None:
-            color = 'orange'
-
-            if obj.status == 'paid':
-                color = 'green'
-
+            color = self.STATUS_COLORS.get(obj.status, 'orange')
             return format_html('<div style="display:flex;gap:4px;white-space:nowrap">'
                                '<a class="button" style="background-color:{};text-decoration:none" href="{}" target="_blank">Show</a>'
                                '<a class="button" style="text-decoration:none;padding-left:6px;padding-right:6px" href="{}" '
@@ -64,26 +75,27 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     @admin.action(description='Escalate reminder level')
     def escalate_reminder_level(self, request, queryset):
+        escalated_count = 0
         for invoice in queryset:
-            if invoice.status == 'created':
-                invoice.status = 'rappel1'
+            next_status = self.NEXT_REMINDER_STATUS.get(invoice.status)
+            if next_status:
+                invoice.status = next_status
                 invoice.was_sent_by_email = False
                 invoice.was_sent_by_post = False
                 invoice.save()
-            elif invoice.status == 'rappel1':
-                invoice.status = 'rappel2'
-                invoice.was_sent_by_email = False
-                invoice.was_sent_by_post = False
-                invoice.save()
-            elif invoice.status == 'rappel2':
-                invoice.status = 'rappel3'
-                invoice.was_sent_by_email = False
-                invoice.was_sent_by_post = False
-                invoice.save()
-            else:
+                escalated_count += 1
+            elif invoice.status == 'rappel3':
                 self.message_user(request,
                                   f'Invoice {invoice.invoice_number} is already at the highest reminder level.',
                                   messages.WARNING)
+            else:
+                self.message_user(request,
+                                  f'Invoice {invoice.invoice_number} is {invoice.get_status_display()}, '
+                                  f'no reminder needed.',
+                                  messages.WARNING)
+
+        if escalated_count > 0:
+            self.message_user(request, f'{escalated_count} invoices escalated', messages.SUCCESS)
 
     @admin.action(description='Export txt for accounting')
     def export_as_txt(self, request, queryset) -> HttpResponse:
@@ -114,7 +126,12 @@ class InvoiceAdmin(admin.ModelAdmin):
             successfully_sent_count = 0
             for invoice in queryset:
 
-                if invoice.was_sent_by_email and not override_sent_email or \
+                if invoice.member is None:
+                    self.message_user(request,
+                                      f'Invoice {invoice.invoice_number} not send because it has no member.',
+                                      messages.WARNING)
+
+                elif invoice.was_sent_by_email and not override_sent_email or \
                         invoice.was_sent_by_post and not override_sent_post:
 
                     self.message_user(request,
@@ -313,14 +330,10 @@ class DateYearFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         # Choices to propose are all the years from the start
-        firstyear = Usage.objects.order_by('date').first().date.year  # First year of the history
-        currentyear = datetime.datetime.now().year  # Current year
-        years = []  # Declaration of the list that'll contain the missing years
-        for x in range(currentyear - firstyear):  # Fill the list with the missing years
-            yearinloop = firstyear + x
-            years.insert(0, (str(yearinloop), str(yearinloop)))
-        years.insert(0, (str(currentyear), str(currentyear)))
-        return years
+        currentyear = datetime.date.today().year
+        first_usage = Usage.objects.order_by('date').first()
+        firstyear = min(first_usage.date.year, currentyear) if first_usage else currentyear  # First year of the history
+        return [(str(year), str(year)) for year in range(currentyear, firstyear - 1, -1)]
 
     def queryset(self, request, queryset):
         print('filter')
@@ -478,19 +491,14 @@ class AccountSummaryAdmin(admin.ModelAdmin):
         )
 
         # --- Calculate Payment summary
-        if year:
-            metrics = {
-                'amount_due': Coalesce(Sum(F('amount') - F('amount_deduction_machine') - F('amount_deduction_cash'),
-                                           filter=Q(date_paid__year=year)), Decimal(0))
-            }
-
-        else:
-            metrics = {
-                'amount_due': Coalesce(Sum('amount', filter=Q(date_paid__isnull=False)), Decimal(0))
-            }
+        paid_filter = Q(date_paid__year=year) if year else Q(date_paid__isnull=False)
+        metrics = {
+            'amount_due': Coalesce(Sum(F('amount') - F('amount_deduction_machine') - F('amount_deduction_cash'),
+                                       filter=paid_filter), Decimal(0))
+        }
 
         qs = Invoice.objects.all()
-        payement_methods = response.context_data['payment_methods'] = list(
+        payment_methods = list(
             qs
             .values('payment_method')
             .annotate(**metrics)
@@ -498,19 +506,10 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 
         # --- Calculate Deduction summary
 
-        if year:
-            metrics = {
-                'deduction_cash': Coalesce(Sum('amount_deduction_cash', filter=Q(date_paid__year=year)), Decimal(0)),
-                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__year=year)),
-                                              Decimal(0))
-            }
-
-        else:
-            metrics = {
-                'deduction_cash': Coalesce(Sum('amount_deduction_cash', filter=Q(date_paid__isnull=False)), Decimal(0)),
-                'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=Q(date_paid__isnull=False)),
-                                              Decimal(0))
-            }
+        metrics = {
+            'deduction_cash': Coalesce(Sum('amount_deduction_cash', filter=paid_filter), Decimal(0)),
+            'deduction_machine': Coalesce(Sum('amount_deduction_machine', filter=paid_filter), Decimal(0))
+        }
 
         qs = Invoice.objects.all()
         payment_deduction = (
@@ -518,14 +517,14 @@ class AccountSummaryAdmin(admin.ModelAdmin):
             .aggregate(**metrics)
         )
 
-        payement_methods.append(
+        payment_methods.append(
             {'payment_method': 'deduction machine', 'amount_due': payment_deduction['deduction_machine']})
-        payement_methods.append({'payment_method': 'deduction cash', 'amount_due': payment_deduction['deduction_cash']})
+        payment_methods.append({'payment_method': 'deduction cash', 'amount_due': payment_deduction['deduction_cash']})
 
-        response.context_data['payement_methods'] = payement_methods
+        response.context_data['payment_methods'] = payment_methods
 
         payment_total = 0
-        for method in payement_methods:
+        for method in payment_methods:
             amount_due = method['amount_due']
             if amount_due:
                 payment_total += amount_due

@@ -19,18 +19,18 @@
             <tr>
                 <th> <div class="text"> <a href="#">Account</a> </div> </th>
                 <th> <div class="text"> <a href="#">Name </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">CHF used </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">CHF invoiced </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">CHF uninvoiced </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">CHF paid </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">CHF unpaid </a> </div> </th>
-                <th> <div class="text, la"> <a href="#">CHF postpaid </a> </div> </th>
+                <th class="la"> <div class="text"> <a href="#">CHF used </a> </div> </th>
+                <th class="la"> <div class="text"> <a href="#">CHF invoiced </a> </div> </th>
+                <th class="la"> <div class="text"> <a href="#">CHF uninvoiced </a> </div> </th>
+                <th class="la"> <div class="text"> <a href="#">CHF paid </a> </div> </th>
+                <th class="la"> <div class="text"> <a href="#">CHF unpaid </a> </div> </th>
+                <th class="la"> <div class="text"> <a href="#">CHF postpaid </a> </div> </th>
             </tr>
         </thead>
         <tbody>
             {% for row in summary %}
             <tr class="{% cycle 'row1' 'row2' %}">
-                <td width="20%"> {{ row.resource__account__number }} </td>
+                <td> {{ row.resource__account__number }} </td>
                 <td width="20%"> {{ row.resource__account__name }} </td>
                 <td class="la"> {{ row.total_used | format_currency }} </td>
                 <td class="la"> {{ row.total_invoiced | format_currency }} </td>
@@ -68,7 +68,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for row in payement_methods %}
+        {% for row in payment_methods %}
         <tr class="{% cycle 'row1' 'row2' %}">
             <td> {{ row.payment_method }}</td>
             <td class="la"> {{ row.amount_due | default:0 | format_currency}} </td>
@@ -87,6 +87,7 @@
 
 .la {
     text-align: right;
+    white-space: nowrap;
 
 }
 
