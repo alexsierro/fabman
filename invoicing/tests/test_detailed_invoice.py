@@ -34,6 +34,63 @@ class DetailedInvoiceTests(TestCase):
         self.assertEqual(len(lines), 1)
         self.assertEqual(lines[0]['qty'], 5)
 
+    def test_animator_machine_balance_hidden_but_deduction_preserved(self):
+        self.client.force_login(self.staff_user)
+        self.member.is_staff = True
+        self.member.save()
+        self.invoice.amount_deduction_machine = 10
+        self.invoice.save()
+        AccountEntry.objects.create(member=self.member, amount_machine=1000, invoice=self.invoice)
+
+        response = self.client.get(reverse('show_invoice', args=[1]))
+        self.assertNotContains(response, '<td>Crédit machine</td>')
+        self.assertNotContains(response, 'Avoir restant')
+        self.assertContains(response, 'Déduction crédit machine')
+        self.assertEqual(response.context['invoice'].amount_due, 40)
+
+        AccountEntry.objects.create(member=self.member, amount_cash=20, invoice=self.invoice)
+        response = self.client.get(reverse('show_invoice', args=[1]))
+        self.assertContains(response, 'Avoir restant')
+        self.assertContains(response, 'Autre')
+        self.assertNotContains(response, '<td>Crédit machine</td>')
+
+        self.member.is_staff = False
+        self.member.save()
+        response = self.client.get(reverse('show_invoice', args=[1]))
+        self.assertContains(response, '<td>Crédit machine</td>')
+
+    def test_animator_machine_balance_hidden_in_creation_preview(self):
+        self.client.force_login(self.staff_user)
+        Usage.objects.create(member=self.member, resource=self.resource, qty=1)
+        AccountEntry.objects.create(member=self.member, amount_machine=1000)
+        for animator in (True, False):
+            self.member.is_staff = animator
+            self.member.save()
+            response = self.client.get(reverse('preview_invoice'), {'member_id': self.member.pk})
+            self.assertEqual(response.status_code, 200)
+            if animator:
+                self.assertNotContains(response, 'Avoir machine restant')
+            else:
+                self.assertContains(response, 'Avoir machine restant')
+
+    def test_animator_machine_balance_shown_when_exhausted(self):
+        self.client.force_login(self.staff_user)
+        self.member.is_staff = True
+        self.member.save()
+        Usage.objects.create(member=self.member, resource=self.resource, qty=1)
+        entry = AccountEntry.objects.create(member=self.member, amount_machine=0, invoice=self.invoice)
+
+        for balance in (0, -10):
+            with self.subTest(balance=balance):
+                entry.amount_machine = balance
+                entry.save()
+                response = self.client.get(reverse('show_invoice', args=[1]))
+                self.assertContains(response, 'Avoir restant')
+                self.assertContains(response, '<td>Crédit machine</td>')
+
+                response = self.client.get(reverse('preview_invoice'), {'member_id': self.member.pk})
+                self.assertContains(response, 'Avoir machine restant')
+
     def test_detailed_invoice_lists_all_usages(self):
         self.client.force_login(self.staff_user)
         response = self.client.get(reverse('show_detailed_invoice', args=[1]))

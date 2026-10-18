@@ -96,12 +96,14 @@
                         <td>Déduction</td>
                         <td>{{ deduction_machine|floatformat:"-2" }}</td>
                     </tr>
+                    {% if not member_info.is_staff or amount_machine_after <= 0 %}
                     <tr>
                         <td></td>
                         <td></td>
                         <td>Avoir machine restant</td>
                         <td>{{ amount_machine_after|floatformat:"-2" }}</td>
                     </tr>
+                    {% endif %}
 
                     <tr>
                         <td colspan="4"> <h3>Déduction avoir cash</h3></td>

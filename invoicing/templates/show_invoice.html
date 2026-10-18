@@ -364,7 +364,7 @@
     </table>
 
     {% block remaining_credit %}
-    {% if invoice.amount_deduction_cash > 0 or invoice.amount_deduction_machine > 0 or amount_machine_after > 0 or amount_cash_after > 0 %}
+    {% if invoice.amount_deduction_cash > 0 or amount_cash_after > 0 or member_info.is_staff and amount_machine_after <= 0 or not member_info.is_staff and invoice.amount_deduction_machine > 0 or not member_info.is_staff and amount_machine_after > 0 %}
         <div class="no-break">
         <h3>Avoir restant</h3>
         <table style="width:100%">
@@ -372,11 +372,13 @@
                 <th style="width:86%">Désignation</th>
                 <th colspan="2" style="width:14%">Total</th>
             </tr>
+            {% if not member_info.is_staff or amount_machine_after <= 0 %}
             <tr>
                 <td>Crédit machine</td>
                 <td>CHF</td>
                 <td class="chiffre">{{ amount_machine_after|format_currency }}</td>
             </tr>
+            {% endif %}
             <tr>
                 <td style="background-color: #EEE !important" ;>Autre</td>
                 <td style="background-color: #EEE !important" ;>CHF</td>
