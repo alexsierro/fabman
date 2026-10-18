@@ -6,6 +6,11 @@
     {% include "admin/invoice_preview_style.html" %}
     <style>
         .fee-step { margin-bottom: 30px; }
+        .fee-step > summary {
+            cursor: pointer; padding: 10px; background: var(--primary); color: var(--header-link-color);
+        }
+        .fee-step > summary h2 { display: inline; padding: 0; background: none; color: inherit; }
+        .fee-step > summary:focus-visible { outline: 2px solid var(--link-fg); outline-offset: 2px; }
         .fee-step table { width: 100%; }
         .fee-step .muted { opacity: 0.6; }
         .fee-step form > p { margin: 10px 0; }
@@ -46,8 +51,8 @@
     </label>
 </form>
 
-<div class="module fee-step">
-    <h2>1. Membership fees {{ year }}</h2>
+<details class="module fee-step" id="fees" {% if not active_section or active_section == 'fees' %}open{% endif %}>
+    <summary><h2>1. Membership fees {{ year }} ({{ to_create_count }} proposed)</h2></summary>
     {% if missing_swiss_engineering %}
         <ul class="messagelist"><li class="error">
             Resource "contribution-swissengineering" does not exist, it must be created before creating the fees
@@ -119,10 +124,10 @@
         </p>
         <input type="submit" class="default" value="Create selected fees">
     </form>
-</div>
+</details>
 
-<div class="module fee-step">
-    <h2>2. Invoices</h2>
+<details class="module fee-step" id="invoices" {% if not active_section or active_section == 'invoices' %}open{% endif %}>
+    <summary><h2>2. Invoices ({{ members_to_invoice|length }} to create)</h2></summary>
     <form method="post" onsubmit="return confirm('Create ' + this.querySelectorAll('input[name=member]:checked').length + ' invoices?')">
         {% csrf_token %}
         <input type="hidden" name="year" value="{{ year }}">
@@ -153,10 +158,10 @@
             <p>No {{ year }} fee to invoice ({{ fee_invoices_count }} existing fee invoices).</p>
         {% endif %}
     </form>
-</div>
+</details>
 
-<div class="module fee-step">
-    <h2>3. Sending</h2>
+<details class="module fee-step" id="sending" {% if not active_section or active_section == 'sending' %}open{% endif %}>
+    <summary><h2>3. Sending ({{ unsent_email|length }} email, {{ unsent_post|length }} post)</h2></summary>
     <form method="post" onsubmit="return confirm('Send ' + this.querySelectorAll('input[name=invoice]:checked').length + ' invoices by email?')">
         {% csrf_token %}
         <input type="hidden" name="year" value="{{ year }}">
@@ -222,9 +227,15 @@
             <p><input type="submit" value="Mark selected as sent by post"></p>
         {% endif %}
     </form>
-</div>
+</details>
 
 <script>
+    const activeSection = document.querySelector('.fee-step:target');
+    if (activeSection) {
+        activeSection.open = true;
+        activeSection.querySelector('summary').focus({preventScroll: true});
+        activeSection.scrollIntoView({block: 'start'});
+    }
     // "select all / none" checkbox in the header and shift + click range selection, for each table
     document.querySelectorAll('input.select-all').forEach(selectAll => {
         const checkboxes = Array.from(selectAll.closest('table').querySelectorAll('tbody input[type=checkbox]'));

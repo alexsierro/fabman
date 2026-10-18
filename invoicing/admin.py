@@ -595,10 +595,13 @@ class MembershipFeeAdmin(admin.ModelAdmin):
 
         if request.method == 'POST':
             step = request.POST.get('step')
+            section = {'fees': 'fees', 'invoices': 'invoices', 'email': 'sending', 'post': 'sending'}.get(step, 'fees')
             if step == 'fees':
-                self._create_fees(request, year)
+                if self._create_fees(request, year):
+                    section = 'invoices'
             elif step == 'invoices':
-                self._create_invoices(request, year)
+                if self._create_invoices(request, year):
+                    section = 'sending'
             elif step == 'email':
                 self._send_by_email(request, year)
             elif step == 'post':
@@ -606,7 +609,7 @@ class MembershipFeeAdmin(admin.ModelAdmin):
                                                                          pk__in=request.POST.getlist('invoice')) \
                     .update(was_sent_by_post=True)
                 self.message_user(request, f'{count} invoices marked as sent by post', messages.SUCCESS)
-            return HttpResponseRedirect(f'{request.path}?year={year}')
+            return HttpResponseRedirect(f'{request.path}?year={year}&section={section}#{section}')
 
         rows = membership_fees.build_fee_rows(year)
         rows.sort(key=lambda row: (bool(row.existing), row.proposed_resource is None))
@@ -617,6 +620,8 @@ class MembershipFeeAdmin(admin.ModelAdmin):
             'opts': self.model._meta,
             'title': f'Membership fees {year}',
             'year': year,
+            'active_section': request.GET.get('section') if request.GET.get('section') in
+                              ('fees', 'invoices', 'sending') else None,
             'years': [current_year - 1, current_year],
             'rows': rows,
             'fee_resources': membership_fees.fee_resources(),
@@ -647,15 +652,17 @@ class MembershipFeeAdmin(admin.ModelAdmin):
             self.message_user(request, f'Resource "{membership_fees.SWISS_ENGINEERING_SLUG}" must be created '
                                        f'before creating the fees of Swiss Engineering members. '
                                        f'No fee has been created.', messages.ERROR)
-            return
+            return False
 
         self.message_user(request, f'{len(created)} usages created for {year}', messages.SUCCESS)
+        return bool(created)
 
     def _create_invoices(self, request, year):
         selected_ids = request.POST.getlist('member')
         invoices = [membership_fees.create_yearly_invoice(member)
                     for member in membership_fees.members_to_invoice(year).filter(pk__in=selected_ids)]
         self.message_user(request, f'{len(invoices)} invoices created', messages.SUCCESS)
+        return bool(invoices)
 
     def _send_by_email(self, request, year):
         sent_count = 0
