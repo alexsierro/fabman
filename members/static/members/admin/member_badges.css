@@ -1,0 +1,32 @@
+#result_list .column-members_actions,
+#result_list .field-members_actions {
+    width: 1%;
+    white-space: nowrap;
+}
+.member-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+.member-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+.member-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 1;
+}
+.member-badge-animator { background: #245b83; }
+.member-badge-committee { background: #6b3d85; }
+.member-badge-cash { background: #ffda57; color: #624900; }

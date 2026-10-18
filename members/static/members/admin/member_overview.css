@@ -1,0 +1,55 @@
+.member-overview { max-width: 1200px; }
+.overview-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.member-summary {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 16px;
+}
+.member-summary h3 { margin-top: 0; padding: 0; }
+.member-summary p { margin: 8px 0; padding: 0; }
+.member-summary .member-badges { vertical-align: middle; }
+.member-role-summary {
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    align-self: flex-start;
+}
+.member-role-summary h3 { margin-bottom: 12px; }
+.resigned-status { color: var(--error-fg); font-weight: bold; }
+.invoice-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--darkened-bg);
+    border-radius: 6px;
+    align-self: flex-start;
+}
+.invoice-summary strong { display: block; margin-top: 4px; font-size: 1.3rem; }
+.invoice-table-wrapper { overflow-x: auto; }
+.invoice-table { width: 100%; }
+.invoice-table td, .invoice-table th { padding: 12px; vertical-align: middle; }
+.invoice-table tbody tr:nth-child(even) { background: var(--darkened-bg); }
+.invoice-table .amount { text-align: right; white-space: nowrap; }
+.invoice-table tfoot { background: var(--darkened-bg); font-weight: bold; }
+.invoice-documents { white-space: nowrap; }
+.invoice-documents a + a { margin-left: 10px; }
+.invoice-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--darkened-bg);
+    border: 1px solid var(--border-color);
+}
+.invoice-status.status-rappel1, .invoice-status.status-rappel2, .invoice-status.status-rappel3 {
+    color: var(--error-fg);
+    font-weight: bold;
+}
+.empty-invoices { padding: 20px; }

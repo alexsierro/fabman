@@ -5,6 +5,8 @@ venv*/
 members/membres.csv
 invoicing/usage.csv
 static/
+!members/static/
+!members/static/**
 backup/
 email.env
 
