@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count, Q
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -29,8 +30,36 @@ class ProjectCardAdmin(admin.ModelAdmin):
 admin.site.register(ProjectCard, ProjectCardAdmin)
 
 
+class MemberResignationFilter(admin.SimpleListFilter):
+    title = 'resignation'
+    parameter_name = 'resignation'
+
+    def lookups(self, request, model_admin):
+        return (('resigned', 'Resigned members'), ('all', 'All members'))
+
+    def choices(self, changelist):
+        for choice in super().choices(changelist):
+            if choice['query_string'] == changelist.get_query_string(remove=[self.parameter_name]):
+                choice['display'] = 'Not resigned'
+            yield choice
+
+    def queryset(self, request, queryset):
+        if self.value() == 'all':
+            return queryset
+        return queryset.filter(date_resigned__isnull=self.value() != 'resigned')
+
+
 class MemberAdmin(admin.ModelAdmin):
     actions = ['export_as_mail_list', 'export_as_mail_csv']
+
+    class Media:
+        css = {'all': ('members/admin/member_badges.css',)}
+
+    def member_badges(self, member):
+        return render_to_string('admin/members/member_badges.html', {
+            'member': member,
+            'can_open_cash_drawer': member.is_staff or member.is_allowed_to_open_cash_register,
+        })
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -73,8 +102,10 @@ class MemberAdmin(admin.ModelAdmin):
             color = 'darkorange'
         if open_invoices > 1:
             color = 'red'
-        return format_html('<a class="button" href="{}" style="background-color:{}"target="_blank">Invoices ({})</a>',
-                           reverse('show_members', args=[obj.pk]), color, open_invoices)
+        return format_html('<div class="member-actions">'
+                           '<a class="button" href="{}" style="background-color:{}" target="_blank">Details ({} inv.)</a>'
+                           '{}</div>',
+                           reverse('show_members', args=[obj.pk]), color, open_invoices, self.member_badges(obj))
 
     def formatted_name(self, member):
         if member.is_resigned:
@@ -84,12 +115,12 @@ class MemberAdmin(admin.ModelAdmin):
             return member.name
 
 
-    list_display = ['members_actions', 'formatted_name', 'surname', 'visa', 'rfid', 'is_staff', 'is_committee']
+    list_display = ['members_actions', 'formatted_name', 'surname', 'member_type', 'visa', 'rfid']
     list_display_links = ['formatted_name', 'surname']
     search_fields = ['name', 'surname', 'rfid', 'visa']
     ordering = ['name', 'surname']
     readonly_fields = ['get_tariff', 'is_in_mail_list']
-    list_filter = ['subscription_status']
+    list_filter = [MemberResignationFilter, 'subscription_status']
 
 
 admin.site.register(Member, MemberAdmin)

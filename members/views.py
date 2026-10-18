@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -35,14 +38,14 @@ def show(request, pk):
     if not request.user.is_staff:
         raise PermissionDenied
 
-    members = Member.objects.get(pk=pk)
-    invoice = Invoice.objects.filter(member=pk).exclude(status='paid').exclude(status='cancelled')
-    invoice_annotated = invoice.values('invoice_number',
-                                     'amount',
-                                     'date_invoice',
-                                     'status'
-                                      ).order_by('date_invoice')
-
-
-    return render(request, 'show_members.html', {'members': members, 'invoice': invoice_annotated})
-
+    member = get_object_or_404(Member, pk=pk)
+    invoices = list(Invoice.objects.filter(member=member).exclude(status__in=('paid', 'cancelled'))
+                    .order_by('date_invoice', 'invoice_number'))
+    return render(request, 'show_members.html', {
+        **admin.site.each_context(request),
+        'title': f'Member details - {member}',
+        'member': member,
+        'invoices': invoices,
+        'total_due': sum((invoice.amount_due for invoice in invoices), Decimal(0)),
+        'can_open_cash_drawer': member.is_staff or member.is_allowed_to_open_cash_register,
+    })

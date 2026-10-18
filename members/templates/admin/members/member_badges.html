@@ -1,0 +1,12 @@
+<span class="member-badges">
+    {% if member.is_staff %}<span class="member-badge member-badge-animator" title="Animator" aria-label="Animator">A</span>{% endif %}
+    {% if member.is_committee %}<span class="member-badge member-badge-committee" title="Committee" aria-label="Committee">C</span>{% endif %}
+    {% if can_open_cash_drawer %}
+        <span class="member-badge member-badge-cash" title="Can open the cash drawer" role="img" aria-label="Can open the cash drawer">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+                <circle cx="5" cy="5" r="3"/>
+                <path d="m7.2 7.2 6.3 6.3M10 10l2-2M12 12l2-2"/>
+            </svg>
+        </span>
+    {% endif %}
+</span>

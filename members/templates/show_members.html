@@ -1,42 +1,97 @@
-{% load static %}
+{% extends "admin/base_site.html" %}
+{% load static app_filters %}
 
-<html xmlns="http://www.w3.org/1999/html">
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'members/admin/member_badges.css' %}">
+    <link rel="stylesheet" href="{% static 'members/admin/member_overview.css' %}">
+    {% include "admin/invoice_preview_style.html" %}
+{% endblock %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:members_member_changelist' %}">Members</a>
+    &rsaquo; {{ member }}
+</div>
+{% endblock %}
 
-
-<body>
-<div id="page">
-    <div id="navbar2"></div>
-    <div id="infoUser"></div>
-    <div id="invoces">
-
-        <h1> Listes des factures ouvertes</h1>
-        <table class="detail">
-
-        <tr>
-            <td>Numéro</td>
-            <td>Date</td>
-            <td>Somme</td>
-            <td>Statu</td>
-            <td></td>
-        </tr>
-        {% for invoice in invoice %}
-        <tr class="detail">
-            <td>{{ invoice.invoice_number }}</td>
-            <td>{{ invoice.date_invoice }}</td>
-            <td>{{ invoice.amount }}</td>
-            <td>{{ invoice.status }}</td>
-            <td><a href="../../invoicing/show_pdf/{{ invoice.invoice_number }}">Show</a></td>
-        </tr>
-        {% endfor %}
-        </table>
+{% block content %}
+<div class="member-overview">
+    <div class="overview-toolbar">
+        <a class="button" href="{% url 'admin:members_member_changelist' %}">Back to members</a>
+        <a class="button" href="{% url 'admin:members_member_change' member.pk %}">Edit member</a>
+        <a class="button" href="{% url 'admin:invoicing_invoice_changelist' %}?member__id__exact={{ member.pk }}">All invoices</a>
     </div>
-    <div id="statistique">
 
+    <div class="module">
+        <h2>Member details</h2>
+        <div class="member-summary">
+            <div>
+                <h3>{{ member }}</h3>
+                <p>{{ member.get_member_type_display }}{% if member.visa %} &middot; {{ member.visa }}{% endif %}</p>
+                {% if member.is_resigned %}
+                    <p class="resigned-status">Resigned on {{ member.date_resigned|date:"d.m.Y" }}</p>
+                {% endif %}
+                {% if member.mail %}<p><a href="mailto:{{ member.mail }}">{{ member.mail }}</a></p>{% endif %}
+                {% if member.address or member.locality %}
+                    <p>{{ member.address|default_if_none:"" }}<br>
+                        {{ member.npa|default_if_none:"" }} {{ member.locality|default_if_none:"" }}</p>
+                {% endif %}
+                <p>Invoice delivery: {{ member.get_preferred_invoice_method_display }}</p>
+            </div>
+            {% if member.is_staff or member.is_committee or can_open_cash_drawer %}
+                <div class="member-role-summary" aria-label="Member roles and access">
+                    <h3>Roles and access</h3>
+                    {% include "admin/members/member_badges.html" %}
+                </div>
+            {% endif %}
+            <div class="invoice-summary">
+                <span>Open invoices: <strong>{{ invoices|length }}</strong></span>
+                <span>Total due <strong>CHF {{ total_due|format_currency }}</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="module">
+        <h2>Open invoices</h2>
+        {% if invoices %}
+            <div class="invoice-table-wrapper">
+                <table class="invoice-table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Invoice</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="amount">Amount due (CHF)</th>
+                        <th scope="col">Documents</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for invoice in invoices %}
+                        <tr>
+                            <th scope="row"><a href="{% url 'admin:invoicing_invoice_change' invoice.pk %}">#{{ invoice.invoice_number }}</a></th>
+                            <td>{{ invoice.date_invoice|date:"d.m.Y" }}</td>
+                            <td><span class="invoice-status status-{{ invoice.status }}">{{ invoice.get_status_display }}</span></td>
+                            <td class="amount">{{ invoice.amount_due|format_currency }}</td>
+                            <td class="invoice-documents">
+                                <a class="button" href="{% url 'show_pdf_invoice' invoice.invoice_number %}"
+                                   data-preview="{% url 'show_invoice' invoice.invoice_number %}" target="_blank" rel="noopener">PDF</a>
+                                <a href="{% url 'show_detailed_pdf_invoice' invoice.invoice_number %}"
+                                   data-preview="{% url 'show_detailed_invoice' invoice.invoice_number %}" target="_blank" rel="noopener">Detailed PDF</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><th colspan="3" scope="row">Total due (CHF)</th><td class="amount">{{ total_due|format_currency }}</td><td></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-invoices">No open invoices for this member.</p>
+        {% endif %}
     </div>
 </div>
-
-
-</body>
-
-</html>
+{% include "admin/invoice_preview_script.html" %}
+{% endblock %}
