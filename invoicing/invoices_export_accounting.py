@@ -27,10 +27,11 @@ def export_as_txt(self, request, queryset):
     writer.writerow(
         ['Date', 'Doc', 'Description', 'AccountDebit', 'AccountCredit', 'Amount'])
     for invoice in queryset.order_by('date_paid'):
-        if invoice.is_paid:
+        if invoice.is_paid or False:
             date_paid = invoice.date_paid
             doc = invoice.invoice_number
             description = f'Facture manager pour {invoice.member}'
+            print(invoice.invoice_number)
             account_debit = accounts[invoice.payment_method]
             account_credit = 3633
             amount = invoice.amount_due

@@ -1,19 +1,108 @@
 {% extends "admin/base.html" %}
-{% load app_filters %}
+{% block extrastyle %}
+<style>
+    .import-actions { margin: 12px 0 24px; }
+    .import-actions .cancel-link { display: inline-block; padding: 10px 15px; margin-left: 8px; }
+    .import-summary { margin-bottom: 16px; }
+    .import-section { margin-bottom: 24px; }
+    .import-section table { width: 100%; max-width: 1000px; }
+    .import-section td.num, .import-section th.num { text-align: right; }
+    .import-section h2.ok { color: var(--message-success-color, #2e7d32); }
+    .import-section h2.warn { color: var(--error-fg); }
+</style>
+{% endblock %}
 {% block content %}
+<h1>Import from e-banking</h1>
+<p><a href="{% url 'admin:invoicing_invoice_changelist' %}">&larr; Back to invoices</a></p>
 
-<form method="post" enctype="multipart/form-data">
-{% csrf_token %}
-<input type="file" name="sentFile" />
-<input type="submit" name="submit" value="Import" />
-</form>
-<br/>
-<div>
-{% for result in results %}
-    {{ result }}<br/>
-{% endfor %}
-
-
+<div class="import-summary">
+    <strong>{{ file_name }}</strong>:
+    {% if step == 'preview' %}
+        preview
+        {{ paid|length }} to mark paid,
+        {{ mismatches|length }} mismatch{{ mismatches|length|pluralize:"es" }},
+        {{ skipped|length }} skipped.
+    {% else %}
+        {{ paid|length }} marked paid{% if mismatches %},
+        {{ mismatches|length }} changed since preview and not applied{% endif %}.
+    {% endif %}
 </div>
 
+{% if step == 'preview' %}
+<form method="post" class="import-actions">
+    {% csrf_token %}
+    {% if paid %}
+        <input type="submit" name="confirm" class="default"
+               value="Confirm: mark {{ paid|length }} invoice{{ paid|length|pluralize }} paid" />
+    {% endif %}
+    <a href="{% url 'import_ebanking' %}" class="button cancel-link">Cancel</a>
+</form>
+{% endif %}
+
+{% if step == 'preview' or mismatches %}
+<div class="import-section">
+    <h2 class="warn">{% if step == 'preview' %}Mismatches{% else %}Not applied{% endif %} ({{ mismatches|length }})</h2>
+    {% if mismatches %}
+    <table>
+        <thead><tr><th>Date</th><th>Reference</th><th>Invoice</th><th class="num">Amount</th><th>Reason</th></tr></thead>
+        <tbody>
+        {% for m in mismatches %}
+            <tr>
+                <td>{{ m.date|date:"Y-m-d" }}</td>
+                <td>{{ m.reference }}</td>
+                <td>{% if m.invoice %}<a href="{% url 'admin:invoicing_invoice_change' m.invoice.pk %}" target="_blank">{{ m.invoice }}</a>{% else %}-{% endif %}</td>
+                <td class="num">{{ m.amount }}</td>
+                <td>{{ m.reason }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No mismatches.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="import-section">
+    <h2 class="ok">{% if step == 'preview' %}Invoices to mark paid{% else %}Invoices marked paid{% endif %} ({{ paid|length }})</h2>
+    {% if paid %}
+    <table>
+        <thead><tr><th>Date</th><th>Reference</th><th>Invoice</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+        {% for p in paid %}
+            <tr>
+                <td>{{ p.date|date:"Y-m-d" }}</td>
+                <td>{{ p.reference }}</td>
+                <td><a href="{% url 'admin:invoicing_invoice_change' p.invoice.pk %}" target="_blank">{{ p.invoice }}</a></td>
+                <td class="num">{{ p.amount }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>{% if step == 'preview' %}No invoices to mark paid.{% else %}No invoices marked paid.{% endif %}</p>
+    {% endif %}
+</div>
+
+{% if skipped %}
+<div class="import-section">
+    <details>
+        <summary>Skipped rows: not QRR / CHF ({{ skipped|length }})</summary>
+        <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Reference</th><th class="num">Amount</th><th>Currency</th></tr></thead>
+            <tbody>
+            {% for s in skipped %}
+                <tr>
+                    <td>{{ s.date|date:"Y-m-d" }}</td>
+                    <td>{{ s.type }}</td>
+                    <td>{{ s.reference|default:"-" }}</td>
+                    <td class="num">{{ s.amount }}</td>
+                    <td>{{ s.currency }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </details>
+</div>
+{% endif %}
 {% endblock %}

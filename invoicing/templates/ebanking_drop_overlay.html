@@ -1,0 +1,72 @@
+{% comment %}
+Full-page drop zone: dragging a file anywhere over the page shows it, dropping submits the form.
+Usage: {% include "ebanking_drop_overlay.html" with form_id="..." %}, the form must have a file input.
+{% endcomment %}
+<style>
+    /* Full-page layer so a drop works anywhere; it blurs the page behind the box. */
+    #ebanking-drop-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    #ebanking-drop-overlay.visible { display: flex; }
+    #ebanking-drop-overlay div {
+        padding: 64px 96px;
+        border: 3px dashed var(--link-fg);
+        border-radius: 12px;
+        font-size: 1.25rem;
+        background: var(--body-bg);
+        color: var(--body-fg);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        /* Let drag events reach the overlay itself, not this child. */
+        pointer-events: none;
+    }
+</style>
+<div id="ebanking-drop-overlay" data-form="{{ form_id }}"><div>Drop the e-banking CSV file to import it</div></div>
+<script>
+(function () {
+    const overlay = document.getElementById('ebanking-drop-overlay');
+    const form = document.getElementById(overlay.dataset.form);
+    const input = form.querySelector('input[type=file]');
+
+    function isFileDrag(e) {
+        return Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') !== -1;
+    }
+
+    // Show the overlay as soon as a file is dragged anywhere over the page.
+    window.addEventListener('dragenter', function (e) {
+        if (!isFileDrag(e)) return;
+        e.preventDefault();
+        overlay.classList.add('visible');
+    });
+    overlay.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+    overlay.addEventListener('dragleave', function (e) {
+        if (e.target === overlay) overlay.classList.remove('visible');
+    });
+    overlay.addEventListener('drop', function (e) {
+        e.preventDefault();
+        overlay.classList.remove('visible');
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            form.submit();
+        }
+    });
+    // Avoid the browser opening a file dropped outside the overlay.
+    window.addEventListener('dragover', function (e) {
+        if (isFileDrag(e)) e.preventDefault();
+    });
+    window.addEventListener('drop', function (e) {
+        if (isFileDrag(e)) e.preventDefault();
+        overlay.classList.remove('visible');
+    });
+})();
+</script>

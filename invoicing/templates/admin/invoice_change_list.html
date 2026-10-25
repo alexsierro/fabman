@@ -3,6 +3,22 @@
 {% block extrastyle %}
     {{ block.super }}
     {% include "admin/invoice_preview_style.html" %}
+    <style>
+        #invoice-tools { display: flex; align-items: stretch; gap: 8px; }
+        #invoice-tools .button { display: flex; align-items: center; margin: 0; line-height: normal; }
+        /* Let the label sit in the flex row as if the form were not there. */
+        #ebanking-import-form { display: contents; }
+        #ebanking-import-form input[type=file] { display: none; }
+        /* Match a.button: undo the admin's generic label styling. */
+        #ebanking-import-button {
+            padding: 4px 5px;
+            font-size: inherit;
+            font-weight: normal;
+            color: var(--button-fg);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
 {% endblock %}
 
 {% block footer %}
@@ -11,11 +27,34 @@
 {% endblock %}
 
 {% block object-tools %}
-    <div>
+    <div id="invoice-tools">
 <a class="button" href="/invoicing/preview" target="_blank">Create new invoice</a>
-<a class="button" href="/invoicing/import-ebanking" target="_blank">Import from e-banking</a>
+<form id="ebanking-import-form" method="post" enctype="multipart/form-data"
+      action="{% url 'import_ebanking' %}">
+    {% csrf_token %}
+    <label class="button" id="ebanking-import-button" title="Click to choose or drop the e-banking CSV file">
+        Import from e-banking
+        <input type="file" name="sentFile" accept=".csv,text/csv" />
+    </label>
+</form>
+{% include "ebanking_drop_overlay.html" with form_id="ebanking-import-form" %}
 
     </div>
     <br />
     {{ block.super }}
+    <script>
+    (function () {
+        const form = document.getElementById('ebanking-import-form');
+        const input = form.querySelector('input[type=file]');
+
+        function submit() {
+            if (!input.files.length) return;
+            form.submit();
+            // Allow importing the same file again later.
+            input.value = '';
+        }
+
+        input.addEventListener('change', submit);
+    })();
+    </script>
 {% endblock %}

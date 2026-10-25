@@ -2,7 +2,9 @@ import csv
 from datetime import datetime
 from decimal import Decimal
 
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Max, Sum
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
@@ -150,48 +152,132 @@ def show_invoice(request, invoice_number):
 date_format = '%Y-%m-%d %H:%M:%S.%f'
 
 
+EBANKING_SESSION_KEY = 'ebanking_import'
+
+
+def ebanking_mismatch_reason(invoice, amount):
+    if invoice.status == 'paid':
+        return f'Already paid on {invoice.date_paid} ({invoice.payment_method})'
+    if invoice.amount_due != amount:
+        return f'Amount mismatch: expected {invoice.amount_due}'
+    return None
+
+
+def parse_ebanking(f):
+    """Match the payments of an e-banking CSV export against invoices, without changing anything."""
+    matches = list()
+    mismatches = list()
+    skipped = list()
+    matched_invoices = set()
+
+    lines = f.read().decode('iso-8859-1').split('\n')
+    reader = csv.DictReader(lines, delimiter=';')
+
+    for row in reader:
+        try:
+            date = datetime.strptime(row['Valuta'], date_format)
+            amount = Decimal(row['Betrag'])
+            currency = row['Währung']
+            payment_type = row['Typ']
+            raw_reference = row['Referenznummer']
+        except (KeyError, ValueError, ArithmeticError, TypeError):
+            continue
+
+        if payment_type != 'QRR' or currency != 'CHF':
+            skipped.append({'date': date, 'amount': amount, 'currency': currency, 'type': payment_type,
+                            'reference': raw_reference})
+            continue
+
+        try:
+            reference = int(raw_reference[:-1])
+        except ValueError:
+            mismatches.append({'date': date, 'amount': amount, 'reference': raw_reference, 'invoice': None,
+                               'reason': 'Invalid reference number'})
+            continue
+
+        try:
+            invoice = Invoice.objects.get(invoice_number=reference)
+        except Invoice.DoesNotExist:
+            mismatches.append({'date': date, 'amount': amount, 'reference': reference, 'invoice': None,
+                               'reason': 'Invoice not found'})
+            continue
+
+        reason = ebanking_mismatch_reason(invoice, amount)
+        if reason is None and invoice.pk in matched_invoices:
+            reason = 'Duplicate payment in this file'
+
+        if reason:
+            mismatches.append({'date': date, 'amount': amount, 'reference': reference, 'invoice': invoice,
+                               'reason': reason})
+        else:
+            matched_invoices.add(invoice.pk)
+            matches.append({'date': date, 'amount': amount, 'reference': reference, 'invoice': invoice})
+
+    return matches, mismatches, skipped
+
+
 def import_ebanking(request):
     if not request.user.is_staff:
         raise PermissionDenied
 
-    has_error = False
+    # Files are uploaded from the invoice list; this page only shows the preview and the result.
+    invoice_list = redirect('admin:invoicing_invoice_changelist')
 
-    results = list()
+    if request.method != 'POST':
+        # Leaving the preview (e.g. Cancel) discards it.
+        request.session.pop(EBANKING_SESSION_KEY, None)
+        return invoice_list
 
-    if request.POST:
-        results.append('File read OK')
-        f = request.FILES['sentFile']
-        lines = f.read().decode('iso-8859-1').split('\n')
-        reader = csv.DictReader(lines, delimiter=';')
+    context = {}
 
-        for row in reader:
-            date = datetime.strptime(row['Valuta'], date_format)
-            amount = Decimal(row['Betrag'])
-            currency = row['Währung']
-            reference = int(row['Referenznummer'][:-1])
-            payment_type = row['Typ']
+    if 'confirm' in request.POST:
+        pending = request.session.pop(EBANKING_SESSION_KEY, None)
+        if not pending:
+            messages.error(request, 'Nothing to confirm, the import has already been applied or has expired.')
+            return invoice_list
 
-            print(date, reference, amount, currency, payment_type)
+        paid = list()
+        mismatches = list()
 
-            if payment_type == 'QRR' and currency == 'CHF':
+        with transaction.atomic():
+            for match in pending['matches']:
+                date = datetime.fromisoformat(match['date'])
+                amount = Decimal(match['amount'])
+                invoice = Invoice.objects.select_for_update().filter(pk=match['invoice_id']).first()
+                if invoice is None:
+                    reason = 'Invoice deleted since preview'
+                else:
+                    reason = ebanking_mismatch_reason(invoice, amount)
+                if reason:
+                    mismatches.append({'date': date, 'amount': amount, 'reference': match['reference'],
+                                       'invoice': invoice, 'reason': f'Changed since preview: {reason}'})
+                    continue
 
-                try:
-                    invoice = Invoice.objects.get(invoice_number=reference)
-                except Invoice.DoesNotExist:
-                    invoice = None
-                    results.append(f'### Invoice #{reference}: {date}, {amount} not found.')
-                    has_error = True
+                invoice.date_paid = date
+                invoice.payment_method = 'bank'
+                invoice.status = 'paid'
+                invoice.save()
+                paid.append({'date': date, 'amount': amount, 'reference': match['reference'], 'invoice': invoice})
 
-                print(invoice)
+        context.update({'step': 'done', 'file_name': pending['file_name'], 'paid': paid, 'mismatches': mismatches})
 
-                if invoice:
-                    if invoice.amount_due == amount:
-                        invoice.date_paid = date
-                        invoice.payment_method = 'bank'
-                        invoice.status = 'paid'
-                        invoice.save()
-                        results.append(f'Invoice {invoice}, marked paid on {date}.')
+    else:
+        f = request.FILES.get('sentFile')
+        if not f:
+            messages.error(request, 'No file selected.')
+            return invoice_list
 
-        results.append('Import finished successfully.') if not has_error else results.append('Import finished with errors.')
+        matches, mismatches, skipped = parse_ebanking(f)
 
-    return render(request, 'import_ebanking.html', context={'results': results})
+        request.session[EBANKING_SESSION_KEY] = {
+            'file_name': f.name,
+            'matches': [{'invoice_id': m['invoice'].pk,
+                         'reference': m['reference'],
+                         'date': m['date'].isoformat(),
+                         'amount': str(m['amount'])} for m in matches],
+        }
+
+        context.update({'step': 'preview', 'file_name': f.name, 'paid': matches, 'mismatches': mismatches,
+                        'skipped': skipped})
+
+    return render(request, 'import_ebanking.html', context=context)
