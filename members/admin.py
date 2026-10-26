@@ -120,7 +120,7 @@ class MemberAdmin(admin.ModelAdmin):
     search_fields = ['name', 'surname', 'rfid', 'visa']
     ordering = ['name', 'surname']
     readonly_fields = ['get_tariff', 'is_in_mail_list']
-    list_filter = [MemberResignationFilter, 'subscription_status']
+    list_filter = [MemberResignationFilter, 'subscription_status', 'is_committee', 'is_staff']
 
 
 admin.site.register(Member, MemberAdmin)
