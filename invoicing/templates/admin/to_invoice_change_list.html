@@ -1,5 +1,20 @@
 {% extends 'admin/change_list.html' %}
-{% load app_filters %}
+{% load app_filters static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'members/admin/member_badges.css' %}">
+    <style>
+        .to-invoice .member-name { display: inline-flex; align-items: center; gap: 6px; }
+        .to-invoice th.amount, .to-invoice td.amount {
+            text-align: right;
+            white-space: nowrap;
+            width: 9em;
+            font-variant-numeric: tabular-nums;
+        }
+        .to-invoice th.amount .text { float: none; }
+    </style>
+{% endblock %}
 
 {% block content_title %}
     <h1>Total usages to invoice, per member</h1>
@@ -8,19 +23,32 @@
 {% block result_list %}
 
 <div class="results">
-    <table>
+    <table class="to-invoice">
         <thead>
             <tr>
                 <th>Member</th>
-                <th>Non invoiced amount</th>
+                <th>Type</th>
+                <th class="amount">Non invoiced amount</th>
+                <th class="amount">Credit machine</th>
+                <th class="amount">Credit cash</th>
+                <th class="amount">Rest to invoice</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for member in invoiceable_members %}
                 <tr>
-                    <td>{{ member.name }} {{ member.surname }}</td>
-                    <td style="text-align: right;">{{ member.total_amount | format_currency }}</td>
+                    <td>
+                        <span class="member-name">
+                            {{ member.name }} {{ member.surname }}
+                            {% include 'admin/members/member_badges.html' with can_open_cash_drawer=member.can_open_cash_drawer %}
+                        </span>
+                    </td>
+                    <td>{{ member.get_member_type_display }}</td>
+                    <td class="amount">{{ member.total_amount | format_currency }}</td>
+                    <td class="amount">{{ member.credit_machine | format_currency }}</td>
+                    <td class="amount">{{ member.credit_cash | format_currency }}</td>
+                    <td class="amount">{{ member.amount_due | format_currency }}</td>
                     <td>
                         <a href="{% url 'preview_invoice' %}?member_id={{ member.id }}" class="button default">
                             Preview

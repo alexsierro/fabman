@@ -727,7 +727,19 @@ class ToInvoiceAdmin(admin.ModelAdmin):
             )
         )
 
-        invoiceable_members = invoiceable_members.order_by('-total_amount')
+        invoiceable_members = list(invoiceable_members.order_by('-total_amount'))
+
+        # credit already allocated to the not yet invoiced usages, deducted when the invoice is created
+        deductions = {}
+        for row in CreditConsumption.objects.filter(usage__invoice=None) \
+                .values('usage__member_id', 'credit__credit_type').annotate(total=Sum('amount')):
+            deductions[(row['usage__member_id'], row['credit__credit_type'])] = row['total']
+        for member in invoiceable_members:
+            member.credit_machine = deductions.get((member.pk, 'machine'), Decimal(0))
+            member.credit_cash = deductions.get((member.pk, 'cash'), Decimal(0))
+            member.amount_due = member.total_amount - member.credit_machine - member.credit_cash
+            # same badges as the member list
+            member.can_open_cash_drawer = member.is_staff or member.is_allowed_to_open_cash_register
 
         response.context_data['invoiceable_members'] = invoiceable_members
 

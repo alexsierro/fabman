@@ -279,6 +279,22 @@ class CreditAdminTests(TestCase):
         response = self.client.get(reverse('admin:invoicing_creditconsumption_changelist'))
         self.assertEqual(response.status_code, 200)
 
+    def test_to_invoice_shows_the_credits_and_the_rest(self):
+        Credit.objects.create(member=self.member, amount=5, credit_type='machine')
+        Usage.objects.create(member=self.member, resource=create_resource('laser', 10, machine=True), qty=1)
+        response = self.client.get(reverse('admin:invoicing_toinvoice_changelist'))
+        member = response.context['invoiceable_members'][0]
+        # 30 used: 5 from the machine credit, the remaining 25 from the cash credit
+        self.assertEqual((member.total_amount, member.credit_machine, member.credit_cash, member.amount_due),
+                         (30, 5, 25, 0))
+
+    def test_to_invoice_shows_the_member_type_and_badges(self):
+        self.member.is_staff = True
+        self.member.save()
+        response = self.client.get(reverse('admin:invoicing_toinvoice_changelist'))
+        self.assertContains(response, 'member-badge-animator')
+        self.assertContains(response, self.member.get_member_type_display())
+
     def test_consumptions_are_read_only(self):
         response = self.client.get(reverse('admin:invoicing_creditconsumption_add'))
         self.assertEqual(response.status_code, 403)
