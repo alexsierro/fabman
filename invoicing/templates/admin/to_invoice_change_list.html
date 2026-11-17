@@ -5,14 +5,9 @@
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'members/admin/member_badges.css' %}">
     <style>
-        .to-invoice .member-name { display: inline-flex; align-items: center; gap: 6px; }
-        .to-invoice th.amount, .to-invoice td.amount {
-            text-align: right;
-            white-space: nowrap;
-            width: 9em;
-            font-variant-numeric: tabular-nums;
-        }
-        .to-invoice th.amount .text { float: none; }
+        #result_list .member-name { display: inline-flex; align-items: center; gap: 6px; }
+        #result_list .amount { text-align: right; white-space: nowrap; }
+        #result_list tfoot td { font-weight: bold; }
     </style>
 {% endblock %}
 
@@ -20,43 +15,55 @@
     <h1>Total usages to invoice, per member</h1>
 {% endblock %}
 
+{% block object-tools %}{% endblock %}
+{% block search %}{% endblock %}
+{% block filters %}{% endblock %}
+
 {% block result_list %}
 
 <div class="results">
-    <table class="to-invoice">
+    <table id="result_list">
         <thead>
             <tr>
-                <th>Member</th>
-                <th>Type</th>
-                <th class="amount">Non invoiced amount</th>
-                <th class="amount">Credit machine</th>
-                <th class="amount">Credit cash</th>
-                <th class="amount">Rest to invoice</th>
-                <th>Actions</th>
+                {% include 'admin/member_rows_headers.html' %}
+                <th scope="col" class="column-actions"><div class="text"><span>&nbsp;</span></div><div class="clear"></div></th>
             </tr>
         </thead>
         <tbody>
-            {% for member in invoiceable_members %}
+            {% for row in rows %}
+                {% with member=row.member %}
                 <tr>
-                    <td>
+                    <th class="field-member">
                         <span class="member-name">
-                            {{ member.name }} {{ member.surname }}
+                            <a href="{% url 'preview_invoice' %}?member_id={{ member.pk }}">{{ member.name }} {{ member.surname }}</a>
                             {% include 'admin/members/member_badges.html' with can_open_cash_drawer=member.can_open_cash_drawer %}
                         </span>
-                    </td>
-                    <td>{{ member.get_member_type_display }}</td>
-                    <td class="amount">{{ member.total_amount | format_currency }}</td>
-                    <td class="amount">{{ member.credit_machine | format_currency }}</td>
-                    <td class="amount">{{ member.credit_cash | format_currency }}</td>
-                    <td class="amount">{{ member.amount_due | format_currency }}</td>
-                    <td>
-                        <a href="{% url 'preview_invoice' %}?member_id={{ member.id }}" class="button default">
-                            Preview
-                        </a>
+                    </th>
+                    <td class="field-type">{{ member.get_member_type_display }}</td>
+                    {% for amount in row.amounts %}
+                        <td class="amount">{% if amount %}{{ amount | format_currency }}{% else %}-{% endif %}</td>
+                    {% endfor %}
+                    <td class="field-actions">
+                        <a href="{% url 'preview_invoice' %}?member_id={{ member.pk }}">Preview</a>
                     </td>
                 </tr>
+                {% endwith %}
+            {% empty %}
+                <tr><td colspan="7">Nothing to invoice.</td></tr>
             {% endfor %}
         </tbody>
+        {% if rows %}
+        <tfoot>
+            <tr>
+                <td colspan="2">Total ({{ rows|length }} members)</td>
+                <td class="amount">{{ totals.total | format_currency }}</td>
+                <td class="amount">{{ totals.machine | format_currency }}</td>
+                <td class="amount">{{ totals.cash | format_currency }}</td>
+                <td class="amount">{{ totals.due | format_currency }}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+        {% endif %}
     </table>
 </div>
 

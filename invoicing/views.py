@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from invoicing.invoice_view_helpers import get_invoice_pdf, get_invoice_html
@@ -161,7 +162,10 @@ def create(request):
         if buffer_days and not Usage.objects.filter(member_id=member_id, invoice=None, date__lt=cutoff).exists():
             messages.warning(request, f'No usage older than {buffer_days} days to invoice')
             return redirect(f"{reverse('preview_invoice')}?member_id={member_id}&buffer_days={buffer_days}")
-        prepare_invoice(member_id, True, buffer_days=buffer_days)
+        invoice = prepare_invoice(member_id, True, buffer_days=buffer_days)['invoice']
+        messages.success(request, format_html('Invoice <a href="{}">#{}</a> created for {} {}',
+                                              reverse('show_invoice', args=[invoice.invoice_number]),
+                                              invoice.invoice_number, invoice.member.name, invoice.member.surname))
         return redirect('admin:invoicing_invoice_changelist')
 
 

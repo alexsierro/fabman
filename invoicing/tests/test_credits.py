@@ -3,6 +3,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 from django.db.models import ProtectedError, Sum
@@ -283,10 +284,24 @@ class CreditAdminTests(TestCase):
         Credit.objects.create(member=self.member, amount=5, credit_type='machine')
         Usage.objects.create(member=self.member, resource=create_resource('laser', 10, machine=True), qty=1)
         response = self.client.get(reverse('admin:invoicing_toinvoice_changelist'))
-        member = response.context['invoiceable_members'][0]
+        row, = response.context['rows']
         # 30 used: 5 from the machine credit, the remaining 25 from the cash credit
-        self.assertEqual((member.total_amount, member.credit_machine, member.credit_cash, member.amount_due),
-                         (30, 5, 25, 0))
+        self.assertEqual((row['total'], row['machine'], row['cash'], row['due']), (30, 5, 25, 0))
+
+    def test_to_invoice_is_sortable(self):
+        other = Member.objects.create(name='A', surname='A')
+        Usage.objects.create(member=other, resource=create_resource('glue', 1), qty=1)
+        url = reverse('admin:invoicing_toinvoice_changelist')
+        for order, expected in (('', [self.member, other]), ('member', [other, self.member]),
+                                ('total', [other, self.member]), ('-cash', [self.member, other])):
+            response = self.client.get(url, {'o': order} if order else {})
+            self.assertEqual([row['member'] for row in response.context['rows']], expected)
+
+    def test_overview_pages_pass_on_admin_redirects(self):
+        # an unknown filter: the changelist redirects instead of rendering
+        for name in ('admin:invoicing_toinvoice_changelist', 'admin:invoicing_creditbalance_changelist'):
+            response = self.client.get(reverse(name), {'unknown_filter': 1})
+            self.assertEqual(response.status_code, 302)
 
     def test_to_invoice_shows_the_member_type_and_badges(self):
         self.member.is_staff = True
@@ -311,6 +326,16 @@ class CreditAdminTests(TestCase):
                          (self.member, 40, 30, 20, 15))
         self.assertEqual(row['next_expiry'], timezone.localdate(timezone.now() + datetime.timedelta(days=10)))
         self.assertEqual(row['next_expiry_amount'], 40)
+
+    def test_credit_balances_count_the_reservation_on_an_expired_credit(self):
+        # valid at the date of the usage, expired since: the open usage keeps it
+        Credit.objects.create(member=self.member, amount=99, credit_type='cash',
+                              valid_to=timezone.now() - datetime.timedelta(days=5))
+        Usage.objects.create(member=self.member, resource=create_resource('glue', 10), qty=1,
+                             date=timezone.now() - datetime.timedelta(days=10))
+        row, = credit_balances()
+        # 20 of the unlimited credit, 10 of the expired one; its 89 left are not available
+        self.assertEqual((row['cash'], row['pending']), (30, 30))
 
     def test_credit_balance_page(self):
         self.member.is_staff = True
@@ -443,6 +468,9 @@ class InvoiceBufferTests(TestCase):
         invoice = Invoice.objects.get()
         self.assertRedirects(response, reverse('admin:invoicing_invoice_changelist'), fetch_redirect_response=False)
         self.assertEqual(list(invoice.usage_set.all()), [old])
+        message, = get_messages(response.wsgi_request)
+        self.assertIn(f'#{invoice.invoice_number}</a> created', str(message))
+        self.assertIn(reverse('show_invoice', args=[invoice.invoice_number]), str(message))
 
     def test_nothing_older_than_the_buffer(self):
         self.usage(2)

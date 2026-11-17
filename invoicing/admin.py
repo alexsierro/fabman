@@ -490,11 +490,23 @@ class CreditConsumptionAdmin(ReadOnlyConsumptionMixin, admin.ModelAdmin):
         return obj.usage.date
 
 
-class CreditBalanceAdmin(admin.ModelAdmin):
-    """Read only overview: the credit available for each member."""
-    change_list_template = "admin/credit_balance_change_list.html"
+def member_sort_key(row):
+    return row['member'].name.lower(), row['member'].surname.lower()
+
+
+def member_type_sort_key(row):
+    return row['member'].get_member_type_display().lower()
+
+
+class MemberRowsAdminMixin:
+    """Read only admin page listing computed rows per member, in a table like a changelist.
+
+    COLUMNS is a list of (key, label, sort key of a row, is an amount): amounts sort the largest first.
+    The rows are dicts with at least 'member'; build_rows returns them in the default order.
+    """
     actions = None
     show_full_result_count = False
+    COLUMNS = []
 
     def has_add_permission(self, request):
         return False
@@ -505,16 +517,11 @@ class CreditBalanceAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    # (key, label, sort key of a row, is an amount): amounts sort the largest first
-    COLUMNS = [
-        ('member', 'Member', lambda row: (row['member'].name.lower(), row['member'].surname.lower()), False),
-        ('type', 'Type', lambda row: row['member'].get_member_type_display().lower(), False),
-        ('machine', 'Machine', lambda row: row['machine'], True),
-        ('cash', 'Cash', lambda row: row['cash'], True),
-        ('pending', 'Reserved', lambda row: row['pending'], True),
-        ('upcoming', 'Upcoming', lambda row: row['upcoming'], True),
-        ('next_expiry', 'Next expiry', lambda row: row['next_expiry'], False),
-    ]
+    def build_rows(self):
+        raise NotImplementedError
+
+    def extra_context_data(self, rows):
+        return {}
 
     @classmethod
     def sort_rows(cls, rows, order):
@@ -528,20 +535,7 @@ class CreditBalanceAdmin(admin.ModelAdmin):
         filled = sorted((row for row in rows if sort_key(row) is not None), key=sort_key, reverse=descending)
         return filled + [row for row in rows if sort_key(row) is None], key, descending
 
-    def changelist_view(self, request, extra_context=None):
-        response = super().changelist_view(request, extra_context=extra_context)
-        if not hasattr(response, 'context_data'):
-            return response
-        rows = credit_balances()
-        for row in rows:
-            member = row['member']
-            # same badges as the member list
-            member.can_open_cash_drawer = member.is_staff or member.is_allowed_to_open_cash_register
-            # in the order of the template columns
-            row['amounts'] = [row['machine'], row['cash'], row['pending'], row['upcoming']]
-
-        # the admin's own sort parameter: the changelist skips values that are not column numbers
-        rows, sorted_key, descending = self.sort_rows(rows, request.GET.get('o', ''))
+    def headers(self, sorted_key, descending):
         headers = []
         for key, label, _, is_amount in self.COLUMNS:
             if key == sorted_key:
@@ -550,11 +544,49 @@ class CreditBalanceAdmin(admin.ModelAdmin):
                 toggle = f'-{key}' if is_amount else key
             headers.append({'label': label, 'key': key, 'amount': is_amount, 'url': f'?o={toggle}',
                             'sorted': key == sorted_key, 'ascending': key == sorted_key and not descending})
-        response.context_data['headers'] = headers
+        return headers
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(request, extra_context=extra_context)
+        # e.g. a redirect for invalid parameters: nothing to add
+        if not hasattr(response, 'context_data'):
+            return response
+        rows = self.build_rows()
+        for row in rows:
+            member = row['member']
+            # same badges as the member list
+            member.can_open_cash_drawer = member.is_staff or member.is_allowed_to_open_cash_register
+        # the admin's own sort parameter: the changelist skips values that are not column numbers
+        rows, sorted_key, descending = self.sort_rows(rows, request.GET.get('o', ''))
+        response.context_data['headers'] = self.headers(sorted_key, descending)
         response.context_data['rows'] = rows
-        response.context_data['totals'] = {key: sum((row[key] for row in rows), Decimal(0))
-                                           for key in ('machine', 'cash', 'pending', 'upcoming')}
+        response.context_data.update(self.extra_context_data(rows))
         return response
+
+
+class CreditBalanceAdmin(MemberRowsAdminMixin, admin.ModelAdmin):
+    """Read only overview: the credit available for each member."""
+    change_list_template = "admin/credit_balance_change_list.html"
+    AMOUNTS = ('machine', 'cash', 'pending', 'upcoming')
+    COLUMNS = [
+        ('member', 'Member', member_sort_key, False),
+        ('type', 'Type', member_type_sort_key, False),
+        ('machine', 'Machine', lambda row: row['machine'], True),
+        ('cash', 'Cash', lambda row: row['cash'], True),
+        ('pending', 'Reserved', lambda row: row['pending'], True),
+        ('upcoming', 'Upcoming', lambda row: row['upcoming'], True),
+        ('next_expiry', 'Next expiry', lambda row: row['next_expiry'], False),
+    ]
+
+    def build_rows(self):
+        rows = credit_balances()
+        for row in rows:
+            # in the order of the template columns
+            row['amounts'] = [row[key] for key in self.AMOUNTS]
+        return rows
+
+    def extra_context_data(self, rows):
+        return {'totals': {key: sum((row[key] for row in rows), Decimal(0)) for key in self.AMOUNTS}}
 
 
 admin.site.register(Credit, CreditAdmin)
@@ -775,46 +807,45 @@ class AccountSummaryAdmin(admin.ModelAdmin):
 admin.site.register(AccountSummary, AccountSummaryAdmin)
 
 
-class ToInvoiceAdmin(admin.ModelAdmin):
+class ToInvoiceAdmin(MemberRowsAdminMixin, admin.ModelAdmin):
+    """Read only overview: the not yet invoiced usages of each member, with the credit they already use."""
     change_list_template = "admin/to_invoice_change_list.html"
-    actions = None
-    show_full_result_count = False
+    AMOUNTS = ('total', 'machine', 'cash', 'due')
+    COLUMNS = [
+        ('member', 'Member', member_sort_key, False),
+        ('type', 'Type', member_type_sort_key, False),
+        ('total', 'Non invoiced', lambda row: row['total'], True),
+        ('machine', 'Credit machine', lambda row: row['machine'], True),
+        ('cash', 'Credit cash', lambda row: row['cash'], True),
+        ('due', 'Rest to invoice', lambda row: row['due'], True),
+    ]
 
-    def changelist_view(self, request, extra_context=None):
-        response = super().changelist_view(
-            request,
-            extra_context=extra_context
-        )
-
-
-        invoiceable_members = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
-            .order_by('name', 'surname')
-        
-        invoiceable_members = invoiceable_members.annotate(
-            total_amount=Coalesce(
-            Sum('usage__total_price', filter=Q(usage__invoice=None)),
-            Decimal(0)
-            )
-        )
-
-        invoiceable_members = list(invoiceable_members.order_by('-total_amount'))
+    def build_rows(self):
+        members = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct().annotate(
+            total_amount=Coalesce(Sum('usage__total_price', filter=Q(usage__invoice=None)), Decimal(0))
+        ).order_by('-total_amount', 'name', 'surname')
 
         # credit already allocated to the not yet invoiced usages, deducted when the invoice is created
         deductions = {}
         for row in CreditConsumption.objects.filter(usage__invoice=None) \
                 .values('usage__member_id', 'credit__credit_type').annotate(total=Sum('amount')):
             deductions[(row['usage__member_id'], row['credit__credit_type'])] = row['total']
-        for member in invoiceable_members:
-            member.credit_machine = deductions.get((member.pk, 'machine'), Decimal(0))
-            member.credit_cash = deductions.get((member.pk, 'cash'), Decimal(0))
-            member.amount_due = member.total_amount - member.credit_machine - member.credit_cash
-            # same badges as the member list
-            member.can_open_cash_drawer = member.is_staff or member.is_allowed_to_open_cash_register
 
-        response.context_data['invoiceable_members'] = invoiceable_members
+        rows = []
+        for member in members:
+            row = {'member': member, 'total': member.total_amount,
+                   'machine': deductions.get((member.pk, 'machine'), Decimal(0)),
+                   'cash': deductions.get((member.pk, 'cash'), Decimal(0))}
+            row['due'] = row['total'] - row['machine'] - row['cash']
+            # in the order of the template columns
+            row['amounts'] = [row[key] for key in self.AMOUNTS]
+            rows.append(row)
+        return rows
 
-        return response
-    
+    def extra_context_data(self, rows):
+        return {'totals': {key: sum((row[key] for row in rows), Decimal(0)) for key in self.AMOUNTS}}
+
+
 admin.site.register(ToInvoice, ToInvoiceAdmin)
 
 

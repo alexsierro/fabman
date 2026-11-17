@@ -309,7 +309,8 @@ def credit_balances():
     upcoming is the credit not yet valid, next_expiry the first end date of a credit valid now with something left.
     """
     now = timezone.now()
-    credits = Credit.objects.filter(_not_expired_at(now)).select_related('member').annotate(
+    # every credit: an open usage keeps the credit valid at its date, even if it expired since
+    credits = Credit.objects.select_related('member').annotate(
         consumed=Sum('consumptions__amount'),
         pending=Sum('consumptions__amount', filter=Q(consumptions__usage__invoice=None)))
 
@@ -320,7 +321,7 @@ def credit_balances():
             'next_expiry': None, 'next_expiry_amount': ZERO})
         remaining = credit.amount - _cents(credit.consumed)
         row['pending'] += _cents(credit.pending)
-        if remaining <= 0:
+        if remaining <= 0 or (credit.valid_to is not None and credit.valid_to <= now):
             continue
         if credit.valid_from is not None and credit.valid_from > now:
             row['upcoming'] += remaining

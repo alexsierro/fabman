@@ -31,18 +31,7 @@
     <table id="result_list">
         <thead>
             <tr>
-                {% for header in headers %}
-                    <th scope="col" class="column-{{ header.key }} sortable{% if header.sorted %} sorted {{ header.ascending|yesno:'ascending,descending' }}{% endif %}{% if header.amount %} amount{% endif %}">
-                        {% if header.sorted %}
-                            <div class="sortoptions">
-                                <a class="sortremove" href="?" title="Remove from sorting"></a>
-                                <a href="{{ header.url }}" class="toggle {{ header.ascending|yesno:'ascending,descending' }}" title="Toggle sorting"></a>
-                            </div>
-                        {% endif %}
-                        <div class="text"><a href="{{ header.url }}">{{ header.label }}</a></div>
-                        <div class="clear"></div>
-                    </th>
-                {% endfor %}
+                {% include 'admin/member_rows_headers.html' %}
             </tr>
         </thead>
         <tbody>
