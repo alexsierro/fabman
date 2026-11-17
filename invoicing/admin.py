@@ -19,7 +19,9 @@ from django.utils.html import format_html
 from . import invoices_export_accounting, membership_fees
 from .invoice_mail_helper import send_invoice
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense, UsageSummary, Image, AccountSummary, ToInvoice, MembershipFee, Credit, CreditConsumption, day_bound
+    Expense, UsageSummary, Image, AccountSummary, ToInvoice, MembershipFee, Credit, CreditConsumption, day_bound, \
+    CreditBalance
+from .credits import credit_balances
 from members.models import Member
 
 
@@ -488,7 +490,75 @@ class CreditConsumptionAdmin(ReadOnlyConsumptionMixin, admin.ModelAdmin):
         return obj.usage.date
 
 
+class CreditBalanceAdmin(admin.ModelAdmin):
+    """Read only overview: the credit available for each member."""
+    change_list_template = "admin/credit_balance_change_list.html"
+    actions = None
+    show_full_result_count = False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    # (key, label, sort key of a row, is an amount): amounts sort the largest first
+    COLUMNS = [
+        ('member', 'Member', lambda row: (row['member'].name.lower(), row['member'].surname.lower()), False),
+        ('type', 'Type', lambda row: row['member'].get_member_type_display().lower(), False),
+        ('machine', 'Machine', lambda row: row['machine'], True),
+        ('cash', 'Cash', lambda row: row['cash'], True),
+        ('pending', 'Reserved', lambda row: row['pending'], True),
+        ('upcoming', 'Upcoming', lambda row: row['upcoming'], True),
+        ('next_expiry', 'Next expiry', lambda row: row['next_expiry'], False),
+    ]
+
+    @classmethod
+    def sort_rows(cls, rows, order):
+        """Sort by `order`, a column key, '-' first for descending. Empty values (no expiry) always come last."""
+        key = order.lstrip('-')
+        column = next((column for column in cls.COLUMNS if column[0] == key), None)
+        if column is None:
+            return rows, None, False
+        descending = order.startswith('-')
+        sort_key = column[2]
+        filled = sorted((row for row in rows if sort_key(row) is not None), key=sort_key, reverse=descending)
+        return filled + [row for row in rows if sort_key(row) is None], key, descending
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(request, extra_context=extra_context)
+        if not hasattr(response, 'context_data'):
+            return response
+        rows = credit_balances()
+        for row in rows:
+            member = row['member']
+            # same badges as the member list
+            member.can_open_cash_drawer = member.is_staff or member.is_allowed_to_open_cash_register
+            # in the order of the template columns
+            row['amounts'] = [row['machine'], row['cash'], row['pending'], row['upcoming']]
+
+        # the admin's own sort parameter: the changelist skips values that are not column numbers
+        rows, sorted_key, descending = self.sort_rows(rows, request.GET.get('o', ''))
+        headers = []
+        for key, label, _, is_amount in self.COLUMNS:
+            if key == sorted_key:
+                toggle = key if descending else f'-{key}'
+            else:
+                toggle = f'-{key}' if is_amount else key
+            headers.append({'label': label, 'key': key, 'amount': is_amount, 'url': f'?o={toggle}',
+                            'sorted': key == sorted_key, 'ascending': key == sorted_key and not descending})
+        response.context_data['headers'] = headers
+        response.context_data['rows'] = rows
+        response.context_data['totals'] = {key: sum((row[key] for row in rows), Decimal(0))
+                                           for key in ('machine', 'cash', 'pending', 'upcoming')}
+        return response
+
+
 admin.site.register(Credit, CreditAdmin)
+admin.site.register(CreditBalance, CreditBalanceAdmin)
 admin.site.register(CreditConsumption, CreditConsumptionAdmin)
 
 

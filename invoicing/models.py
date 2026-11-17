@@ -320,6 +320,14 @@ class Credit(models.Model):
         return f'{self.member} : {self.amount}'
 
 
+class CreditBalance(Credit):
+    """Admin overview of the credit available for each member."""
+    class Meta:
+        proxy = True
+        verbose_name = "Credit balance"
+        verbose_name_plural = "Credit balances"
+
+
 def protect_invoiced_usage(collector, field, sub_objs, using):
     """on_delete of a consumption's usage: an invoiced usage keeps its deduction, the others release the credit."""
     invoiced = {consumption for consumption in sub_objs if consumption.usage.invoice_id is not None}

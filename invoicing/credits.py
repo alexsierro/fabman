@@ -301,6 +301,44 @@ def credit_summary(member, max_rows=10):
     }
 
 
+def credit_balances():
+    """Credit of every member with something left, for the admin overview, largest balance first.
+
+    Each row is {'member', 'machine', 'cash', 'pending', 'upcoming', 'next_expiry', 'next_expiry_amount'}:
+    machine and cash are available now (what the open usages reserve, `pending`, is already taken out),
+    upcoming is the credit not yet valid, next_expiry the first end date of a credit valid now with something left.
+    """
+    now = timezone.now()
+    credits = Credit.objects.filter(_not_expired_at(now)).select_related('member').annotate(
+        consumed=Sum('consumptions__amount'),
+        pending=Sum('consumptions__amount', filter=Q(consumptions__usage__invoice=None)))
+
+    rows = {}
+    for credit in credits:
+        row = rows.setdefault(credit.member_id, {
+            'member': credit.member, 'machine': ZERO, 'cash': ZERO, 'pending': ZERO, 'upcoming': ZERO,
+            'next_expiry': None, 'next_expiry_amount': ZERO})
+        remaining = credit.amount - _cents(credit.consumed)
+        row['pending'] += _cents(credit.pending)
+        if remaining <= 0:
+            continue
+        if credit.valid_from is not None and credit.valid_from > now:
+            row['upcoming'] += remaining
+            continue
+        row[credit.credit_type] += remaining
+        if credit.valid_to is not None:
+            # by local day: credits are valid by whole days
+            end = timezone.localdate(credit.valid_to)
+            if row['next_expiry'] is None or end < row['next_expiry']:
+                row['next_expiry'], row['next_expiry_amount'] = end, remaining
+            elif end == row['next_expiry']:
+                row['next_expiry_amount'] += remaining
+
+    rows = [row for row in rows.values() if row['machine'] or row['cash'] or row['pending'] or row['upcoming']]
+    rows.sort(key=lambda row: (-(row['machine'] + row['cash']), row['member'].name, row['member'].surname))
+    return rows
+
+
 TRANSFER_CLOSING_COMMENT = 'Balance transferred to credit'
 
 

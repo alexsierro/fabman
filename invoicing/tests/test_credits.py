@@ -9,7 +9,7 @@ from django.db.models import ProtectedError, Sum
 from django.utils import timezone
 
 from invoicing.credits import available_credit, pending_deductions, balance_after_invoice, transfer_account_entries, \
-    _validity
+    _validity, credit_balances
 from invoicing.models import Usage, Resource, Invoice, Credit, CreditConsumption, AccountEntry
 from invoicing.admin import CreditForm
 from invoicing.views import prepare_invoice
@@ -294,6 +294,43 @@ class CreditAdminTests(TestCase):
         response = self.client.get(reverse('admin:invoicing_toinvoice_changelist'))
         self.assertContains(response, 'member-badge-animator')
         self.assertContains(response, self.member.get_member_type_display())
+
+    def test_credit_balances(self):
+        # setUp: 50 cash, 20 reserved by the open wood usage
+        Credit.objects.create(member=self.member, amount=40, credit_type='machine',
+                              valid_to=timezone.now() + datetime.timedelta(days=10))
+        Credit.objects.create(member=self.member, amount=15, credit_type='cash',
+                              valid_from=timezone.now() + datetime.timedelta(days=5))
+        Credit.objects.create(member=self.member, amount=99, credit_type='cash',
+                              valid_to=timezone.now() - datetime.timedelta(days=5))
+        empty = Member.objects.create(name='E', surname='E')
+        Credit.objects.create(member=empty, amount=0, credit_type='cash')
+
+        row, = credit_balances()
+        self.assertEqual((row['member'], row['machine'], row['cash'], row['pending'], row['upcoming']),
+                         (self.member, 40, 30, 20, 15))
+        self.assertEqual(row['next_expiry'], timezone.localdate(timezone.now() + datetime.timedelta(days=10)))
+        self.assertEqual(row['next_expiry_amount'], 40)
+
+    def test_credit_balance_page(self):
+        self.member.is_staff = True
+        self.member.save()
+        response = self.client.get(reverse('admin:invoicing_creditbalance_changelist'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'member-badge-animator')
+        self.assertContains(response, '30.00')
+        credits_url = f"{reverse('admin:invoicing_credit_changelist')}?member__id__exact={self.member.pk}"
+        self.assertContains(response, credits_url)
+        other = Member.objects.create(name='A', surname='A')
+        Credit.objects.create(member=other, amount=5, credit_type='machine')
+        for order, expected in (('member', [other, self.member]), ('-cash', [self.member, other]),
+                                ('-machine', [other, self.member]), ('next_expiry', [self.member, other])):
+            response = self.client.get(reverse('admin:invoicing_creditbalance_changelist'), {'o': order})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual([row['member'] for row in response.context['rows']], expected)
+        response = self.client.get(credits_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['cl'].result_list), [self.credit])
 
     def test_consumptions_are_read_only(self):
         response = self.client.get(reverse('admin:invoicing_creditconsumption_add'))
