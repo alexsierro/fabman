@@ -161,8 +161,8 @@ def create(request):
         if buffer_days and not Usage.objects.filter(member_id=member_id, invoice=None, date__lt=cutoff).exists():
             messages.warning(request, f'No usage older than {buffer_days} days to invoice')
             return redirect(f"{reverse('preview_invoice')}?member_id={member_id}&buffer_days={buffer_days}")
-        result = prepare_invoice(member_id, True, buffer_days=buffer_days)
-        return redirect('show_invoice', invoice_number=result['invoice'].invoice_number)
+        prepare_invoice(member_id, True, buffer_days=buffer_days)
+        return redirect('admin:invoicing_invoice_changelist')
 
 
 # can be shown in an iframe for the preview in the membership fees wizard

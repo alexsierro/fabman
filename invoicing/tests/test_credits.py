@@ -388,7 +388,7 @@ class InvoiceBufferTests(TestCase):
         response = self.client.post(reverse('create_invoice'), {'member_id': self.member.pk, 'buffer_days': 7})
 
         invoice = Invoice.objects.get()
-        self.assertRedirects(response, reverse('show_invoice', args=[invoice.invoice_number]), fetch_redirect_response=False)
+        self.assertRedirects(response, reverse('admin:invoicing_invoice_changelist'), fetch_redirect_response=False)
         self.assertEqual(list(invoice.usage_set.all()), [old])
 
     def test_nothing_older_than_the_buffer(self):
