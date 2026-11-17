@@ -18,11 +18,18 @@
         <option value="{{ member.pk }}"{% if invoice and invoice.member == member %} selected="selected"{% endif %}>{{ member.name}} {{ member.surname }}</option>
             {% endfor %}
         </select>
+        <label for="buffer_days">Usages older than</label>
+        <input type="number" id="buffer_days" name="buffer_days" min="0" step="1" value="{{ buffer_days|default:0 }}" style="width: 5em">
+        <span>days (0 = all)</span>
         <input type="submit" value="Preview">
     </form>
 
     {% if invoice %}
         <h1>Apercu : Facture pour  {{ member_info.name }} {{ member_info.surname }} </h1>
+        {% if cutoff %}
+            <p>Usages before {{ cutoff|date:"d.m.Y H:i" }} only:
+                {{ excluded_count }} more recent usage{{ excluded_count|pluralize }} left for a later invoice.</p>
+        {% endif %}
 
         <div style="border-style: solide; display: grid; grid-template-columns: 70mm 50mm 99mm">
 
@@ -96,14 +103,13 @@
                         <td>Déduction</td>
                         <td>{{ deduction_machine|floatformat:"-2" }}</td>
                     </tr>
-                    {% if not member_info.is_staff or amount_machine_after <= 0 %}
                     <tr>
                         <td></td>
                         <td></td>
                         <td>Avoir machine restant</td>
                         <td>{{ amount_machine_after|floatformat:"-2" }}</td>
                     </tr>
-                    {% endif %}
+                    {% include "invoice_preview_expiry.html" with lines=validity.machine %}
 
                     <tr>
                         <td colspan="4"> <h3>Déduction avoir cash</h3></td>
@@ -120,6 +126,12 @@
                         <td>Avoir cash restant</td>
                         <td>{{ cash_after|floatformat:"-2" }}</td>
                     </tr>
+                    {% include "invoice_preview_expiry.html" with lines=validity.cash %}
+                    {% if excluded_count %}
+                    <tr>
+                        <td colspan="4"><i>Avoir après cette facture, sans les utilisations pas encore facturées.</i></td>
+                    </tr>
+                    {% endif %}
 
                     <tr>
                         <td></td>
@@ -131,10 +143,15 @@
                 </table>
             </div>
         </div>
+        {% if usages %}
         <form action="{% url 'create_invoice' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="member_id" value="{{ invoice.member_id }}">
+            <input type="hidden" name="buffer_days" value="{{ buffer_days|default:0 }}">
             <input type="submit" value="Créer facture">
         </form>
+        {% else %}
+            <p>No usage to invoice{% if cutoff %} before {{ cutoff|date:"d.m.Y" }}{% endif %}.</p>
+        {% endif %}
     {% endif %}
 {% endblock %}

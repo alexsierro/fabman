@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import Q, Sum
 
-from invoicing.models import Usage, Resource, AccountEntry, Invoice
+from invoicing.models import Usage, Resource, Invoice
 from invoicing.views import prepare_invoice
 from members.models import Member
 
@@ -28,9 +28,6 @@ SWISS_ENGINEERING_ELIGIBLE_SLUGS = ['cotisation-membre', 'cotisation-reduit', 'c
 SWISS_ENGINEERING_SHARE = Decimal('0.5')
 
 LAST_INVOICES_COUNT = 5
-
-STAFF_MACHINE_CREDIT = 1000
-STAFF_MACHINE_CREDIT_TEMPORARY = 9000
 
 
 def fee_resources():
@@ -103,10 +100,8 @@ def build_fee_rows(year):
         if len(invoices) < LAST_INVOICES_COUNT:
             invoices.append(invoice)
 
-    # as in "To invoice", machine usages of the staff are paid by their machine credit
     uninvoiced_totals = dict(
         Usage.objects.filter(member__in=members, invoice=None)
-        .exclude(member__is_staff=True, resource__payable_by_animation_hours=True)
         .values_list('member_id').annotate(total=Sum('total_price')))
 
     rows = []
@@ -160,26 +155,12 @@ def members_to_invoice(year):
     return Member.objects.filter(pk__in=member_ids).order_by('name', 'surname')
 
 
-@transaction.atomic
 def create_yearly_invoice(member):
-    """Invoice all non invoiced usages of a member, the machine credit of the staff is reset."""
-    adjustment = None
-    if member.is_staff:
-        balance = AccountEntry.objects.filter(member=member).aggregate(machine=Sum('amount_machine'))['machine'] or 0
+    """Invoice all non invoiced usages of a member.
 
-        # temporary credit so all machine usages are deducted, then adjusted to leave the yearly credit
-        if balance < STAFF_MACHINE_CREDIT_TEMPORARY:
-            adjustment = AccountEntry.objects.create(member=member,
-                                                     amount_machine=STAFF_MACHINE_CREDIT_TEMPORARY - balance,
-                                                     invoice=None, comment='Ajustement credit machine animateur')
-
-    invoice = prepare_invoice(member.id, create=True)['invoice']
-
-    if adjustment:
-        adjustment.amount_machine = STAFF_MACHINE_CREDIT - balance + invoice.amount_deduction_machine
-        adjustment.save()
-
-    return invoice
+    The staff are invoiced like everyone: their machine credit is granted per activity, added manually.
+    """
+    return prepare_invoice(member.id, create=True)['invoice']
 
 
 def fee_invoices(year):

@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.contrib import messages
@@ -8,20 +8,46 @@ from django.db import transaction
 from django.db.models import Max, Sum
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from invoicing.invoice_view_helpers import get_invoice_pdf, get_invoice_html
-from invoicing.models import Invoice, Usage, AccountEntry
+from invoicing.credits import allocate, available_credit, credit_validity, pending_deductions
+from invoicing.models import Invoice, Usage
 from members.models import Member
 
 
-def prepare_invoice(member_id, create=False):
+def parse_buffer_days(value):
+    """Days to leave out of the invoice, so that credits can still be created for recent usages. None if invalid."""
+    if value in (None, ''):
+        return 0
+    try:
+        days = int(value)
+    except (TypeError, ValueError):
+        return None
+    return days if days >= 0 else None
+
+
+@transaction.atomic
+def prepare_invoice(member_id, create=False, buffer_days=0):
     invoice_number_max = Invoice.objects.all().aggregate(Max('invoice_number'))['invoice_number__max'] or 0
     invoice_number = invoice_number_max + 1
 
     member = Member.objects.get(pk=member_id)
     usages = Usage.objects.filter(member=member, invoice=None)
+
+    # with a buffer only the usages older than it are invoiced, the credits are allocated to them alone
+    cutoff = timezone.now() - timedelta(days=buffer_days) if buffer_days else None
+    savepoint = None
+    if cutoff is not None:
+        excluded_count = usages.filter(date__gte=cutoff).count()
+        usages = usages.filter(date__lt=cutoff)
+        # a preview must not change the allocation: it is rolled back once computed
+        savepoint = None if create else transaction.savepoint()
+        allocate(member.pk, until=cutoff)
+    else:
+        excluded_count = 0
 
     total_amount = usages.aggregate(total=Sum('total_price'))['total'] or 0
 
@@ -32,25 +58,22 @@ def prepare_invoice(member_id, create=False):
                                      'project__name').annotate(qty=Sum('qty'), total_price=Sum('total_price')
                                                                ).order_by('project__name')
 
-    balance = AccountEntry.objects.filter(member=member).aggregate(machine=Sum('amount_machine'),
-                                                                   cash=Sum('amount_cash'))
-
-    # information about machine hours balance
-    amount_machine_before = balance['machine'] or 0
     amount_machine_usages = usages.filter(resource__payable_by_animation_hours=True).aggregate(
         total=Sum('total_price'))['total'] or 0
     amount_other_usages = total_amount - amount_machine_usages
 
-    deduction_machine = min(amount_machine_before, amount_machine_usages)
-    amount_machine_after = amount_machine_before - deduction_machine
+    # the credits are already allocated to the usages, the invoice deducts what they consume
+    deduction = pending_deductions(member)
+    deduction_machine = deduction['machine']
+    deduction_cash = deduction['cash']
 
-    # information about cash balance
-    cash_before = balance['cash'] or 0
-    remaining_amount = total_amount - deduction_machine
-    deduction_cash = min(cash_before, remaining_amount)
-    cash_after = cash_before - deduction_cash
-
-    deduction = deduction_machine + deduction_cash
+    # only the invoiced usages hold credit now, what is available remains after the invoice
+    available = available_credit(member)
+    validity = credit_validity(member)
+    amount_machine_after = available['machine']
+    cash_after = available['cash']
+    amount_machine_before = amount_machine_after + deduction_machine
+    cash_before = cash_after + deduction_cash
 
     invoice = Invoice(amount=total_amount,
                       amount_deduction_machine=deduction_machine,
@@ -59,18 +82,24 @@ def prepare_invoice(member_id, create=False):
                       invoice_number=invoice_number)
 
     if create:
-        invoice.save()
-
-        if deduction != 0:
-            AccountEntry.objects.create(member=member, amount_machine=-deduction_machine, amount_cash=-deduction_cash,
-                                        invoice=invoice)
-
         invoice.date_invoice = timezone.now()
         invoice.save()
         usages.update(invoice=invoice)
         usages = Usage.objects.filter(invoice=invoice)
+        if cutoff is not None:
+            # the usages left out get their credit back
+            allocate(member.pk)
+    elif savepoint is not None:
+        # evaluate what the template shows before the allocation is rolled back
+        usages = list(usages)
+        usages_annotated = list(usages_annotated)
+        transaction.savepoint_rollback(savepoint)
 
     return {'usages': usages,
+            'buffer_days': buffer_days,
+            'cutoff': cutoff,
+            'excluded_count': excluded_count,
+            'validity': validity,
             'usages_anotated': usages_annotated,
             'member_info': member,
             'invoice': invoice,
@@ -94,22 +123,22 @@ def preview(request):
     choice_member = Member.objects.exclude(usage=None).filter(usage__invoice=None).distinct() \
         .order_by('name', 'surname')
     
-    member_id = None
-    if request.method == 'POST':
-        member_id = request.POST.get('member_id', None)
-    elif request.method == 'GET':
-        member_id = request.GET.get('member_id', None)
+    params = request.POST if request.method == 'POST' else request.GET
+    member_id = params.get('member_id', None)
+    buffer_days = parse_buffer_days(params.get('buffer_days'))
+    if buffer_days is None:
+        return HttpResponseBadRequest('Invalid buffer_days, expected a number of days >= 0')
 
     if member_id:
         if not choice_member.filter(pk=member_id).exists():
             return HttpResponseBadRequest('Invalid member_id or not usages for this member')
 
-        result = prepare_invoice(member_id)
+        result = prepare_invoice(member_id, buffer_days=buffer_days)
         result['choice_member'] = choice_member
         return render(request, 'preview_invoice.html', result)
 
     else:
-        return render(request, 'preview_invoice.html', {'choice_member': choice_member})
+        return render(request, 'preview_invoice.html', {'choice_member': choice_member, 'buffer_days': buffer_days})
 
 
 
@@ -125,7 +154,14 @@ def create(request):
 
     else:
         member_id = request.POST['member_id']
-        result = prepare_invoice(member_id, True)
+        buffer_days = parse_buffer_days(request.POST.get('buffer_days'))
+        if buffer_days is None:
+            return HttpResponseBadRequest('Invalid buffer_days, expected a number of days >= 0')
+        cutoff = timezone.now() - timedelta(days=buffer_days)
+        if buffer_days and not Usage.objects.filter(member_id=member_id, invoice=None, date__lt=cutoff).exists():
+            messages.warning(request, f'No usage older than {buffer_days} days to invoice')
+            return redirect(f"{reverse('preview_invoice')}?member_id={member_id}&buffer_days={buffer_days}")
+        result = prepare_invoice(member_id, True, buffer_days=buffer_days)
         return redirect('show_invoice', invoice_number=result['invoice'].invoice_number)
 
 

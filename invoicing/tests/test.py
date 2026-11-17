@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from weasyprint.css.validation.properties import transform
 
-from invoicing.models import Usage, Resource, Invoice, AccountEntry
+from invoicing.models import Usage, Resource, Invoice, Credit
 from members.models import Member
 
 
@@ -83,8 +83,8 @@ class InvoicePreviewTests(TestCase):
 
         member1 = Member.objects.create(name='Name1', surname='Surname', member_type='membre', subscription_status='active', locality='City')
 
-        AccountEntry.objects.create(member=member1, amount_machine=75)
-        AccountEntry.objects.create(member=member1, amount_cash=4)
+        Credit.objects.create(member=member1, amount=75, credit_type='machine')
+        Credit.objects.create(member=member1, amount=4, credit_type='cash')
 
         resource1 = Resource.objects.create(name='Resource1', price_member=10, price_not_member=1, price_consumable_only=0.5, slug='res1', payable_by_animation_hours=True)
         resource2 = Resource.objects.create(name='Resource2', price_member=10, price_not_member=1, price_consumable_only=0.5, slug='res2')

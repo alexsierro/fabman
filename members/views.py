@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from invoicing.credits import credit_summary
 from invoicing.models import Invoice
 from members.models import Member
 from django.db.models.functions import Concat
@@ -48,4 +49,5 @@ def show(request, pk):
         'invoices': invoices,
         'total_due': sum((invoice.amount_due for invoice in invoices), Decimal(0)),
         'can_open_cash_drawer': member.is_staff or member.is_allowed_to_open_cash_register,
+        'credits': credit_summary(member),
     })

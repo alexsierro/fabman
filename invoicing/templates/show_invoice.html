@@ -162,6 +162,23 @@
         padding-right: 0mm;
     }
 
+    .note-avoir {
+        font-size: 0.85em;
+        font-style: italic;
+        margin: 1mm 0 0;
+    }
+
+    /* how long a part of a remaining credit stays valid, under its total */
+    .echeance td {
+        font-size: 0.85em;
+        font-style: italic;
+        padding-top: 0;
+    }
+
+    .echeance td:first-child {
+        padding-left: 5mm;
+    }
+
     .chiffre-center {
         text-align: right !important;
         padding-right: 5mm;
@@ -364,7 +381,7 @@
     </table>
 
     {% block remaining_credit %}
-    {% if invoice.amount_deduction_cash > 0 or amount_cash_after > 0 or member_info.is_staff and amount_machine_after <= 0 or not member_info.is_staff and invoice.amount_deduction_machine > 0 or not member_info.is_staff and amount_machine_after > 0 %}
+    {% if show_remaining_credit %}
         <div class="no-break">
         <h3>Avoir restant</h3>
         <table style="width:100%">
@@ -372,12 +389,19 @@
                 <th style="width:86%">Désignation</th>
                 <th colspan="2" style="width:14%">Total</th>
             </tr>
-            {% if not member_info.is_staff or amount_machine_after <= 0 %}
+            {% if show_machine_balance %}
             <tr>
                 <td>Crédit machine</td>
                 <td>CHF</td>
                 <td class="chiffre">{{ amount_machine_after|format_currency }}</td>
             </tr>
+            {% for line in validity.machine %}
+            <tr class="echeance">
+                <td>dont {{ line.label }}</td>
+                <td>CHF</td>
+                <td class="chiffre">{{ line.amount|format_currency }}</td>
+            </tr>
+            {% endfor %}
             {% endif %}
             <tr>
                 <td style="background-color: #EEE !important" ;>Autre</td>
@@ -385,7 +409,17 @@
                 <td style=" background-color: #EEE !important" ;
                     class="chiffre">{{ amount_cash_after|format_currency }}</td>
             </tr>
+            {% for line in validity.cash %}
+            <tr class="echeance">
+                <td style="background-color: #EEE !important">dont {{ line.label }}</td>
+                <td style="background-color: #EEE !important">CHF</td>
+                <td style="background-color: #EEE !important" class="chiffre">{{ line.amount|format_currency }}</td>
+            </tr>
+            {% endfor %}
         </table>
+        {% if usages_left_out %}
+            <p class="note-avoir">Avoir après cette facture, sans les utilisations pas encore facturées.</p>
+        {% endif %}
         </div>
         <br/>
     {% endif %}

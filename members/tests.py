@@ -6,10 +6,11 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from members.models import Member
 from members.signals import member_post_save
-from invoicing.models import Invoice
+from invoicing.models import Invoice, Credit, Usage, Resource
 
 
 class MemberOverviewTest(TestCase):
@@ -63,6 +64,45 @@ class MemberOverviewTest(TestCase):
     def test_missing_member_is_404(self):
         response = self.client.get(reverse('show_members', args=[999999]))
         self.assertEqual(response.status_code, 404)
+
+    def test_credit_recap(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, 'No credit for this member.')
+
+        now = timezone.now()
+        machine = Resource.objects.create(name='Laser', slug='laser', price_member=10, price_not_member=10,
+                                          price_consumable_only=10, payable_by_animation_hours=True)
+        Credit.objects.create(member=self.member, amount=100, credit_type='machine', comment='Forfait')
+        Credit.objects.create(member=self.member, amount=30, credit_type='cash', valid_to=now + datetime.timedelta(days=10))
+        Credit.objects.create(member=self.member, amount=40, credit_type='cash', valid_from=now + datetime.timedelta(days=5))
+        Credit.objects.create(member=self.member, amount=15, credit_type='cash', valid_to=now - datetime.timedelta(days=1))
+        Usage.objects.create(member=self.member, resource=machine, qty=2)
+
+        response = self.client.get(self.url)
+
+        credits = response.context['credits']
+        totals = {total['label']: (total['available'], total['pending']) for total in credits['totals']}
+        self.assertEqual(totals, {'Machine': (80, 20), 'Cash': (30, 0)})
+        self.assertContains(response, 'CHF 20.00 reserved for usages not invoiced yet')
+        self.assertEqual(credits['expired_unused'], 15)
+        self.assertContains(response, 'expired unused')
+        self.assertContains(response, '1 used up or expired credit<')
+
+        # the credit valid now expiring within the window has a badge, not the one starting later nor the unlimited
+        self.assertEqual({credit.amount: getattr(credit, 'expires', None) for credit in credits['usable']},
+                         {30: 'in 10 days', 40: None, 100: None})
+        self.assertContains(response, 'class="credit-expiry"')
+        self.assertContains(response, 'Expires in 10 days')
+        self.assertNotContains(response, 'credit-expiry soon')
+
+    def test_credit_expiring_soon_badge(self):
+        Credit.objects.create(member=self.member, amount=50, credit_type='cash',
+                              valid_to=timezone.now() + datetime.timedelta(days=1))
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, 'class="credit-expiry soon"')
+        self.assertContains(response, 'Expires tomorrow')
 
     def test_non_staff_and_anonymous_are_denied(self):
         self.client.force_login(User.objects.create_user('regular'))

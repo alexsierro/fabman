@@ -154,7 +154,21 @@ class Resource(models.Model):
         return f'{self.name}'
 
 
+INVOICED_USAGE_DELETE_ERROR = 'Cannot delete an invoiced usage, an invoice keeps its lines: delete or cancel it first'
+
+
+class UsageQuerySet(models.QuerySet):
+    def delete(self):
+        # checked before Django starts deleting, so nothing is deleted and the transaction stays usable
+        invoiced = set(self.filter(invoice__isnull=False))
+        if invoiced:
+            raise models.ProtectedError(INVOICED_USAGE_DELETE_ERROR, invoiced)
+        return super().delete()
+
+
 class Usage(models.Model):
+    objects = UsageQuerySet.as_manager()
+
     date = models.DateTimeField('date used', default=timezone.now)
     member = models.ForeignKey('members.Member', on_delete=models.PROTECT, default=None, null=True, blank=True)
     project = models.ForeignKey('members.Project', on_delete=models.PROTECT, default=None, null=True, blank=True)
@@ -180,6 +194,12 @@ class Usage(models.Model):
     def clean(self):
         if self.project and self.project.member != self.member:
             raise ValidationError('Project not owned by this member')
+
+    def delete(self, *args, **kwargs):
+        # read from the database: the instance may predate the deletion of its invoice
+        if self.pk is not None and Usage.objects.filter(pk=self.pk, invoice__isnull=False).exists():
+            raise models.ProtectedError(INVOICED_USAGE_DELETE_ERROR, {self})
+        return super().delete(*args, **kwargs)
 
     def __str__(self):
         return f'{self.member} / {self.qty} {self.resource.unit} {self.resource}'
@@ -246,6 +266,79 @@ class AccountEntry(models.Model):
 
     def __str__(self):
         return f'{self.member} : machine {self.amount_machine}, cash {self.amount_cash}'
+
+
+
+def day_bound(value, end):
+    """The first (or the last, with end) instant of the local day of a date or datetime, None stays None.
+
+    A credit is valid by whole days: shown "valable jusqu'au 31.01" it must cover the whole 31.01.
+    """
+    if value is None:
+        return None
+    if isinstance(value, datetime.datetime):
+        value = timezone.localtime(timezone.make_aware(value) if timezone.is_naive(value) else value).date()
+    return timezone.make_aware(datetime.datetime.combine(value, datetime.time.max if end else datetime.time.min))
+
+
+class Credit(models.Model):
+
+    CREDIT_TYPE = [
+        ('cash', 'Cash'),
+        ('machine', 'Machine')
+    ]
+
+    member = models.ForeignKey('members.Member', on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(0))
+    # validity window of the credit by whole days (see save), a null bound means no limit in that direction
+    valid_from = models.DateTimeField(default=None, null=True, blank=True)
+    valid_to = models.DateTimeField(default=None, null=True, blank=True)
+    # an invoice shows the credits that existed when it was created
+    created_at = models.DateTimeField(default=timezone.now)
+    credit_type = models.CharField(max_length=7, choices=CREDIT_TYPE, default='cash', null=False, blank=False)
+    comment = models.CharField(max_length=200, blank=True)
+
+    @property
+    def is_used_by_invoice(self):
+        return self.pk is not None and self.consumptions.filter(usage__invoice__isnull=False).exists()
+
+    def clean(self):
+        if self.valid_from and self.valid_to and self.valid_from > self.valid_to:
+            raise ValidationError('Valid from must be before valid to')
+        if self.pk is not None:
+            invoiced = self.consumptions.filter(usage__invoice__isnull=False) \
+                .aggregate(total=models.Sum('amount'))['total'] or 0
+            if self.amount < invoiced:
+                raise ValidationError(f'Amount cannot be lower than the {invoiced} already deducted on invoices')
+
+    def save(self, *args, **kwargs):
+        self.valid_from = day_bound(self.valid_from, end=False)
+        self.valid_to = day_bound(self.valid_to, end=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.member} : {self.amount}'
+
+
+def protect_invoiced_usage(collector, field, sub_objs, using):
+    """on_delete of a consumption's usage: an invoiced usage keeps its deduction, the others release the credit."""
+    invoiced = {consumption for consumption in sub_objs if consumption.usage.invoice_id is not None}
+    if invoiced:
+        raise models.ProtectedError(
+            'Cannot delete an invoiced usage: its credit consumption is deducted on the invoice', invoiced)
+    models.CASCADE(collector, field, sub_objs, using)
+
+
+class CreditConsumption(models.Model):
+    # Rebuilt automatically for the not yet invoiced usages, see invoicing/credits.py
+    credit = models.ForeignKey(Credit, on_delete=models.CASCADE, related_name='consumptions')
+    usage = models.ForeignKey(Usage, on_delete=protect_invoiced_usage, related_name='credit_consumptions')
+    amount = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(0))
+
+    def __str__(self):
+        return f'{self.credit.member} : {self.amount}'
+
+
 
 
 class ExpenseType(models.Model):

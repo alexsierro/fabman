@@ -35,8 +35,9 @@ class MembershipFeeAnimatorTests(TestCase):
                 response = self.client.get(self.url, {'year': 2026})
 
                 self.assertContains(response, self.badge, count=2, html=True)
-                usage.delete()
+                # an invoiced usage cannot be deleted: the invoice first
                 invoice.delete()
+                usage.delete()
 
     def test_regular_member_has_no_badge(self):
         self.member.is_staff = False
@@ -79,5 +80,6 @@ class MembershipFeeAnimatorTests(TestCase):
 
                 self.assertContains(response, '<span class="committee-badge">Committee</span>',
                                     count=2, html=True)
-                usage.delete()
+                # an invoiced usage cannot be deleted: the invoice first
                 invoice.delete()
+                usage.delete()

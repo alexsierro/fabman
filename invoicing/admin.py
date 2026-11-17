@@ -2,7 +2,9 @@ import csv
 import datetime
 from decimal import Decimal
 
+from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin.widgets import AdminDateWidget
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum, Q, F
 from django.db.models.functions import Coalesce
@@ -11,12 +13,13 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 
 from . import invoices_export_accounting, membership_fees
 from .invoice_mail_helper import send_invoice
 from .models import Invoice, Usage, Resource, AccountEntry, ResourceCategory, ResourceWidget, ResourceUnit, ExpenseType, \
-    Expense, UsageSummary, Image, AccountSummary, ToInvoice, MembershipFee
+    Expense, UsageSummary, Image, AccountSummary, ToInvoice, MembershipFee, Credit, CreditConsumption, day_bound
 from members.models import Member
 
 
@@ -331,6 +334,164 @@ admin.site.register(AccountEntry, AccountEntryAdmin)
 admin.site.register(Expense, ExpenseAdmin)
 
 
+class CreditStatusFilter(admin.SimpleListFilter):
+    title = 'status'
+    parameter_name = 'status'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('available', 'Available'),
+            ('exhausted', 'Exhausted'),
+            ('upcoming', 'Not yet valid'),
+            ('expired', 'Expired'),
+        )
+
+    def queryset(self, request, queryset):
+        now = timezone.now()
+        value = self.value()
+        if value == 'available':
+            return queryset.filter(valid_now_q(now), consumed__lt=F('amount'))
+        elif value == 'exhausted':
+            return queryset.filter(consumed__gte=F('amount'))
+        elif value == 'upcoming':
+            return queryset.filter(valid_from__gt=now)
+        elif value == 'expired':
+            return queryset.filter(valid_to__lt=now)
+        return queryset
+
+
+def valid_now_q(now):
+    return (Q(valid_from__isnull=True) | Q(valid_from__lte=now)) & (Q(valid_to__isnull=True) | Q(valid_to__gte=now))
+
+
+class ReadOnlyConsumptionMixin:
+    """The consumptions are rebuilt automatically from the credits and the usages, see invoicing/credits.py."""
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class CreditConsumptionInline(ReadOnlyConsumptionMixin, admin.TabularInline):
+    model = CreditConsumption
+    extra = 0
+    fields = ['usage', 'usage_date', 'invoice', 'amount']
+    readonly_fields = fields
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('usage', 'usage__member', 'usage__resource',
+                                                            'usage__invoice', 'usage__invoice__member')
+
+    @admin.display(description='usage date')
+    def usage_date(self, obj):
+        return obj.usage.date
+
+    def invoice(self, obj):
+        return obj.usage.invoice or '-'
+
+
+class CreditForm(forms.ModelForm):
+    """A credit is valid by whole days: only dates are entered, saved as the start and the end of the day."""
+    valid_from = forms.DateField(required=False, widget=AdminDateWidget,
+                                 help_text='First day the credit can be used, empty: no limit')
+    valid_to = forms.DateField(required=False, widget=AdminDateWidget,
+                               help_text='Last day the credit can be used, empty: no limit')
+
+    class Meta:
+        model = Credit
+        # set when the credit is created, read only in the admin
+        exclude = ['created_at']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('valid_from', 'valid_to'):
+            value = getattr(self.instance, name)
+            if value is not None:
+                # the local date: the start of a local day is the day before in UTC
+                self.initial[name] = timezone.localdate(value)
+
+    def clean_valid_from(self):
+        return day_bound(self.cleaned_data['valid_from'], end=False)
+
+    def clean_valid_to(self):
+        return day_bound(self.cleaned_data['valid_to'], end=True)
+
+
+class CreditAdmin(admin.ModelAdmin):
+    form = CreditForm
+    list_display = ['member', 'credit_type', 'amount', 'consumed', 'remaining', 'valid_from', 'valid_to',
+                    'is_valid_now', 'comment']
+    list_display_links = ['member']
+    list_filter = ['credit_type', CreditStatusFilter]
+    search_fields = ['member__name', 'member__surname', 'comment']
+    autocomplete_fields = ['member']
+    ordering = ['-id']
+    inlines = [CreditConsumptionInline]
+
+    def get_readonly_fields(self, request, obj=None):
+        # an invoice already used the credit: its owner and its type are part of the invoice history
+        if obj is not None and obj.is_used_by_invoice:
+            return ['member', 'credit_type', 'created_at', 'consumed', 'remaining']
+        return ['created_at', 'consumed', 'remaining']
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.is_used_by_invoice:
+            return False
+        return super().has_delete_permission(request, obj=obj)
+
+    def delete_queryset(self, request, queryset):
+        used = queryset.filter(consumptions__usage__invoice__isnull=False).distinct()
+        if used.exists():
+            self.message_user(request, f'{used.count()} credits already used by an invoice were not deleted',
+                              messages.WARNING)
+        super().delete_queryset(request, queryset.exclude(pk__in=used.values('pk')))
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('member').annotate(
+            consumed=Coalesce(Sum('consumptions__amount'), Decimal(0)))
+
+    @admin.display(ordering='consumed')
+    def consumed(self, obj):
+        return getattr(obj, 'consumed', Decimal(0))
+
+    @admin.display(description='remaining')
+    def remaining(self, obj):
+        return obj.amount - self.consumed(obj)
+
+    @admin.display(boolean=True, description='valid now')
+    def is_valid_now(self, obj):
+        now = timezone.now()
+        return (obj.valid_from is None or obj.valid_from <= now) and (obj.valid_to is None or obj.valid_to >= now)
+
+
+class CreditConsumptionAdmin(ReadOnlyConsumptionMixin, admin.ModelAdmin):
+    list_display = ['credit', 'credit_type', 'usage', 'usage_date', 'amount', 'usage__invoice']
+    list_filter = ['credit__credit_type', ('usage__invoice', admin.EmptyFieldListFilter)]
+    search_fields = ['credit__member__name', 'credit__member__surname']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('credit', 'credit__member', 'usage', 'usage__member',
+                                                            'usage__resource', 'usage__invoice',
+                                                            'usage__invoice__member')
+
+    @admin.display(ordering='credit__credit_type')
+    def credit_type(self, obj):
+        return obj.credit.get_credit_type_display()
+
+    @admin.display(ordering='usage__date', description='usage date')
+    def usage_date(self, obj):
+        return obj.usage.date
+
+
+admin.site.register(Credit, CreditAdmin)
+admin.site.register(CreditConsumption, CreditConsumptionAdmin)
+
+
 class DateYearFilter(admin.SimpleListFilter):
     title = 'year'
     parameter_name = 'date'
@@ -561,13 +722,7 @@ class ToInvoiceAdmin(admin.ModelAdmin):
         
         invoiceable_members = invoiceable_members.annotate(
             total_amount=Coalesce(
-            Sum(
-                'usage__total_price',
-                filter=Q(usage__invoice=None) & (
-                Q(usage__resource__payable_by_animation_hours=False) |
-                Q(is_staff=False)
-                )
-            ),
+            Sum('usage__total_price', filter=Q(usage__invoice=None)),
             Decimal(0)
             )
         )

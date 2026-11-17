@@ -5,6 +5,7 @@
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'members/admin/member_badges.css' %}">
     <link rel="stylesheet" href="{% static 'members/admin/member_overview.css' %}">
+    <link rel="stylesheet" href="{% static 'members/admin/member_credits.css' %}">
     {% include "admin/invoice_preview_style.html" %}
 {% endblock %}
 
@@ -50,6 +51,70 @@
                 <span>Open invoices: <strong>{{ invoices|length }}</strong></span>
                 <span>Total due <strong>CHF {{ total_due|format_currency }}</strong></span>
             </div>
+        </div>
+    </div>
+
+    <div class="module credits">
+        <h2>Credits</h2>
+        <div class="credit-body">
+        {% if credits.totals %}
+            <div class="credit-totals">
+                {% for total in credits.totals %}
+                    <div class="credit-total credit-{{ total.type }}">
+                        <span class="label">{% include "members/credit_icon.html" with type=total.type %}{{ total.label }} available</span>
+                        <strong>CHF {{ total.available|chf }}</strong>
+                        {% if total.pending %}<small>CHF {{ total.pending|chf }} reserved for usages not invoiced yet</small>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if credits.usable %}
+            <div class="invoice-table-wrapper">
+                <table class="credit-table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Type</th>
+                        <th scope="col" class="amount">Remaining (CHF)</th>
+                        <th scope="col">Validity</th>
+                        <th scope="col">Comment</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for credit in credits.usable %}
+                        <tr class="credit-{{ credit.credit_type }}">
+                            <td><a class="credit-type" href="{% url 'admin:invoicing_credit_change' credit.pk %}">{% include "members/credit_icon.html" with type=credit.credit_type %}{{ credit.get_credit_type_display }}</a></td>
+                            <td class="amount">
+                                <strong>{{ credit.remaining|chf }}</strong> <span class="muted">/ {{ credit.amount|chf }}</span>
+                                <div class="credit-gauge" title="{{ credit.percent_left }}% left"><span style="width: {{ credit.percent_left }}%"></span></div>
+                            </td>
+                            <td class="validity">
+                                {% if credit.valid_from or credit.valid_to %}{{ credit.valid_from|date:"d.m.Y"|default:"…" }} – {{ credit.valid_to|date:"d.m.Y"|default:"…" }}{% else %}<span class="muted">No limit</span>{% endif %}
+                                {% if credit.expires %}<span class="credit-expiry{% if credit.expires_soon %} soon{% endif %}" title="CHF {{ credit.remaining|chf }} left">Expires {{ credit.expires }}</span>{% endif %}
+                            </td>
+                            <td>{{ credit.comment }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif credits.count %}
+            <p class="muted">No credit available.</p>
+        {% else %}
+            <p class="muted">No credit for this member.</p>
+        {% endif %}
+
+        <div class="credit-footer">
+            <span>
+                {% if credits.usable_more %}<span>{{ credits.usable_more }} more credit{{ credits.usable_more|pluralize }}</span>{% endif %}
+                {% if credits.other_count %}<span>{{ credits.other_count }} used up or expired credit{{ credits.other_count|pluralize }}</span>{% endif %}
+                {% if credits.expired_unused %}<span>CHF {{ credits.expired_unused|chf }} expired unused</span>{% endif %}
+            </span>
+            <span class="links">
+                {% if credits.count %}<a href="{% url 'admin:invoicing_credit_changelist' %}?member__id__exact={{ member.pk }}">All credits</a>{% endif %}
+                <a href="{% url 'admin:invoicing_credit_add' %}?member={{ member.pk }}">Add a credit</a>
+            </span>
+        </div>
         </div>
     </div>
 

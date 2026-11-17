@@ -12,7 +12,9 @@ from weasyprint import HTML
 
 from fabman.settings import MEDIA_ROOT, STATIC_ROOT, STATIC_URL, MEDIA_URL, STATICFILES_DIRS
 from invoicing.invoice_helper import get_payment_delay
-from invoicing.models import Invoice, Usage, AccountEntry
+from invoicing.credits import balance_after_invoice, credit_validity_after_invoice, has_usages_left_out, \
+    is_from_before_credits
+from invoicing.models import Invoice, Usage
 
 
 def get_static_file_prefix():
@@ -77,13 +79,24 @@ def get_invoice_html(invoice_number, is_for_pdf=False, detailed=False):
 
     qrbill_svg_b64 = None if detailed else get_qrbill_svg_b64(invoice, number_ref)
 
-    balance = AccountEntry.objects. \
-        filter(Q(date__lte=invoice.date_invoice) | Q(invoice=invoice), member=invoice.member, ). \
-        aggregate(machine=Sum('amount_machine'), cash=Sum('amount_cash'))
-
-    amount_cash_after = balance['cash'] or 0
-    amount_machine_after = balance['machine'] or 0
+    balance = balance_after_invoice(invoice)
+    amount_machine_after = balance['machine']
+    amount_cash_after = balance['cash']
     payment_delay = get_payment_delay(invoice)
+
+    # Before the credits the staff had a yearly machine forfait, its balance was not shown: an old invoice is
+    # shown as it was sent. Since the credits the staff get credit per activity, shown like for everyone.
+    from_before_credits = is_from_before_credits(invoice)
+    staff_forfait = invoice.member.is_staff and from_before_credits
+    show_machine_balance = not staff_forfait or amount_machine_after <= 0
+    if staff_forfait:
+        show_remaining_credit = invoice.amount_deduction_cash > 0 or amount_cash_after > 0 or amount_machine_after <= 0
+    else:
+        show_remaining_credit = invoice.amount_deduction_cash > 0 or amount_cash_after > 0 \
+            or invoice.amount_deduction_machine > 0 or amount_machine_after > 0
+    # an old invoice is shown as it was sent, without the lines added with the credits
+    validity = {'machine': None, 'cash': None} if from_before_credits else credit_validity_after_invoice(invoice)
+    usages_left_out = show_remaining_credit and not from_before_credits and has_usages_left_out(invoice)
 
     template = get_template('show_invoice_details.html' if detailed else 'show_invoice.html')
 
@@ -95,6 +108,10 @@ def get_invoice_html(invoice_number, is_for_pdf=False, detailed=False):
                             'amount_machine_usages': amount_machine_usages,
                             'amount_cash_after': amount_cash_after,
                             'amount_machine_after': amount_machine_after,
+                            'show_remaining_credit': show_remaining_credit,
+                            'show_machine_balance': show_machine_balance,
+                            'validity': validity,
+                            'usages_left_out': usages_left_out,
                             'use_projects': use_projects,
                             'detailed': detailed,
                             'today': timezone.localdate(),

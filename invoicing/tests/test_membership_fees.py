@@ -7,7 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from invoicing import membership_fees
-from invoicing.models import Usage, Resource, AccountEntry, Invoice
+from invoicing.credits import available_credit, balance_after_invoice
+from invoicing.models import Usage, Resource, Invoice, Credit
 from members.models import Member
 
 
@@ -117,21 +118,23 @@ class MembershipFeesTests(TestCase):
             membership_fees.create_fees(2026, {member.id: self.membre})
         self.assertFalse(Usage.objects.exists())
 
-    def test_create_yearly_invoice_resets_staff_machine_credit(self):
+    def test_create_yearly_invoice_bills_staff_like_everyone(self):
+        # no yearly forfait anymore: the activity credits pay what they cover, the rest is invoiced
         member = Member.objects.create(name='N', surname='S', is_staff=True)
         machine = create_resource('machine', 10)
         machine.payable_by_animation_hours = True
         machine.save()
-        AccountEntry.objects.create(member=member, amount_machine=200)
+        Credit.objects.create(member=member, amount=200, credit_type='machine')
         Usage.objects.create(member=member, resource=machine, qty=30)
         Usage.objects.create(member=member, resource=self.membre, qty=1, year=2026)
 
         invoice = membership_fees.create_yearly_invoice(member)
 
-        self.assertEqual(invoice.amount_deduction_machine, 300)
-        self.assertEqual(invoice.amount_due, 100)
-        balance = sum(entry.amount_machine for entry in AccountEntry.objects.filter(member=member))
-        self.assertEqual(balance, 1000)
+        self.assertEqual(invoice.amount_deduction_machine, 200)
+        self.assertEqual(invoice.amount_due, 200)
+        self.assertEqual(Credit.objects.filter(member=member).count(), 1)
+        self.assertEqual(available_credit(member)['machine'], 0)
+        self.assertEqual(balance_after_invoice(invoice)['machine'], 0)
 
     def test_members_to_invoice_and_unsent_invoices(self):
         member = Member.objects.create(name='N', surname='S')

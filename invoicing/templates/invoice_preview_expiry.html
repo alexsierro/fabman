@@ -1,0 +1,9 @@
+{# How long the parts of a remaining credit stay valid, the lines add up to it, see invoicing.credits._validity #}
+{% for line in lines %}
+    <tr>
+        <td></td>
+        <td></td>
+        <td><i>dont {{ line.label }}</i></td>
+        <td><i>{{ line.amount|floatformat:"-2" }}</i></td>
+    </tr>
+{% endfor %}

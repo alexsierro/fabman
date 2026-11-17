@@ -1,0 +1,14 @@
+{# Icon of a credit type, colored by the surrounding text: a 3D printer for machine, a banknote for cash #}
+<svg class="credit-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+    {% if type == 'machine' %}
+        <rect x="1.5" y="1.5" width="13" height="13" rx="1.5"/>
+        <path d="M1.5 4.8h13M4 12.3h8"/>
+        <rect x="6" y="3.3" width="4" height="3.6" rx=".6" fill="currentColor" stroke="none"/>
+        <path d="M7.2 6.6 8 8l.8-1.4" stroke-linejoin="round"/>
+        <rect x="6" y="9.6" width="4" height="2.7" fill="currentColor" stroke="none"/>
+    {% else %}
+        <rect x="1.5" y="4" width="13" height="8" rx="1.2"/>
+        <circle cx="8" cy="8" r="1.8"/>
+        <path d="M4 6.5v3M12 6.5v3"/>
+    {% endif %}
+</svg>

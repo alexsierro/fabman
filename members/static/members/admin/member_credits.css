@@ -1,0 +1,82 @@
+.credit-body { padding: 16px; }
+/* --credit-color for the tile border, gauge and icon, --credit-bg/--credit-fg for the type badge */
+.credit-machine { --credit-color: #1f6f8b; --credit-bg: #1f6f8b; --credit-fg: #fff; }
+.credit-cash { --credit-color: #c79100; --credit-bg: #ffda57; --credit-fg: #624900; }
+
+.credit-totals {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.credit-total {
+    padding: 12px 16px;
+    background: var(--darkened-bg);
+    border-left: 4px solid var(--credit-color);
+    border-radius: 6px;
+}
+.credit-total .label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--body-quiet-color);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.credit-total strong { display: block; margin-top: 4px; font-size: 1.6rem; }
+.credit-total small { display: block; margin-top: 4px; color: var(--body-quiet-color); }
+
+.credit-table { width: 100%; }
+.credit-table td, .credit-table th { padding: 10px 12px; vertical-align: middle; }
+.credit-table tbody tr:nth-child(even) { background: var(--darkened-bg); }
+.credit-table .amount { text-align: right; white-space: nowrap; }
+.credits .muted { color: var(--body-quiet-color); }
+.credit-total .credit-icon { color: var(--credit-color); }
+.credit-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--credit-fg) !important;
+    background: var(--credit-bg);
+    font-weight: 600;
+    text-decoration: none !important;
+    white-space: nowrap;
+}
+.credit-type:hover { filter: brightness(1.08); }
+.credit-icon { flex: none; }
+.credit-gauge {
+    height: 4px;
+    margin-top: 6px;
+    min-width: 90px;
+    background: var(--border-color);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.credit-gauge span { display: block; height: 100%; background: var(--credit-color); }
+.credit-table .validity { white-space: nowrap; }
+.credit-expiry {
+    display: inline-block;
+    margin-left: 14px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--body-quiet-color);
+    color: var(--body-bg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+.credit-expiry.soon { background: var(--error-fg); }
+
+.credit-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    color: var(--body-quiet-color);
+}
+.credit-footer > span > span + span::before { content: "·"; margin: 0 8px; }
+.credit-footer .links a + a { margin-left: 12px; }
