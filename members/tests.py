@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from members import statistics
 from members.models import Member
 from members.signals import member_post_save
 from invoicing.models import Invoice, Credit, Usage, Resource
@@ -168,6 +169,83 @@ class MemberAdminResignationFilterTest(TestCase):
     def test_resigned_member_change_page_remains_accessible(self):
         response = self.client.get(reverse('admin:members_member_change', args=[self.resigned.pk]))
         self.assertEqual(response.status_code, 200)
+
+
+class MemberStatisticsTest(TestCase):
+    def setUp(self):
+        self.url = reverse('admin:members_member_statistics')
+        d = datetime.date
+        # without a date added: counted from the first usage, or from the start of the history without usage
+        before = Member.objects.create(name='Before', surname='History', date_added=None)
+        resource = Resource.objects.create(name='Laser', slug='laser', price_member=10, price_not_member=10,
+                                           price_consumable_only=10)
+        for usage_date in (datetime.datetime(2025, 6, 1, 12), datetime.datetime(2025, 2, 20, 12)):
+            Usage.objects.create(member=before, resource=resource, qty=1, date=timezone.make_aware(usage_date))
+        Member.objects.create(name='Unknown', surname='Start', date_added=None)
+        Member.objects.create(name='Joined', surname='January', date_added=d(2025, 1, 15))
+        Member.objects.create(name='Left', surname='March', date_added=d(2025, 2, 10), date_resigned=d(2025, 3, 5))
+        Member.objects.create(name='Student', surname='Member', member_type='etudiant', date_added=d(2026, 1, 1))
+        for member_type in statistics.NON_MEMBER_TYPES:
+            Member.objects.create(name='Non', surname=member_type, member_type=member_type, date_added=d(2025, 1, 1))
+
+    def test_monthly_counts_and_years(self):
+        result = statistics.statistics(today=datetime.date(2026, 1, 20))
+
+        self.assertEqual([(point.date, point.count) for point in result['points']][:4], [
+            (datetime.date(2025, 1, 31), 2),
+            (datetime.date(2025, 2, 28), 4),
+            (datetime.date(2025, 3, 31), 3),
+            (datetime.date(2025, 4, 30), 3),
+        ])
+        self.assertEqual(len(result['points']), 13)
+        # the current month is counted up to today
+        self.assertEqual((result['points'][-1].date, result['points'][-1].count), (datetime.date(2026, 1, 20), 4))
+        self.assertEqual(result['current_count'], 4)
+        self.assertEqual(result['from_first_usage'], 1)
+        self.assertEqual(result['unknown_start'], 1)
+        self.assertEqual([(row.year, row.joined, row.resigned, row.count) for row in result['years']],
+                         [(2026, 1, 0, 4), (2025, 3, 1, 3)])
+        self.assertEqual([tick['label'] for tick in result['chart']['x_ticks']], [2025, 2026])
+
+    def test_member_type_filter(self):
+        today = datetime.date(2026, 1, 20)
+        self.assertEqual(statistics.statistics(statistics.ALL_MEMBER_TYPES, today)['current_count'], 9)
+        self.assertEqual(statistics.statistics('etudiant', today)['current_count'], 1)
+        self.assertEqual(statistics.statistics('no_member', today)['current_count'], 1)
+
+    def test_no_known_date(self):
+        Usage.objects.all().delete()
+        Member.objects.all().delete()
+        Member.objects.create(name='Without', surname='Date', date_added=None)
+        result = statistics.statistics()
+        self.assertEqual(result['points'], [])
+        self.assertIsNone(result['chart'])
+        self.assertEqual(result['current_count'], 1)
+
+    def test_admin_page(self):
+        self.client.force_login(User.objects.create_superuser('admin'))
+
+        response = self.client.get(self.url, {'member_type': 'unknown'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['member_type'], '')
+        self.assertContains(response, 'Members: Membre, Etudiant, AVS, AI, Passif, Angel</option>')
+        self.assertContains(response, '<polyline class="line"')
+        self.assertContains(response, 'id="members-chart-points"')
+
+        response = self.client.get(self.url, {'member_type': 'etudiant'})
+        self.assertEqual(response.context['member_type'], 'etudiant')
+
+        response = self.client.get(reverse('admin:members_member_changelist'))
+        self.assertContains(response, self.url)
+
+    def test_non_staff_is_denied(self):
+        self.client.force_login(User.objects.create_user('member'))
+        response = self.client.get(self.url)
+        self.assertRedirects(response, f"{reverse('admin:login')}?next={self.url}")
+
+    def test_staff_without_view_permission_is_denied(self):
+        self.client.force_login(User.objects.create_user('staff', is_staff=True))
+        self.assertEqual(self.client.get(self.url).status_code, 403)
 
 
 class VisaLowercaseTest(TestCase):

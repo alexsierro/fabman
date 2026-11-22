@@ -1,9 +1,12 @@
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.template.loader import render_to_string
-from django.urls import reverse
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils.html import format_html
 
+from . import statistics
 from .models import Member, Project, ProjectCard
 from django.http import HttpResponse
 import csv
@@ -54,6 +57,33 @@ class MemberAdmin(admin.ModelAdmin):
 
     class Media:
         css = {'all': ('members/admin/member_badges.css',)}
+
+    def get_urls(self):
+        return [
+            path('statistics/', self.admin_site.admin_view(self.statistics_view),
+                 name='members_member_statistics'),
+        ] + super().get_urls()
+
+    def statistics_view(self, request):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        included = ', '.join(label for value, label in Member.MEMBER_TYPE if value not in statistics.NON_MEMBER_TYPES)
+        member_type_choices = [('', f'Members: {included}'),
+                               (statistics.ALL_MEMBER_TYPES, 'All types')] + Member.MEMBER_TYPE
+        member_type = request.GET.get('member_type', '')
+        if member_type not in dict(member_type_choices):
+            member_type = ''
+
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'title': 'Members statistics',
+            'member_type': member_type,
+            'member_type_choices': member_type_choices,
+            **statistics.statistics(member_type),
+        }
+        return TemplateResponse(request, 'admin/members/member/statistics.html', context)
 
     def member_badges(self, member):
         return render_to_string('admin/members/member_badges.html', {

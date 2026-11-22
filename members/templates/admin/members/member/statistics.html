@@ -1,0 +1,189 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .members-stats { max-width: 960px; }
+        .members-stats form { margin-bottom: 16px; }
+        .members-stats .stat-tile { margin: 0 0 16px; }
+        .members-stats .stat-tile .value { font-size: 2rem; font-weight: bold; color: var(--body-fg); line-height: 1.2; }
+        .members-stats .stat-tile .label { color: var(--body-quiet-color); }
+        .members-stats .chart { position: relative; margin-bottom: 8px; }
+        .members-stats svg { display: block; width: 100%; height: auto; overflow: visible; }
+        .members-stats svg:focus-visible { outline: 2px solid var(--link-fg); outline-offset: 4px; }
+        .members-stats .grid { stroke: var(--hairline-color); stroke-width: 1; }
+        .members-stats .axis-label { fill: var(--body-quiet-color); font-size: 12px; }
+        .members-stats .line { fill: none; stroke: var(--link-fg); stroke-width: 2; stroke-linejoin: round; }
+        .members-stats .area { fill: var(--link-fg); opacity: 0.12; }
+        .members-stats [hidden] { display: none; }
+        .members-stats .crosshair { stroke: var(--body-quiet-color); stroke-width: 1; }
+        .members-stats .marker { fill: var(--link-fg); stroke: var(--body-bg); stroke-width: 2; }
+        .members-stats .tooltip {
+            position: absolute; pointer-events: none; transform: translate(-50%, -100%); margin-top: -12px;
+            padding: 4px 8px; border: 1px solid var(--hairline-color); border-radius: 4px; white-space: nowrap;
+            background: var(--body-bg); color: var(--body-fg); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        .members-stats .tooltip strong { font-size: 1.1em; }
+        .members-stats .note { color: var(--body-quiet-color); margin-bottom: 24px; }
+        .members-stats table { min-width: 400px; margin-bottom: 16px; }
+        .members-stats td.number, .members-stats th.number { text-align: right; }
+        .members-stats details > summary { cursor: pointer; margin-bottom: 8px; }
+    </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url 'admin:members_member_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="members-stats">
+
+<form method="get">
+    <label>Members:
+        <select name="member_type" onchange="this.form.submit()">
+            {% for value, label in member_type_choices %}
+                <option value="{{ value }}" {% if value == member_type %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <noscript><input type="submit" value="Show"></noscript>
+</form>
+
+<div class="stat-tile">
+    <div class="value">{{ current_count }}</div>
+    <div class="label">members today (not resigned)</div>
+</div>
+
+{% if chart %}
+<h2>Members count, at the end of each month</h2>
+<div class="chart" id="members-chart">
+    <svg viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img" tabindex="0"
+         aria-label="Members count at the end of each month. Use the arrow keys to read the values.">
+        {% for tick in chart.y_ticks %}
+            <line class="grid" x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ tick.y|stringformat:'.1f' }}" y2="{{ tick.y|stringformat:'.1f' }}"></line>
+            <text class="axis-label" x="{{ chart.left|add:'-8' }}" y="{{ tick.y|stringformat:'.1f' }}" text-anchor="end" dominant-baseline="middle">{{ tick.value }}</text>
+        {% endfor %}
+        {% for tick in chart.x_ticks %}
+            <line class="grid" x1="{{ tick.x|stringformat:'.1f' }}" x2="{{ tick.x|stringformat:'.1f' }}" y1="{{ chart.bottom }}" y2="{{ chart.bottom|add:'5' }}"></line>
+            <text class="axis-label" x="{{ tick.x|stringformat:'.1f' }}" y="{{ chart.bottom|add:'20' }}" text-anchor="middle">{{ tick.label }}</text>
+        {% endfor %}
+        <polygon class="area" points="{{ chart.area }}"></polygon>
+        <polyline class="line" points="{{ chart.line }}"></polyline>
+        <line class="crosshair" y1="{{ chart.top }}" y2="{{ chart.bottom }}" hidden></line>
+        <circle class="marker" r="5" hidden></circle>
+        <rect class="hit-area" x="{{ chart.left }}" y="0" width="{{ chart.plot_width }}" height="{{ chart.height }}" fill="transparent"></rect>
+    </svg>
+    <div class="tooltip" role="status" hidden></div>
+</div>
+{% endif %}
+
+{% if years %}
+<h2>Per year</h2>
+<table>
+    <thead>
+        <tr>
+            <th scope="col">Year</th>
+            <th scope="col" class="number">Joined</th>
+            <th scope="col" class="number">Resigned</th>
+            <th scope="col" class="number">Members at the end of the year</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in years %}
+        <tr>
+            <td>{{ row.year }}</td>
+            <td class="number">{{ row.joined }}</td>
+            <td class="number">{{ row.resigned }}</td>
+            <td class="number">{{ row.count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<details>
+    <summary>Per month</summary>
+    <table>
+        <thead>
+            <tr><th scope="col">Month</th><th scope="col" class="number">Members</th></tr>
+        </thead>
+        <tbody>
+            {% for point in chart_points reversed %}
+            <tr><td>{{ point.label }}</td><td class="number">{{ point.count }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</details>
+{% else %}
+<p>No member to show.</p>
+{% endif %}
+
+</div>
+{{ chart_points|json_script:"members-chart-points" }}
+<script>
+(function () {
+    const container = document.getElementById('members-chart');
+    if (!container) return;
+    const points = JSON.parse(document.getElementById('members-chart-points').textContent);
+    const svg = container.querySelector('svg');
+    const crosshair = svg.querySelector('.crosshair');
+    const marker = svg.querySelector('.marker');
+    const tooltip = container.querySelector('.tooltip');
+    const width = svg.viewBox.baseVal.width;
+    let current = null;
+
+    function show(index) {
+        current = Math.max(0, Math.min(points.length - 1, index));
+        const point = points[current];
+        crosshair.setAttribute('x1', point.x);
+        crosshair.setAttribute('x2', point.x);
+        marker.setAttribute('cx', point.x);
+        marker.setAttribute('cy', point.y);
+        tooltip.innerHTML = '';
+        tooltip.append(point.label, document.createElement('br'));
+        const count = document.createElement('strong');
+        count.textContent = point.count + ' members';
+        tooltip.append(count);
+        // keep the tooltip inside the chart at both ends
+        const left = Math.max(8, Math.min(92, point.x / width * 100));
+        tooltip.style.left = left + '%';
+        tooltip.style.top = (point.y / svg.viewBox.baseVal.height * 100) + '%';
+        setHidden(false);
+    }
+
+    // SVG elements have no hidden property, so the attribute is toggled
+    function setHidden(hidden) {
+        [crosshair, marker, tooltip].forEach(element => element.toggleAttribute('hidden', hidden));
+    }
+
+    function hide() {
+        setHidden(true);
+    }
+
+    function nearest(x) {
+        let best = 0;
+        points.forEach((point, index) => {
+            if (Math.abs(point.x - x) < Math.abs(points[best].x - x)) best = index;
+        });
+        return best;
+    }
+
+    svg.addEventListener('pointermove', event => {
+        const position = new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+        show(nearest(position.x));
+    });
+    svg.addEventListener('pointerleave', hide);
+    svg.addEventListener('blur', hide);
+    svg.addEventListener('keydown', event => {
+        const moves = {ArrowLeft: -1, ArrowRight: 1, Home: -points.length, End: points.length};
+        if (!(event.key in moves)) return;
+        event.preventDefault();
+        show(current === null ? points.length - 1 : current + moves[event.key]);
+    });
+})();
+</script>
+{% endblock %}
